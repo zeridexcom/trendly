@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
     TrendingUp,
@@ -7,9 +8,13 @@ import {
     Calendar,
     ArrowRight,
     Sparkles,
-    BarChart3,
     Clock,
     CheckCircle2,
+    RefreshCw,
+    Zap,
+    Target,
+    MessageSquare,
+    Brain,
 } from 'lucide-react'
 
 // Mock data for dashboard
@@ -61,9 +66,179 @@ const priorityConfig: Record<string, { color: string; label: string }> = {
     HIGH: { color: 'var(--color-priority-high)', label: '↑ High' },
 }
 
+interface AIInsights {
+    greeting: string
+    mainInsight: string
+    tips: string[]
+    focusArea: string
+    actionItems: string[]
+}
+
 export default function DashboardPage() {
+    const [aiInsights, setAiInsights] = useState<AIInsights | null>(null)
+    const [loadingInsights, setLoadingInsights] = useState(true)
+    const [refreshing, setRefreshing] = useState(false)
+
+    const fetchAIInsights = async () => {
+        try {
+            setRefreshing(true)
+            const response = await fetch('/api/ai/insights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    activeTrends: 24,
+                    ideasInPipeline: 18,
+                    scheduledPosts: 42,
+                    publishedThisWeek: 15,
+                    topPlatforms: ['INSTAGRAM', 'TIKTOK', 'TWITTER'],
+                }),
+            })
+            const data = await response.json()
+            setAiInsights(data)
+        } catch (error) {
+            console.error('Failed to fetch AI insights:', error)
+            // Set fallback insights
+            setAiInsights({
+                greeting: "Welcome back! 🚀",
+                mainInsight: "Your content pipeline is active. Focus on converting ideas to scheduled posts.",
+                tips: [
+                    "Review trending topics daily",
+                    "Batch create content for efficiency",
+                    "Engage during peak hours: 9-11 AM"
+                ],
+                focusArea: "Content velocity",
+                actionItems: ["Check new trends", "Review scheduled content", "Plan next week"]
+            })
+        } finally {
+            setLoadingInsights(false)
+            setRefreshing(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchAIInsights()
+    }, [])
+
     return (
         <div className="animate-fadeIn">
+            {/* AI Insights Card - Top Banner */}
+            <div
+                className="card"
+                style={{
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    marginBottom: 'var(--space-6)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                }}
+            >
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: -30,
+                        right: -30,
+                        width: 150,
+                        height: 150,
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        borderRadius: '50%',
+                        filter: 'blur(40px)',
+                    }}
+                />
+                <div style={{ position: 'relative' }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 'var(--radius-lg)',
+                                    background: 'var(--gradient-primary)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Brain size={20} color="white" />
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
+                                    AI Insights
+                                </h2>
+                                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                                    Powered by Trendly AI
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={fetchAIInsights}
+                            disabled={refreshing}
+                            className="btn btn-ghost btn-sm"
+                            style={{ gap: 'var(--space-2)' }}
+                        >
+                            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                            Refresh
+                        </button>
+                    </div>
+
+                    {loadingInsights ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                            <div className="loading" />
+                            <span style={{ color: 'var(--color-text-secondary)' }}>Analyzing your content strategy...</span>
+                        </div>
+                    ) : aiInsights && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
+                            <div>
+                                <p style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-medium)', marginBottom: 'var(--space-2)' }}>
+                                    {aiInsights.greeting}
+                                </p>
+                                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-4)', lineHeight: '1.6' }}>
+                                    {aiInsights.mainInsight}
+                                </p>
+                                <div
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 'var(--space-2)',
+                                        padding: 'var(--space-2) var(--space-3)',
+                                        background: 'rgba(139, 92, 246, 0.2)',
+                                        borderRadius: 'var(--radius-full)',
+                                    }}
+                                >
+                                    <Target size={14} color="var(--color-primary)" />
+                                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                                        Focus: {aiInsights.focusArea}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                                    <Zap size={14} color="#eab308" />
+                                    Quick Tips
+                                </p>
+                                <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                                    {aiInsights.tips.map((tip, i) => (
+                                        <li
+                                            key={i}
+                                            style={{
+                                                fontSize: 'var(--text-sm)',
+                                                color: 'var(--color-text-secondary)',
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                gap: 'var(--space-2)',
+                                            }}
+                                        >
+                                            <span style={{ color: 'var(--color-primary)' }}>•</span>
+                                            {tip}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Stats Grid */}
             <div
                 style={{
@@ -128,6 +303,51 @@ export default function DashboardPage() {
                     </div>
                 ))}
             </div>
+
+            {/* Action Items from AI */}
+            {aiInsights && (
+                <div
+                    className="card"
+                    style={{
+                        background: 'var(--color-bg-secondary)',
+                        marginBottom: 'var(--space-6)',
+                    }}
+                >
+                    <div className="flex items-center gap-2 mb-4">
+                        <CheckCircle2 size={18} color="var(--color-success)" />
+                        <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-semibold)' }}>
+                            Today's Action Items
+                        </h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                        {aiInsights.actionItems.map((item, i) => (
+                            <div
+                                key={i}
+                                style={{
+                                    padding: 'var(--space-3) var(--space-4)',
+                                    background: 'var(--color-bg-tertiary)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    fontSize: 'var(--text-sm)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-2)',
+                                    cursor: 'pointer',
+                                    transition: 'all var(--transition-fast)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'var(--color-primary-subtle)'
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'var(--color-bg-tertiary)'
+                                }}
+                            >
+                                <span style={{ color: 'var(--color-text-muted)' }}>{i + 1}.</span>
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Main Content Grid */}
             <div
@@ -418,7 +638,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* AI Suggestions */}
+                {/* AI Content Generator */}
                 <div
                     className="card"
                     style={{
@@ -480,7 +700,8 @@ export default function DashboardPage() {
                         >
                             Let AI analyze trends and generate personalized content ideas tailored to your brand and audience.
                         </p>
-                        <button
+                        <Link
+                            href="/dashboard/ideas"
                             className="btn"
                             style={{
                                 background: 'white',
@@ -490,7 +711,7 @@ export default function DashboardPage() {
                         >
                             <Sparkles size={16} />
                             Generate Ideas
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>
