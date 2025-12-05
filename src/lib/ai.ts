@@ -634,3 +634,130 @@ Respond with JSON: {"hooks": ["5 hooks"]}`
 export function estimateTokens(text: string): number {
     return Math.ceil(text.length / 4)
 }
+
+// ============================================
+// AI CONTENT REPURPOSING
+// ============================================
+
+interface RepurposedContent {
+    twitter: { thread: string[]; singlePost: string }
+    linkedin: string
+    instagram: { caption: string; hashtags: string[] }
+    tiktok: { script: string; hooks: string[] }
+    youtubeShorts: { script: string; title: string }
+}
+
+export async function repurposeContent(
+    originalContent: string,
+    contentType: 'blog' | 'video' | 'podcast' | 'article' = 'blog'
+): Promise<RepurposedContent> {
+    const openai = getOpenAI()
+
+    // Mock response for when AI is not available
+    if (!openai) {
+        return {
+            twitter: {
+                thread: [
+                    "🧵 Here's something interesting I've been working on...",
+                    "1/ The key insight is that consistency beats perfection every time.",
+                    "2/ Focus on showing up daily rather than waiting for the perfect moment.",
+                    "3/ Small wins compound into massive results over time.",
+                    "4/ What's your take? Reply below 👇"
+                ],
+                singlePost: "✨ Key insight: Consistency beats perfection. Show up daily, focus on small wins, and watch them compound into massive results. What's your experience? 💬"
+            },
+            linkedin: `I've been reflecting on a key lesson lately.
+
+The most successful people I know share one trait: unwavering consistency.
+
+They don't wait for perfect conditions.
+They don't need motivation every day.
+They simply show up.
+
+Here's what I've learned:
+• Small actions daily > big actions occasionally
+• Progress compounds faster than you expect
+• Perfection is the enemy of progress
+
+What habit has made the biggest difference in your career?
+
+#Leadership #Growth #Productivity`,
+            instagram: {
+                caption: "✨ The secret to success isn't talent or luck—it's showing up every single day.\n\nConsistency beats perfection. Every. Single. Time.\n\nDouble tap if you agree 💫\n\nWhat's one habit you're committed to this week?",
+                hashtags: ["#motivation", "#success", "#consistency", "#mindset", "#growthmindset", "#dailyhabits", "#productivity", "#entrepreneur"]
+            },
+            tiktok: {
+                script: "[HOOK - 0:00] The one thing successful people never tell you...\n\n[CONTENT - 0:03] It's not about being the smartest or most talented.\n\nIt's about showing up EVERY. SINGLE. DAY.\n\nEven when you don't feel like it.\nEven when no one's watching.\nEven when progress feels slow.\n\n[CTA - 0:25] Follow for more real talk on success 🔥",
+                hooks: [
+                    "The one thing successful people never tell you...",
+                    "I tried this for 30 days and here's what happened",
+                    "Stop doing this if you want to succeed"
+                ]
+            },
+            youtubeShorts: {
+                script: "[0:00 - HOOK]\nWant to know the #1 secret to success that nobody talks about?\n\n[0:05 - CONTENT]\nIt's NOT talent. It's NOT luck.\nIt's consistency.\n\nThe most successful people show up every day, even when:\n- They don't feel motivated\n- No one is watching\n- Progress seems slow\n\n[0:45 - CTA]\nSmash that subscribe button for more tips like this!",
+                title: "The #1 Success Secret Nobody Talks About 🔥"
+            }
+        }
+    }
+
+    const prompt = `You are an expert social media content strategist. Take the following ${contentType} content and repurpose it for multiple platforms.
+
+ORIGINAL CONTENT:
+${originalContent}
+
+Generate optimized versions for each platform following their best practices:
+
+1. TWITTER: Create a thread (4-5 tweets) AND a single standalone tweet (under 280 chars)
+2. LINKEDIN: Professional tone, use line breaks, include a question for engagement
+3. INSTAGRAM: Engaging caption with emojis, include 8 relevant hashtags
+4. TIKTOK: Short video script with [HOOK], [CONTENT], [CTA] sections, plus 3 alternative hooks
+5. YOUTUBE SHORTS: 60-second script with timestamps and a catchy title
+
+Respond with JSON in this exact format:
+{
+    "twitter": {
+        "thread": ["tweet1", "tweet2", "tweet3", "tweet4"],
+        "singlePost": "single tweet under 280 chars"
+    },
+    "linkedin": "full linkedin post",
+    "instagram": {
+        "caption": "caption with emojis",
+        "hashtags": ["hashtag1", "hashtag2", "..."]
+    },
+    "tiktok": {
+        "script": "full script with sections",
+        "hooks": ["hook1", "hook2", "hook3"]
+    },
+    "youtubeShorts": {
+        "script": "60 second script",
+        "title": "catchy title"
+    }
+}`
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'openai/gpt-4o-mini',
+            messages: [
+                { role: 'system', content: 'You are a viral content strategist. Always respond with valid JSON only, no markdown.' },
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.8,
+            max_tokens: 2000,
+        })
+
+        const content = response.choices[0]?.message?.content
+        if (!content) throw new Error('No response from AI')
+
+        const jsonMatch = content.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]) as RepurposedContent
+        }
+        throw new Error('Invalid JSON response')
+    } catch (error) {
+        console.error('AI Repurpose Error:', error)
+        // Return mock data on error
+        return repurposeContent(originalContent, contentType)
+    }
+}
+
