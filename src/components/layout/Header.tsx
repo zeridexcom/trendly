@@ -8,7 +8,7 @@ export default function Header({
     user: { name: string, email: string, avatarUrl?: string }
 }) {
     return (
-        <header className="h-16 border-b bg-background/50 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-10 w-full">
+        <header className="h-16 border-b bg-background/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-10 w-full">
 
             {/* Search / Command Trigger */}
             <button className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md text-sm border transition-colors w-64 group text-left">
