@@ -12,6 +12,7 @@ import {
     Settings,
     LogOut,
     Users,
+    ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -21,90 +22,84 @@ export default function Sidebar() {
     const isActive = (path: string) => pathname === path || pathname?.startsWith(`${path}/`)
 
     const links = [
-        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { href: '/dashboard/trends', label: 'Trends', icon: TrendingUp },
         { href: '/dashboard/ideas', label: 'Ideas', icon: Lightbulb },
         { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
         { href: '/dashboard/admin/users', label: 'Team', icon: Users },
     ]
 
-    const friends = [
-        { name: 'Sarah Chen', role: 'Designer', avatar: 'S', color: '#FF754C' },
-        { name: 'Mike Johnson', role: 'Editor', avatar: 'M', color: '#3F8CFF' },
-        { name: 'Emily Davis', role: 'Manager', avatar: 'E', color: '#6C5DD3' },
-    ]
+    const navItemClass = (active: boolean) => cn(
+        "group flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+        active
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+    )
 
     return (
-        <aside className="w-[250px] bg-white p-6 flex flex-col border-r border-transparent flex-shrink-0 h-screen sticky top-0 overflow-y-auto no-scrollbar">
-            {/* Logo */}
-            <div className="flex items-center gap-3 mb-10 px-2">
-                <div className="w-10 h-10 rounded-xl bg-[#6C5DD3] flex items-center justify-center shadow-lg shadow-[#6C5DD3]/20">
-                    <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-[#11142D]">Trendly</span>
-            </div>
-
-            {/* Main Navigation */}
-            <div className="flex-1">
-                <div className="mb-8">
-                    <p className="px-4 text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wider">Overview</p>
-                    <nav className="space-y-1">
-                        {links.map((link) => {
-                            const Icon = link.icon
-                            const active = isActive(link.href)
-                            return (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={cn(
-                                        "sidebar-link",
-                                        active && "active"
-                                    )}
-                                >
-                                    <Icon size={20} />
-                                    {link.label}
-                                </Link>
-                            )
-                        })}
-                    </nav>
-                </div>
-
-                {/* Friends/Team Section */}
-                <div>
-                    <p className="px-4 text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wider">Team</p>
-                    <div className="space-y-3 px-2">
-                        {friends.map((friend) => (
-                            <div key={friend.name} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
-                                <div
-                                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                                    style={{ background: friend.color }}
-                                >
-                                    {friend.avatar}
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-[#11142D]">{friend.name}</p>
-                                    <p className="text-xs text-gray-400">{friend.role}</p>
-                                </div>
-                            </div>
-                        ))}
+        <aside className="w-64 border-r bg-background/50 backdrop-blur-xl h-screen flex flex-col sticky top-0">
+            {/* Brand */}
+            <div className="h-16 flex items-center px-6 border-b">
+                <div className="flex items-center gap-2 font-semibold">
+                    <div className="bg-primary text-primary-foreground p-1 rounded-md">
+                        <Sparkles size={16} fill="currentColor" />
                     </div>
+                    <span>Trendly</span>
                 </div>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="mt-auto pt-6 border-t border-gray-100">
+            {/* Navigation */}
+            <div className="flex-1 py-6 px-3 flex flex-col gap-1 overflow-y-auto">
+                <div className="px-3 mb-2 text-xs font-medium text-muted-foreground/50 uppercase tracking-wider">
+                    Platform
+                </div>
+
+                {links.map((link) => {
+                    const Icon = link.icon
+                    const active = isActive(link.href)
+                    return (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className={navItemClass(active)}
+                        >
+                            <Icon size={16} strokeWidth={2} className={active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"} />
+                            {link.label}
+                            {active && <ChevronRight size={14} className="ml-auto opacity-50" />}
+                        </Link>
+                    )
+                })}
+
+                <div className="mt-8 px-3 mb-2 text-xs font-medium text-muted-foreground/50 uppercase tracking-wider">
+                    Your Team
+                </div>
+                {['Sarah Chen', 'Mike Johnson', 'Emily Davis'].map((name, i) => (
+                    <button key={i} className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors w-full text-left">
+                        <div className="w-6 h-6 rounded-full bg-muted border flex items-center justify-center text-[10px] font-bold">
+                            {name.charAt(0)}
+                        </div>
+                        {name}
+                    </button>
+                ))}
+
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 border-t bg-muted/20">
                 <Link
                     href="/dashboard/admin/settings"
-                    className="sidebar-link"
+                    className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors mb-1"
+                    )}
                 >
-                    <Settings size={20} />
+                    <Settings size={16} />
                     Settings
                 </Link>
                 <button
-                    className="sidebar-link w-full text-red-400 hover:text-red-500 hover:bg-red-50"
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
-                    <LogOut size={20} />
-                    Logout
+                    <LogOut size={16} />
+                    Log out
                 </button>
             </div>
         </aside>
