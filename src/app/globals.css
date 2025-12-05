@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Trendly - Premium Light Theme (Coursue-inspired) */
+
 :root {
   /* Light Theme Colors - Based on 'Coursue' Design */
   --color-bg-body: #F5F6FA;
