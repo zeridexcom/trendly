@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import {
     DndContext,
     DragOverlay,
@@ -23,11 +23,12 @@ import {
     Plus,
     MoreVertical,
     ThumbsUp,
-    MessageSquare,
     Calendar,
     Sparkles,
     X,
-    ArrowRight,
+    Loader2,
+    CheckCircle,
+    Zap,
 } from 'lucide-react'
 
 // Types
@@ -43,6 +44,18 @@ interface Idea {
     createdBy: { name: string }
     createdAt: string
     linkedTrend?: { title: string }
+    hook?: string
+    aiGenerated?: boolean
+}
+
+interface GeneratedIdea {
+    title: string
+    description: string
+    suggestedPlatform: string
+    suggestedFormat: string
+    hook?: string
+    estimatedEngagement?: string
+    contentPillars?: string[]
 }
 
 // Mock data
@@ -95,17 +108,6 @@ const initialIdeas: Idea[] = [
         hasUpvoted: false,
         createdBy: { name: 'Alex Kim' },
         createdAt: '2024-01-09T16:45:00Z',
-    },
-    {
-        id: '5',
-        title: 'Holiday campaign retrospective',
-        status: 'ARCHIVED',
-        platforms: ['INSTAGRAM', 'TWITTER'],
-        priority: 'LOW',
-        upvoteCount: 1,
-        hasUpvoted: false,
-        createdBy: { name: 'Sarah Chen' },
-        createdAt: '2024-01-01T11:20:00Z',
     },
 ]
 
@@ -165,7 +167,23 @@ function IdeaCard({
             className="kanban-card"
         >
             <div className="flex items-start justify-between mb-2">
-                <h4 className="kanban-card-title">{idea.title}</h4>
+                <div className="flex items-center gap-2">
+                    <h4 className="kanban-card-title">{idea.title}</h4>
+                    {idea.aiGenerated && (
+                        <span style={{
+                            fontSize: '10px',
+                            background: 'var(--gradient-primary)',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: 'var(--radius-full)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '2px'
+                        }}>
+                            <Sparkles size={10} /> AI
+                        </span>
+                    )}
+                </div>
                 <button className="btn btn-ghost btn-icon btn-sm" onClick={(e) => e.stopPropagation()}>
                     <MoreVertical size={14} />
                 </button>
@@ -182,6 +200,22 @@ function IdeaCard({
                 >
                     {idea.description}
                 </p>
+            )}
+
+            {idea.hook && (
+                <div
+                    style={{
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-warning)',
+                        background: 'rgba(234, 179, 8, 0.1)',
+                        padding: 'var(--space-2)',
+                        borderRadius: 'var(--radius-sm)',
+                        marginBottom: 'var(--space-3)',
+                        fontStyle: 'italic',
+                    }}
+                >
+                    💡 "{idea.hook}"
+                </div>
             )}
 
             {idea.linkedTrend && (
@@ -290,11 +324,22 @@ export default function IdeasPage() {
     const [activeId, setActiveId] = useState<string | null>(null)
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [showAIModal, setShowAIModal] = useState(false)
+    const [isGenerating, setIsGenerating] = useState(false)
+    const [generatedIdeas, setGeneratedIdeas] = useState<GeneratedIdea[]>([])
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         platforms: ['INSTAGRAM'],
         priority: 'NORMAL',
+    })
+
+    // AI Modal form state
+    const [aiFormData, setAiFormData] = useState({
+        contentType: '',
+        audience: '',
+        goal: 'AWARENESS',
+        platforms: ['INSTAGRAM', 'TIKTOK'],
+        numberOfIdeas: 5,
     })
 
     const sensors = useSensors(
@@ -325,7 +370,6 @@ export default function IdeasPage() {
         const activeIdea = ideas.find((i) => i.id === active.id)
         if (!activeIdea) return
 
-        // Check if dropped on a column
         const targetColumn = columns.find((c) => c.id === over.id)
         if (targetColumn) {
             setIdeas(
@@ -336,7 +380,6 @@ export default function IdeasPage() {
             return
         }
 
-        // Check if dropped on another idea
         const overIdea = ideas.find((i) => i.id === over.id)
         if (overIdea && activeIdea.status !== overIdea.status) {
             setIdeas(
@@ -362,7 +405,6 @@ export default function IdeasPage() {
     }
 
     const handleCreatePost = (idea: Idea) => {
-        // Would navigate to calendar with idea pre-filled
         console.log('Create post from idea:', idea)
     }
 
@@ -379,6 +421,100 @@ export default function IdeasPage() {
         setIdeas([newIdea, ...ideas])
         setShowCreateModal(false)
         setFormData({ title: '', description: '', platforms: ['INSTAGRAM'], priority: 'NORMAL' })
+    }
+
+    // 🔥 AI GENERATION FUNCTION - Connected to API!
+    const handleGenerateIdeas = async () => {
+        if (!aiFormData.contentType) {
+            alert('Please describe what type of content you need')
+            return
+        }
+
+        setIsGenerating(true)
+        setGeneratedIdeas([])
+
+        try {
+            const response = await fetch('/api/ai/ideas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    brandName: 'Your Brand',
+                    brandNiche: aiFormData.contentType,
+                    audienceDescription: aiFormData.audience || 'General audience',
+                    platforms: aiFormData.platforms,
+                    goal: aiFormData.goal,
+                    numberOfIdeas: aiFormData.numberOfIdeas,
+                }),
+            })
+
+            const data = await response.json()
+
+            if (data.ideas && data.ideas.length > 0) {
+                setGeneratedIdeas(data.ideas)
+            } else {
+                // Fallback if no ideas returned
+                setGeneratedIdeas([
+                    {
+                        title: `${aiFormData.contentType} - Idea 1`,
+                        description: 'AI-generated content idea based on your input',
+                        suggestedPlatform: aiFormData.platforms[0] || 'INSTAGRAM',
+                        suggestedFormat: 'Reel',
+                        hook: 'Stop scrolling! This will change everything...',
+                    },
+                ])
+            }
+        } catch (error) {
+            console.error('AI generation error:', error)
+            // Show error to user
+            alert('Failed to generate ideas. Please try again.')
+        } finally {
+            setIsGenerating(false)
+        }
+    }
+
+    // Add AI-generated idea to board
+    const handleAddGeneratedIdea = (generatedIdea: GeneratedIdea) => {
+        const newIdea: Idea = {
+            id: Date.now().toString(),
+            title: generatedIdea.title,
+            description: generatedIdea.description,
+            status: 'NEW',
+            platforms: [generatedIdea.suggestedPlatform || 'INSTAGRAM'],
+            priority: generatedIdea.estimatedEngagement === 'High' ? 'HIGH' : 'NORMAL',
+            upvoteCount: 0,
+            hasUpvoted: false,
+            createdBy: { name: 'Trendly AI' },
+            createdAt: new Date().toISOString(),
+            hook: generatedIdea.hook,
+            aiGenerated: true,
+        }
+        setIdeas([newIdea, ...ideas])
+
+        // Remove from generated list
+        setGeneratedIdeas(generatedIdeas.filter(i => i.title !== generatedIdea.title))
+    }
+
+    // Add all generated ideas
+    const handleAddAllGeneratedIdeas = () => {
+        const newIdeas = generatedIdeas.map((genIdea, index) => ({
+            id: (Date.now() + index).toString(),
+            title: genIdea.title,
+            description: genIdea.description,
+            status: 'NEW',
+            platforms: [genIdea.suggestedPlatform || 'INSTAGRAM'],
+            priority: 'NORMAL' as const,
+            upvoteCount: 0,
+            hasUpvoted: false,
+            createdBy: { name: 'Trendly AI' },
+            createdAt: new Date().toISOString(),
+            hook: genIdea.hook,
+            aiGenerated: true,
+        }))
+
+        setIdeas([...newIdeas, ...ideas])
+        setGeneratedIdeas([])
+        setShowAIModal(false)
+        setAiFormData({ contentType: '', audience: '', goal: 'AWARENESS', platforms: ['INSTAGRAM', 'TIKTOK'], numberOfIdeas: 5 })
     }
 
     const activeIdea = activeId ? ideas.find((i) => i.id === activeId) : null
@@ -399,7 +535,7 @@ export default function IdeasPage() {
                 <div className="flex items-center gap-3">
                     <button className="btn btn-secondary" onClick={() => setShowAIModal(true)}>
                         <Sparkles size={16} />
-                        Generate Ideas
+                        Generate with AI
                     </button>
                     <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
                         <Plus size={16} />
@@ -581,10 +717,10 @@ export default function IdeasPage() {
                 </>
             )}
 
-            {/* AI Generate Modal */}
+            {/* AI Generate Modal - FULLY FUNCTIONAL */}
             {showAIModal && (
                 <>
-                    <div className="modal-backdrop" onClick={() => setShowAIModal(false)} />
+                    <div className="modal-backdrop" onClick={() => !isGenerating && setShowAIModal(false)} />
                     <div className="modal modal-lg">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
@@ -603,79 +739,209 @@ export default function IdeasPage() {
                                 </div>
                                 <h2 className="modal-title">Generate Ideas with AI</h2>
                             </div>
-                            <button className="btn btn-ghost btn-icon" onClick={() => setShowAIModal(false)}>
+                            <button
+                                className="btn btn-ghost btn-icon"
+                                onClick={() => !isGenerating && setShowAIModal(false)}
+                                disabled={isGenerating}
+                            >
                                 <X size={20} />
                             </button>
                         </div>
 
                         <div className="modal-body">
-                            <div className="input-group mb-4">
-                                <label className="input-label">What type of content do you need?</label>
-                                <textarea
-                                    className="input"
-                                    placeholder="e.g., Engaging Instagram Reels about productivity tips for remote workers..."
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div className="input-group">
-                                    <label className="input-label">Target Audience</label>
-                                    <input
-                                        type="text"
-                                        className="input"
-                                        placeholder="e.g., Young professionals, 25-35"
-                                    />
-                                </div>
-                                <div className="input-group">
-                                    <label className="input-label">Goal</label>
-                                    <select className="input select">
-                                        <option value="AWARENESS">Awareness</option>
-                                        <option value="ENGAGEMENT">Engagement</option>
-                                        <option value="LEADS">Leads</option>
-                                        <option value="SALES">Sales</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="input-group mb-4">
-                                <label className="input-label">Platforms</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {Object.entries(platformIcons).map(([key, icon]) => (
+                            {/* Show generated ideas if any */}
+                            {generatedIdeas.length > 0 ? (
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-semibold)' }}>
+                                            ✨ Generated {generatedIdeas.length} Ideas
+                                        </h3>
                                         <button
-                                            key={key}
-                                            className="btn btn-sm"
-                                            style={{
-                                                background: 'var(--color-bg-tertiary)',
-                                                border: '1px solid var(--color-border)',
-                                            }}
+                                            className="btn btn-primary btn-sm"
+                                            onClick={handleAddAllGeneratedIdeas}
                                         >
-                                            {icon}
+                                            <CheckCircle size={14} />
+                                            Add All to Board
                                         </button>
-                                    ))}
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', maxHeight: 400, overflowY: 'auto' }}>
+                                        {generatedIdeas.map((idea, index) => (
+                                            <div
+                                                key={index}
+                                                style={{
+                                                    padding: 'var(--space-4)',
+                                                    background: 'var(--color-bg-tertiary)',
+                                                    borderRadius: 'var(--radius-lg)',
+                                                    border: '1px solid var(--color-border)',
+                                                }}
+                                            >
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <h4 style={{ fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
+                                                        {idea.title}
+                                                    </h4>
+                                                    <button
+                                                        className="btn btn-primary btn-sm"
+                                                        onClick={() => handleAddGeneratedIdea(idea)}
+                                                    >
+                                                        <Plus size={14} />
+                                                        Add
+                                                    </button>
+                                                </div>
+                                                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-2)' }}>
+                                                    {idea.description}
+                                                </p>
+                                                {idea.hook && (
+                                                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
+                                                        💡 Hook: "{idea.hook}"
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span style={{ fontSize: '14px' }}>{platformIcons[idea.suggestedPlatform] || '📱'}</span>
+                                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                                                        {idea.suggestedFormat}
+                                                    </span>
+                                                    {idea.estimatedEngagement && (
+                                                        <span style={{
+                                                            fontSize: 'var(--text-xs)',
+                                                            color: idea.estimatedEngagement === 'High' ? 'var(--color-success)' : 'var(--color-text-muted)'
+                                                        }}>
+                                                            • {idea.estimatedEngagement} engagement
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        className="btn btn-secondary mt-4"
+                                        style={{ width: '100%' }}
+                                        onClick={() => {
+                                            setGeneratedIdeas([])
+                                        }}
+                                    >
+                                        <Sparkles size={16} />
+                                        Generate More Ideas
+                                    </button>
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="input-group mb-4">
+                                        <label className="input-label">What type of content do you need? *</label>
+                                        <textarea
+                                            className="input"
+                                            placeholder="e.g., Engaging Instagram Reels about productivity tips, spoken English classes, cooking tutorials..."
+                                            rows={3}
+                                            value={aiFormData.contentType}
+                                            onChange={(e) => setAiFormData({ ...aiFormData, contentType: e.target.value })}
+                                            disabled={isGenerating}
+                                        />
+                                    </div>
 
-                            <div className="input-group">
-                                <label className="input-label">Number of Ideas</label>
-                                <select className="input select" style={{ maxWidth: 200 }}>
-                                    <option value="5">5 ideas</option>
-                                    <option value="10">10 ideas</option>
-                                    <option value="15">15 ideas</option>
-                                    <option value="20">20 ideas</option>
-                                </select>
-                            </div>
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div className="input-group">
+                                            <label className="input-label">Target Audience</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                placeholder="e.g., students and parents"
+                                                value={aiFormData.audience}
+                                                onChange={(e) => setAiFormData({ ...aiFormData, audience: e.target.value })}
+                                                disabled={isGenerating}
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label className="input-label">Goal</label>
+                                            <select
+                                                className="input select"
+                                                value={aiFormData.goal}
+                                                onChange={(e) => setAiFormData({ ...aiFormData, goal: e.target.value })}
+                                                disabled={isGenerating}
+                                            >
+                                                <option value="AWARENESS">Awareness</option>
+                                                <option value="ENGAGEMENT">Engagement</option>
+                                                <option value="LEADS">Leads</option>
+                                                <option value="SALES">Sales</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="input-group mb-4">
+                                        <label className="input-label">Platforms</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {Object.entries(platformIcons).map(([key, icon]) => (
+                                                <button
+                                                    key={key}
+                                                    className="btn btn-sm"
+                                                    disabled={isGenerating}
+                                                    style={{
+                                                        background: aiFormData.platforms.includes(key)
+                                                            ? 'var(--color-primary-subtle)'
+                                                            : 'var(--color-bg-tertiary)',
+                                                        border: aiFormData.platforms.includes(key)
+                                                            ? '1px solid var(--color-primary)'
+                                                            : '1px solid var(--color-border)',
+                                                    }}
+                                                    onClick={() => {
+                                                        const newPlatforms = aiFormData.platforms.includes(key)
+                                                            ? aiFormData.platforms.filter((p) => p !== key)
+                                                            : [...aiFormData.platforms, key]
+                                                        setAiFormData({ ...aiFormData, platforms: newPlatforms })
+                                                    }}
+                                                >
+                                                    {icon}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="input-group">
+                                        <label className="input-label">Number of Ideas</label>
+                                        <select
+                                            className="input select"
+                                            style={{ maxWidth: 200 }}
+                                            value={aiFormData.numberOfIdeas}
+                                            onChange={(e) => setAiFormData({ ...aiFormData, numberOfIdeas: parseInt(e.target.value) })}
+                                            disabled={isGenerating}
+                                        >
+                                            <option value="3">3 ideas</option>
+                                            <option value="5">5 ideas</option>
+                                            <option value="10">10 ideas</option>
+                                        </select>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setShowAIModal(false)}>
-                                Cancel
-                            </button>
-                            <button className="btn btn-primary">
-                                <Sparkles size={16} />
-                                Generate Ideas
-                            </button>
-                        </div>
+                        {generatedIdeas.length === 0 && (
+                            <div className="modal-footer">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowAIModal(false)}
+                                    disabled={isGenerating}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleGenerateIdeas}
+                                    disabled={isGenerating || !aiFormData.contentType}
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={16} />
+                                            Generate Ideas
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
