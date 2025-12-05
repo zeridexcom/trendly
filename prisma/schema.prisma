@@ -1,0 +1,309 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CREATOR
+  EXECUTIVE
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  TWITTER
+  LINKEDIN
+  OTHER
+}
+
+enum TrendType {
+  HASHTAG
+  SOUND_AUDIO
+  MEME_FORMAT
+  TOPIC
+  OTHER
+}
+
+enum IdeaStatus {
+  NEW
+  SHORTLISTED
+  IN_BRIEFING
+  IN_PRODUCTION
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum PostStatus {
+  IDEA
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+}
+
+enum PostFormat {
+  REEL
+  STORY
+  CAROUSEL
+  SINGLE_IMAGE
+  SHORT
+  TEXT_POST
+  THREAD
+  OTHER
+}
+
+enum PostGoal {
+  AWARENESS
+  ENGAGEMENT
+  LEADS
+  SALES
+  OTHER
+}
+
+enum NotificationType {
+  UPCOMING_POST
+  STUCK_POST
+  EMPTY_SLOT
+  ASSIGNMENT
+  STATUS_CHANGE
+  MENTION
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          UserRole @default(CREATOR)
+  isActive      Boolean  @default(true)
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  trendsCreated    Trend[]
+  ideasCreated     Idea[]
+  postsOwned       Post[]        @relation("PostOwner")
+  postsCreated     Post[]        @relation("PostCreator")
+  ideaUpvotes      IdeaUpvote[]
+  notifications    Notification[]
+  comments         Comment[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  brandTone   String?  // e.g., "playful", "professional", "casual"
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Default platforms for this workspace
+  defaultPlatforms Platform[]
+
+  // Relations
+  contentSlots ContentSlot[]
+}
+
+model Trend {
+  id        String    @id @default(cuid())
+  title     String
+  platform  Platform
+  type      TrendType
+  url       String?
+  notes     String?   @db.Text
+  createdBy String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  creator User   @relation(fields: [createdBy], references: [id])
+  ideas   Idea[]
+  posts   Post[]
+
+  @@index([platform])
+  @@index([type])
+  @@index([createdBy])
+  @@index([createdAt])
+}
+
+model Idea {
+  id             String     @id @default(cuid())
+  title          String
+  description    String?    @db.Text
+  status         IdeaStatus @default(NEW)
+  platforms      Platform[]
+  priority       Priority   @default(NORMAL)
+  linkedTrendId  String?
+  upvoteCount    Int        @default(0)
+  createdBy      String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  linkedTrend Trend?       @relation(fields: [linkedTrendId], references: [id])
+  creator     User         @relation(fields: [createdBy], references: [id])
+  upvotes     IdeaUpvote[]
+  posts       Post[]
+  comments    Comment[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([createdBy])
+  @@index([linkedTrendId])
+}
+
+model IdeaUpvote {
+  id        String   @id @default(cuid())
+  ideaId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  idea Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ideaId, userId])
+  @@index([ideaId])
+  @@index([userId])
+}
+
+model Post {
+  id                String     @id @default(cuid())
+  title             String
+  description       String?    @db.Text
+  status            PostStatus @default(IDEA)
+  platforms         Platform[]
+  format            PostFormat @default(OTHER)
+  campaign          String?
+  region            String?
+  goal              PostGoal   @default(AWARENESS)
+  scheduledDateTime DateTime?
+  ownerId           String?
+  ideaId            String?
+  trendId           String?
+  caption           String?    @db.Text
+  assets            String[]   // Array of URLs
+
+  // Checklist fields
+  copyReady           Boolean @default(false)
+  designReady         Boolean @default(false)
+  internalReviewDone  Boolean @default(false)
+  clientReviewDone    Boolean @default(false)
+
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  owner    User?    @relation("PostOwner", fields: [ownerId], references: [id])
+  idea     Idea?    @relation(fields: [ideaId], references: [id])
+  trend    Trend?   @relation(fields: [trendId], references: [id])
+  creator  User     @relation("PostCreator", fields: [createdBy], references: [id])
+  comments Comment[]
+
+  @@index([status])
+  @@index([ownerId])
+  @@index([scheduledDateTime])
+  @@index([campaign])
+  @@index([createdAt])
+}
+
+model ContentSlot {
+  id          String     @id @default(cuid())
+  name        String
+  platform    Platform
+  format      PostFormat @default(OTHER)
+  dayOfWeek   Int        // 0 = Sunday, 1 = Monday, etc.
+  timeOfDay   String     // Format: "HH:mm" (e.g., "18:00")
+  goal        PostGoal?
+  workspaceId String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@index([dayOfWeek])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?          // URL within app
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  authorId  String
+  ideaId    String?
+  postId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  author User  @relation(fields: [authorId], references: [id])
+  idea   Idea? @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  post   Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId])
+  @@index([postId])
+  @@index([authorId])
+}
+
+model AILog {
+  id           String   @id @default(cuid())
+  userId       String
+  requestType  String   // "idea_generation", "caption", "hooks"
+  prompt       String?  @db.Text
+  response     String?  @db.Text
+  tokensUsed   Int?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([requestType])
+  @@index([createdAt])
+}
