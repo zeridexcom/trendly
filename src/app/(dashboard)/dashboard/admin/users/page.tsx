@@ -12,7 +12,10 @@ import {
     UserX,
     UserCheck,
     X,
+    Check
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Types
 interface TeamMember {
@@ -77,25 +80,29 @@ const mockUsers: TeamMember[] = [
     },
 ]
 
-const roleConfig: Record<string, { label: string; color: string; description: string }> = {
+const roleConfig: Record<string, { label: string; color: string; bg: string; description: string }> = {
     ADMIN: {
         label: 'Admin',
-        color: '#ef4444',
+        color: 'text-red-600',
+        bg: 'bg-red-50 dark:bg-red-900/20',
         description: 'Full access to all features and settings',
     },
     MANAGER: {
         label: 'Manager',
-        color: '#a855f7',
+        color: 'text-purple-600',
+        bg: 'bg-purple-50 dark:bg-purple-900/20',
         description: 'Can manage content, ideas, and team assignments',
     },
     CREATOR: {
         label: 'Creator',
-        color: '#3b82f6',
+        color: 'text-blue-600',
+        bg: 'bg-blue-50 dark:bg-blue-900/20',
         description: 'Can create and edit assigned content',
     },
     EXECUTIVE: {
         label: 'Executive',
-        color: '#22c55e',
+        color: 'text-green-600',
+        bg: 'bg-green-50 dark:bg-green-900/20',
         description: 'Can schedule and publish content',
     },
 }
@@ -168,447 +175,295 @@ export default function UsersPage() {
     }
 
     return (
-        <div className="animate-fadeIn">
+        <div className="space-y-6">
             {/* Header */}
-            <div
-                className="flex items-center justify-between flex-wrap gap-4"
-                style={{ marginBottom: 'var(--space-6)' }}
-            >
-                {/* Search */}
-                <div style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
-                    <Search
-                        size={18}
-                        style={{
-                            position: 'absolute',
-                            left: 'var(--space-4)',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'var(--color-text-muted)',
-                        }}
-                    />
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                         type="text"
                         placeholder="Search team members..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input"
-                        style={{ paddingLeft: 'var(--space-10)' }}
+                        className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                 </div>
-
-                <button className="btn btn-primary" onClick={() => setShowInviteModal(true)}>
-                    <Plus size={16} />
+                <button
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                    onClick={() => setShowInviteModal(true)}
+                >
+                    <Plus className="mr-2 h-4 w-4" />
                     Invite Member
                 </button>
             </div>
 
             {/* Stats */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                    gap: 'var(--space-4)',
-                    marginBottom: 'var(--space-6)',
-                }}
-            >
-                <div className="card" style={{ padding: 'var(--space-4)' }}>
-                    <p style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)' }}>
-                        {users.filter((u) => u.isActive).length}
-                    </p>
-                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-                        Active Members
-                    </p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="rounded-xl border bg-card p-4 shadow-sm">
+                    <div className="text-2xl font-bold">{users.filter((u) => u.isActive).length}</div>
+                    <div className="text-sm text-muted-foreground">Active Members</div>
                 </div>
                 {Object.entries(roleConfig).map(([key, { label, color }]) => (
-                    <div key={key} className="card" style={{ padding: 'var(--space-4)' }}>
-                        <p style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color }}>
+                    <div key={key} className="rounded-xl border bg-card p-4 shadow-sm">
+                        <div className={cn("text-2xl font-bold", color)}>
                             {users.filter((u) => u.role === key && u.isActive).length}
-                        </p>
-                        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-                            {label}s
-                        </p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">{label}s</div>
                     </div>
                 ))}
             </div>
 
             {/* Users Table */}
-            <div className="card card-elevated" style={{ padding: 0, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                            <th
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    textAlign: 'left',
-                                    fontSize: 'var(--text-xs)',
-                                    fontWeight: 'var(--font-semibold)',
-                                    color: 'var(--color-text-muted)',
-                                    textTransform: 'uppercase',
-                                }}
-                            >
-                                Member
-                            </th>
-                            <th
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    textAlign: 'left',
-                                    fontSize: 'var(--text-xs)',
-                                    fontWeight: 'var(--font-semibold)',
-                                    color: 'var(--color-text-muted)',
-                                    textTransform: 'uppercase',
-                                }}
-                            >
-                                Role
-                            </th>
-                            <th
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    textAlign: 'left',
-                                    fontSize: 'var(--text-xs)',
-                                    fontWeight: 'var(--font-semibold)',
-                                    color: 'var(--color-text-muted)',
-                                    textTransform: 'uppercase',
-                                }}
-                            >
-                                Status
-                            </th>
-                            <th
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    textAlign: 'left',
-                                    fontSize: 'var(--text-xs)',
-                                    fontWeight: 'var(--font-semibold)',
-                                    color: 'var(--color-text-muted)',
-                                    textTransform: 'uppercase',
-                                }}
-                            >
-                                Joined
-                            </th>
-                            <th style={{ padding: 'var(--space-4)', width: 50 }}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredUsers.map((user) => (
-                            <tr
-                                key={user.id}
-                                style={{
-                                    borderBottom: '1px solid var(--color-border)',
-                                    transition: 'background var(--transition-fast)',
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-hover)'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'transparent'
-                                }}
-                            >
-                                <td style={{ padding: 'var(--space-4)' }}>
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className="avatar"
-                                            style={{
-                                                opacity: user.isActive ? 1 : 0.5,
-                                            }}
-                                        >
-                                            {getInitials(user.name)}
-                                        </div>
-                                        <div>
-                                            <p
-                                                style={{
-                                                    fontWeight: 'var(--font-medium)',
-                                                    opacity: user.isActive ? 1 : 0.5,
-                                                }}
-                                            >
-                                                {user.name}
-                                            </p>
-                                            <p
-                                                style={{
-                                                    fontSize: 'var(--text-xs)',
-                                                    color: 'var(--color-text-muted)',
-                                                }}
-                                            >
-                                                {user.email}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: 'var(--space-4)' }}>
-                                    <span
-                                        className="badge"
-                                        style={{
-                                            background: `${roleConfig[user.role]?.color}20`,
-                                            color: roleConfig[user.role]?.color,
-                                            border: `1px solid ${roleConfig[user.role]?.color}`,
-                                        }}
-                                    >
-                                        <Shield size={12} />
-                                        {roleConfig[user.role]?.label}
-                                    </span>
-                                </td>
-                                <td style={{ padding: 'var(--space-4)' }}>
-                                    <span
-                                        className="badge"
-                                        style={{
-                                            background: user.isActive
-                                                ? 'var(--color-success-subtle)'
-                                                : 'var(--color-bg-tertiary)',
-                                            color: user.isActive ? 'var(--color-success)' : 'var(--color-text-muted)',
-                                        }}
-                                    >
-                                        {user.isActive ? 'Active' : 'Inactive'}
-                                    </span>
-                                </td>
-                                <td
-                                    style={{
-                                        padding: 'var(--space-4)',
-                                        fontSize: 'var(--text-sm)',
-                                        color: 'var(--color-text-secondary)',
-                                    }}
-                                >
-                                    {formatDate(user.createdAt)}
-                                </td>
-                                <td style={{ padding: 'var(--space-4)', position: 'relative' }}>
-                                    <button
-                                        className="btn btn-ghost btn-icon btn-sm"
-                                        onClick={() => setActiveMenu(activeMenu === user.id ? null : user.id)}
-                                    >
-                                        <MoreVertical size={16} />
-                                    </button>
-
-                                    {activeMenu === user.id && (
-                                        <>
-                                            <div
-                                                style={{ position: 'fixed', inset: 0, zIndex: 99 }}
-                                                onClick={() => setActiveMenu(null)}
-                                            />
-                                            <div
-                                                className="dropdown-menu"
-                                                style={{ zIndex: 100, right: 0, minWidth: 160 }}
-                                            >
-                                                <button
-                                                    className="dropdown-item"
-                                                    onClick={() => {
-                                                        setSelectedUser(user)
-                                                        setShowEditModal(true)
-                                                        setActiveMenu(null)
-                                                    }}
-                                                >
-                                                    <Edit size={14} />
-                                                    Edit Role
-                                                </button>
-                                                <div className="dropdown-separator" />
-                                                <button
-                                                    className="dropdown-item"
-                                                    onClick={() => handleToggleActive(user.id)}
-                                                >
-                                                    {user.isActive ? (
-                                                        <>
-                                                            <UserX size={14} />
-                                                            Deactivate
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <UserCheck size={14} />
-                                                            Activate
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-                                </td>
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="w-full overflow-auto">
+                    <table className="w-full caption-bottom text-sm">
+                        <thead className="[&_tr]:border-b">
+                            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground uppercase text-xs tracking-wider">Member</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground uppercase text-xs tracking-wider">Role</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground uppercase text-xs tracking-wider">Status</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground uppercase text-xs tracking-wider">Joined</th>
+                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground uppercase text-xs tracking-wider w-[50px]"></th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="[&_tr:last-child]:border-0">
+                            {filteredUsers.map((user) => (
+                                <tr
+                                    key={user.id}
+                                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                                >
+                                    <td className="p-4 align-middle">
+                                        <div className="flex items-center gap-3">
+                                            <div className={cn(
+                                                "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted items-center justify-center font-semibold text-muted-foreground",
+                                                !user.isActive && "opacity-50"
+                                            )}>
+                                                {getInitials(user.name)}
+                                            </div>
+                                            <div className={cn(!user.isActive && "opacity-50")}>
+                                                <div className="font-medium">{user.name}</div>
+                                                <div className="text-xs text-muted-foreground">{user.email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 align-middle">
+                                        <span className={cn(
+                                            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                                            roleConfig[user.role]?.bg,
+                                            roleConfig[user.role]?.color
+                                        )}>
+                                            <Shield className="mr-1 h-3 w-3" />
+                                            {roleConfig[user.role]?.label}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 align-middle">
+                                        <span className={cn(
+                                            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors",
+                                            user.isActive
+                                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                                : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
+                                        )}>
+                                            {user.isActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 align-middle text-muted-foreground">
+                                        {formatDate(user.createdAt)}
+                                    </td>
+                                    <td className="p-4 align-middle text-right relative">
+                                        <button
+                                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                                            onClick={() => setActiveMenu(activeMenu === user.id ? null : user.id)}
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </button>
+
+                                        {activeMenu === user.id && (
+                                            <>
+                                                <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)} />
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    className="absolute right-0 z-20 mt-1 w-48 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in"
+                                                >
+                                                    <div className="p-1">
+                                                        <button
+                                                            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                            onClick={() => {
+                                                                setSelectedUser(user)
+                                                                setShowEditModal(true)
+                                                                setActiveMenu(null)
+                                                            }}
+                                                        >
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Edit Role
+                                                        </button>
+                                                        <div className="my-1 h-px bg-muted" />
+                                                        <button
+                                                            className="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground text-red-600 focus:text-red-600"
+                                                            onClick={() => handleToggleActive(user.id)}
+                                                        >
+                                                            {user.isActive ? (
+                                                                <>
+                                                                    <UserX className="mr-2 h-4 w-4" />
+                                                                    Deactivate
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <UserCheck className="mr-2 h-4 w-4" />
+                                                                    Activate
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Invite Modal */}
-            {showInviteModal && (
-                <>
-                    <div className="modal-backdrop" onClick={() => setShowInviteModal(false)} />
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h2 className="modal-title">Invite Team Member</h2>
-                            <button
-                                className="btn btn-ghost btn-icon"
-                                onClick={() => setShowInviteModal(false)}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="modal-body">
-                            <div className="input-group mb-4">
-                                <label className="input-label">Name *</label>
-                                <div style={{ position: 'relative' }}>
-                                    <User
-                                        size={18}
-                                        style={{
-                                            position: 'absolute',
-                                            left: 'var(--space-4)',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            color: 'var(--color-text-muted)',
-                                        }}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="input"
-                                        placeholder="John Doe"
-                                        value={inviteForm.name}
-                                        onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
-                                        style={{ paddingLeft: 'var(--space-10)' }}
-                                    />
-                                </div>
+            <AnimatePresence>
+                {showInviteModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+                            onClick={() => setShowInviteModal(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="relative z-50 w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg sm:p-10"
+                        >
+                            <div className="flex items-center justify-between mb-8">
+                                <h2 className="text-xl font-semibold">Invite Team Member</h2>
+                                <button className="rounded-full p-1 hover:bg-muted" onClick={() => setShowInviteModal(false)}>
+                                    <X className="h-5 w-5" />
+                                </button>
                             </div>
 
-                            <div className="input-group mb-4">
-                                <label className="input-label">Email *</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Mail
-                                        size={18}
-                                        style={{
-                                            position: 'absolute',
-                                            left: 'var(--space-4)',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            color: 'var(--color-text-muted)',
-                                        }}
-                                    />
-                                    <input
-                                        type="email"
-                                        className="input"
-                                        placeholder="john@company.com"
-                                        value={inviteForm.email}
-                                        onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                                        style={{ paddingLeft: 'var(--space-10)' }}
-                                    />
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Name</label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                            placeholder="John Doe"
+                                            value={inviteForm.name}
+                                            onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div className="input-group">
-                                <label className="input-label">Role *</label>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                    {Object.entries(roleConfig).map(([key, { label, color, description }]) => (
-                                        <label
-                                            key={key}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'flex-start',
-                                                gap: 'var(--space-3)',
-                                                padding: 'var(--space-3)',
-                                                borderRadius: 'var(--radius-md)',
-                                                border:
-                                                    inviteForm.role === key
-                                                        ? `1px solid ${color}`
-                                                        : '1px solid var(--color-border)',
-                                                background:
-                                                    inviteForm.role === key ? `${color}10` : 'transparent',
-                                                cursor: 'pointer',
-                                            }}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="role"
-                                                value={key}
-                                                checked={inviteForm.role === key}
-                                                onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-                                                style={{ marginTop: 2 }}
-                                            />
-                                            <div>
-                                                <p style={{ fontWeight: 'var(--font-medium)', color }}>
-                                                    {label}
-                                                </p>
-                                                <p
-                                                    style={{
-                                                        fontSize: 'var(--text-xs)',
-                                                        color: 'var(--color-text-secondary)',
-                                                    }}
-                                                >
-                                                    {description}
-                                                </p>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none">Email</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="email"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                            placeholder="john@company.com"
+                                            value={inviteForm.email}
+                                            onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium leading-none">Role</label>
+                                    <div className="grid gap-3">
+                                        {Object.entries(roleConfig).map(([key, { label, color, bg, description }]) => (
+                                            <div
+                                                key={key}
+                                                className={cn(
+                                                    "cursor-pointer rounded-lg border p-4 transition-all hover:bg-accent",
+                                                    inviteForm.role === key ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-input"
+                                                )}
+                                                onClick={() => setInviteForm({ ...inviteForm, role: key })}
+                                            >
+                                                <div className="flex items-center justify-between space-x-2">
+                                                    <div className="space-y-1">
+                                                        <p className={cn("text-sm font-medium leading-none", color)}>{label}</p>
+                                                        <p className="text-xs text-muted-foreground">{description}</p>
+                                                    </div>
+                                                    {inviteForm.role === key && <Check className="h-4 w-4 text-primary" />}
+                                                </div>
                                             </div>
-                                        </label>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setShowInviteModal(false)}>
-                                Cancel
-                            </button>
-                            <button
-                                className="btn btn-primary"
-                                disabled={!inviteForm.name || !inviteForm.email}
-                                onClick={handleInvite}
-                            >
-                                Send Invite
-                            </button>
-                        </div>
+                            <div className="mt-8 flex justify-end gap-3">
+                                <button className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground" onClick={() => setShowInviteModal(false)}>
+                                    Cancel
+                                </button>
+                                <button
+                                    className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 disabled:opacity-50"
+                                    disabled={!inviteForm.name || !inviteForm.email}
+                                    onClick={handleInvite}
+                                >
+                                    Send Invite
+                                </button>
+                            </div>
+                        </motion.div>
                     </div>
-                </>
-            )}
+                )}
+            </AnimatePresence>
 
+            {/* Edit Modal - Simplified for brevity but reusing similar structure */}
             {/* Edit Role Modal */}
-            {showEditModal && selectedUser && (
-                <>
-                    <div className="modal-backdrop" onClick={() => setShowEditModal(false)} />
-                    <div className="modal">
-                        <div className="modal-header">
-                            <h2 className="modal-title">Edit Role for {selectedUser.name}</h2>
-                            <button
-                                className="btn btn-ghost btn-icon"
-                                onClick={() => setShowEditModal(false)}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="modal-body">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <AnimatePresence>
+                {showEditModal && selectedUser && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+                            onClick={() => setShowEditModal(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="relative z-50 w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg"
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-semibold">Edit Role: {selectedUser.name}</h2>
+                                <button className="rounded-full p-1 hover:bg-muted" onClick={() => setShowEditModal(false)}>
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                            <div className="space-y-2">
                                 {Object.entries(roleConfig).map(([key, { label, color, description }]) => (
                                     <button
                                         key={key}
                                         onClick={() => handleChangeRole(selectedUser.id, key)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'flex-start',
-                                            gap: 'var(--space-3)',
-                                            padding: 'var(--space-4)',
-                                            borderRadius: 'var(--radius-md)',
-                                            border:
-                                                selectedUser.role === key
-                                                    ? `1px solid ${color}`
-                                                    : '1px solid var(--color-border)',
-                                            background:
-                                                selectedUser.role === key ? `${color}10` : 'transparent',
-                                            textAlign: 'left',
-                                            width: '100%',
-                                        }}
+                                        className={cn(
+                                            "w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left hover:bg-accent",
+                                            selectedUser.role === key ? "border-primary bg-primary/5" : "border-input"
+                                        )}
                                     >
                                         <div>
-                                            <p style={{ fontWeight: 'var(--font-medium)', color }}>
-                                                {label}
-                                                {selectedUser.role === key && ' (Current)'}
-                                            </p>
-                                            <p
-                                                style={{
-                                                    fontSize: 'var(--text-xs)',
-                                                    color: 'var(--color-text-secondary)',
-                                                }}
-                                            >
-                                                {description}
-                                            </p>
+                                            <div className={cn("font-medium text-sm", color)}>{label}</div>
+                                            <div className="text-xs text-muted-foreground">{description}</div>
                                         </div>
+                                        {selectedUser.role === key && <Check className="h-4 w-4 text-primary" />}
                                     </button>
                                 ))}
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
-                </>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     )
 }
