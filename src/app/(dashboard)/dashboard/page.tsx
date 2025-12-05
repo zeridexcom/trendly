@@ -1,720 +1,249 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
+    Sparkles,
     TrendingUp,
     Lightbulb,
-    Calendar,
     ArrowRight,
-    Sparkles,
+    PlayCircle,
     Clock,
-    CheckCircle2,
-    RefreshCw,
-    Zap,
-    Target,
-    MessageSquare,
-    Brain,
+    MoreVertical,
+    Plus,
+    BarChart2,
+    Users,
 } from 'lucide-react'
 
-// Mock data for dashboard
-const stats = [
-    { label: 'Active Trends', value: '24', change: '+12%', icon: TrendingUp, color: '#a855f7' },
-    { label: 'Ideas in Pipeline', value: '18', change: '+5', icon: Lightbulb, color: '#eab308' },
-    { label: 'Scheduled Posts', value: '42', change: '+8', icon: Calendar, color: '#22c55e' },
-    { label: 'Published This Week', value: '15', change: '+3', icon: CheckCircle2, color: '#3b82f6' },
-]
-
-const recentIdeas = [
-    { id: '1', title: 'Behind the scenes content series', status: 'SHORTLISTED', platforms: ['INSTAGRAM', 'TIKTOK'], priority: 'HIGH' },
-    { id: '2', title: 'User testimonial carousel', status: 'IN_PRODUCTION', platforms: ['INSTAGRAM'], priority: 'NORMAL' },
-    { id: '3', title: 'Industry trend analysis thread', status: 'NEW', platforms: ['TWITTER', 'LINKEDIN'], priority: 'LOW' },
-]
-
-const upcomingPosts = [
-    { id: '1', title: 'Monday motivation reel', platform: 'INSTAGRAM', scheduledFor: '2024-01-15T10:00:00', status: 'SCHEDULED' },
-    { id: '2', title: 'Product feature announcement', platform: 'TWITTER', scheduledFor: '2024-01-15T14:00:00', status: 'APPROVED' },
-    { id: '3', title: 'Tutorial: Getting started', platform: 'YOUTUBE', scheduledFor: '2024-01-16T12:00:00', status: 'IN_REVIEW' },
-]
-
-const trendingNow = [
-    { id: '1', title: 'AI-generated art trend', platform: 'INSTAGRAM', type: 'MEME_FORMAT' },
-    { id: '2', title: 'Day in my life audio', platform: 'TIKTOK', type: 'SOUND_AUDIO' },
-    { id: '3', title: '#2024Goals', platform: 'TWITTER', type: 'HASHTAG' },
-]
-
-const platformIcons: Record<string, string> = {
-    INSTAGRAM: '📸',
-    TIKTOK: '🎵',
-    YOUTUBE: '▶️',
-    TWITTER: '𝕏',
-    LINKEDIN: '💼',
-}
-
-const statusColors: Record<string, { bg: string; text: string }> = {
-    NEW: { bg: 'var(--color-status-idea)', text: 'white' },
-    SHORTLISTED: { bg: 'var(--color-status-draft)', text: 'white' },
-    IN_PRODUCTION: { bg: 'var(--color-status-scheduled)', text: 'white' },
-    IN_REVIEW: { bg: 'var(--color-status-review)', text: 'black' },
-    APPROVED: { bg: 'var(--color-status-approved)', text: 'white' },
-    SCHEDULED: { bg: 'var(--color-status-scheduled)', text: 'white' },
-}
-
-const priorityConfig: Record<string, { color: string; label: string }> = {
-    LOW: { color: 'var(--color-priority-low)', label: '↓ Low' },
-    NORMAL: { color: 'var(--color-priority-normal)', label: '→ Normal' },
-    HIGH: { color: 'var(--color-priority-high)', label: '↑ High' },
-}
-
-interface AIInsights {
-    greeting: string
-    mainInsight: string
-    tips: string[]
-    focusArea: string
-    actionItems: string[]
-}
-
 export default function DashboardPage() {
-    const [aiInsights, setAiInsights] = useState<AIInsights | null>(null)
-    const [loadingInsights, setLoadingInsights] = useState(true)
-    const [refreshing, setRefreshing] = useState(false)
-
-    const fetchAIInsights = async () => {
-        try {
-            setRefreshing(true)
-            const response = await fetch('/api/ai/insights', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    activeTrends: 24,
-                    ideasInPipeline: 18,
-                    scheduledPosts: 42,
-                    publishedThisWeek: 15,
-                    topPlatforms: ['INSTAGRAM', 'TIKTOK', 'TWITTER'],
-                }),
-            })
-            const data = await response.json()
-            setAiInsights(data)
-        } catch (error) {
-            console.error('Failed to fetch AI insights:', error)
-            // Set fallback insights
-            setAiInsights({
-                greeting: "Welcome back! 🚀",
-                mainInsight: "Your content pipeline is active. Focus on converting ideas to scheduled posts.",
-                tips: [
-                    "Review trending topics daily",
-                    "Batch create content for efficiency",
-                    "Engage during peak hours: 9-11 AM"
-                ],
-                focusArea: "Content velocity",
-                actionItems: ["Check new trends", "Review scheduled content", "Plan next week"]
-            })
-        } finally {
-            setLoadingInsights(false)
-            setRefreshing(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchAIInsights()
-    }, [])
+    const [timeRange, setTimeRange] = useState('Weekly')
 
     return (
-        <div className="animate-fadeIn">
-            {/* AI Insights Card - Top Banner */}
-            <div
-                className="card"
-                style={{
-                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    marginBottom: 'var(--space-6)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}
-            >
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: -30,
-                        right: -30,
-                        width: 150,
-                        height: 150,
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        borderRadius: '50%',
-                        filter: 'blur(40px)',
-                    }}
-                />
-                <div style={{ position: 'relative' }}>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div
-                                style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 'var(--radius-lg)',
-                                    background: 'var(--gradient-primary)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <Brain size={20} color="white" />
-                            </div>
-                            <div>
-                                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
-                                    AI Insights
-                                </h2>
-                                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                                    Powered by Trendly AI
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={fetchAIInsights}
-                            disabled={refreshing}
-                            className="btn btn-ghost btn-sm"
-                            style={{ gap: 'var(--space-2)' }}
-                        >
-                            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                            Refresh
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_350px] gap-8 h-full">
+            {/* LEFT COLUMN - MAIN CONTENT */}
+            <div className="flex flex-col gap-8 overflow-hidden">
+
+                {/* HERO BANNER */}
+                <div className="relative w-full h-[200px] rounded-[24px] overflow-hidden p-8 flex items-center justify-between shadow-lg shadow-[#6C5DD3]/20">
+                    {/* Background Gradient */}
+                    <div className="absolute inset-0 bg-[#6C5DD3] z-0">
+                        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#8979E8] rounded-full blur-[60px] opacity-50 translate-x-1/2 -translate-y-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#5B4EC1] rounded-full blur-[40px] opacity-60 -translate-x-1/2 translate-y-1/2"></div>
+                    </div>
+
+                    <div className="relative z-10 text-white max-w-lg">
+                        <span className="inline-block py-1 px-3 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3 border border-white/10">
+                            AI-POWERED PLATFORM
+                        </span>
+                        <h1 className="text-3xl font-bold mb-4 leading-tight">
+                            Scale Your Content with<br />
+                            Intelligent Generation
+                        </h1>
+                        <button className="bg-white text-[#6C5DD3] px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-gray-50 transition-colors flex items-center gap-2">
+                            Generate Now <div className="bg-[#6C5DD3] rounded-full p-1"><ArrowRight size={12} className="text-white" /></div>
                         </button>
                     </div>
 
-                    {loadingInsights ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                            <div className="loading" />
-                            <span style={{ color: 'var(--color-text-secondary)' }}>Analyzing your content strategy...</span>
-                        </div>
-                    ) : aiInsights && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
-                            <div>
-                                <p style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-medium)', marginBottom: 'var(--space-2)' }}>
-                                    {aiInsights.greeting}
-                                </p>
-                                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-4)', lineHeight: '1.6' }}>
-                                    {aiInsights.mainInsight}
-                                </p>
-                                <div
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--space-2)',
-                                        padding: 'var(--space-2) var(--space-3)',
-                                        background: 'rgba(139, 92, 246, 0.2)',
-                                        borderRadius: 'var(--radius-full)',
-                                    }}
-                                >
-                                    <Target size={14} color="var(--color-primary)" />
-                                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                                        Focus: {aiInsights.focusArea}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                    <Zap size={14} color="#eab308" />
-                                    Quick Tips
-                                </p>
-                                <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                    {aiInsights.tips.map((tip, i) => (
-                                        <li
-                                            key={i}
-                                            style={{
-                                                fontSize: 'var(--text-sm)',
-                                                color: 'var(--color-text-secondary)',
-                                                display: 'flex',
-                                                alignItems: 'flex-start',
-                                                gap: 'var(--space-2)',
-                                            }}
-                                        >
-                                            <span style={{ color: 'var(--color-primary)' }}>•</span>
-                                            {tip}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                    gap: 'var(--space-4)',
-                    marginBottom: 'var(--space-8)',
-                }}
-            >
-                {stats.map((stat, index) => (
-                    <div
-                        key={stat.label}
-                        className="card card-elevated"
-                        style={{
-                            animationDelay: `${index * 50}ms`,
-                        }}
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <div
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 'var(--radius-lg)',
-                                    background: `${stat.color}20`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <stat.icon size={24} style={{ color: stat.color }} />
-                            </div>
-                            <span
-                                style={{
-                                    fontSize: 'var(--text-xs)',
-                                    fontWeight: 'var(--font-medium)',
-                                    color: 'var(--color-success)',
-                                    background: 'var(--color-success-subtle)',
-                                    padding: 'var(--space-1) var(--space-2)',
-                                    borderRadius: 'var(--radius-full)',
-                                }}
-                            >
-                                {stat.change}
-                            </span>
-                        </div>
-                        <p
-                            style={{
-                                fontSize: 'var(--text-3xl)',
-                                fontWeight: 'var(--font-bold)',
-                                marginBottom: 'var(--space-1)',
-                            }}
-                        >
-                            {stat.value}
-                        </p>
-                        <p
-                            style={{
-                                fontSize: 'var(--text-sm)',
-                                color: 'var(--color-text-secondary)',
-                            }}
-                        >
-                            {stat.label}
-                        </p>
-                    </div>
-                ))}
-            </div>
-
-            {/* Action Items from AI */}
-            {aiInsights && (
-                <div
-                    className="card"
-                    style={{
-                        background: 'var(--color-bg-secondary)',
-                        marginBottom: 'var(--space-6)',
-                    }}
-                >
-                    <div className="flex items-center gap-2 mb-4">
-                        <CheckCircle2 size={18} color="var(--color-success)" />
-                        <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--font-semibold)' }}>
-                            Today's Action Items
-                        </h3>
-                    </div>
-                    <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-                        {aiInsights.actionItems.map((item, i) => (
-                            <div
-                                key={i}
-                                style={{
-                                    padding: 'var(--space-3) var(--space-4)',
-                                    background: 'var(--color-bg-tertiary)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    fontSize: 'var(--text-sm)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 'var(--space-2)',
-                                    cursor: 'pointer',
-                                    transition: 'all var(--transition-fast)',
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-primary-subtle)'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-tertiary)'
-                                }}
-                            >
-                                <span style={{ color: 'var(--color-text-muted)' }}>{i + 1}.</span>
-                                {item}
-                            </div>
-                        ))}
+                    {/* Decorative Sparkle (CSS-based) */}
+                    <div className="relative z-10 hidden md:block">
+                        <Sparkles size={120} className="text-white/10 rotate-12" />
                     </div>
                 </div>
-            )}
 
-            {/* Main Content Grid */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-                    gap: 'var(--space-6)',
-                }}
-            >
-                {/* Recent Ideas */}
-                <div className="card card-elevated">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
+                {/* PROGRESS CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                        { label: 'Total Ideas', count: '128', sub: '24 this week', icon: Lightbulb, color: '#6C5DD3', bg: '#EBE9F7' },
+                        { label: 'Scheduled', count: '12', sub: 'Next: Tue 2pm', icon: Clock, color: '#FF754C', bg: '#FFF0EC' },
+                        { label: 'Published', count: '45', sub: '+12% growth', icon: TrendingUp, color: '#3F8CFF', bg: '#EBF3FF' },
+                    ].map((stat, i) => (
+                        <div key={i} className="bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                             <div
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 'var(--radius-md)',
-                                    background: 'rgba(234, 179, 8, 0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
+                                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: stat.bg, color: stat.color }}
                             >
-                                <Lightbulb size={20} style={{ color: '#eab308' }} />
+                                <stat.icon size={24} />
                             </div>
-                            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
-                                Recent Ideas
-                            </h2>
+                            <div>
+                                <h3 className="text-2xl font-bold text-[#11142D]">{stat.count}</h3>
+                                <p className="text-xs text-gray-400 font-medium">{stat.label}</p>
+                            </div>
+                            <div className="ml-auto">
+                                <button className="text-gray-300 hover:text-gray-500"><MoreVertical size={16} /></button>
+                            </div>
                         </div>
-                        <Link
-                            href="/dashboard/ideas"
-                            className="btn btn-ghost btn-sm"
-                            style={{ gap: 'var(--space-2)' }}
-                        >
-                            View all <ArrowRight size={14} />
-                        </Link>
+                    ))}
+                </div>
+
+                {/* ACTIVE TRENDS (Replaces "Continue Watching") */}
+                <div>
+                    <div className="flex items-center justify-between mb-5 px-1">
+                        <h2 className="text-xl font-bold text-[#11142D]">Trending Now</h2>
+                        <div className="flex gap-2">
+                            <button className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#6C5DD3] hover:border-[#6C5DD3] transition-colors">
+                                <ArrowRight size={16} className="rotate-180" />
+                            </button>
+                            <button className="w-8 h-8 rounded-full bg-[#6C5DD3] text-white flex items-center justify-center shadow-lg shadow-[#6C5DD3]/30">
+                                <ArrowRight size={16} />
+                            </button>
+                        </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                        {recentIdeas.map((idea) => (
-                            <div
-                                key={idea.id}
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    background: 'var(--color-bg-tertiary)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    cursor: 'pointer',
-                                    transition: 'all var(--transition-fast)',
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-hover)'
-                                    e.currentTarget.style.transform = 'translateX(4px)'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-tertiary)'
-                                    e.currentTarget.style.transform = 'translateX(0)'
-                                }}
-                            >
-                                <div className="flex items-start justify-between mb-2">
-                                    <p
-                                        style={{
-                                            fontSize: 'var(--text-sm)',
-                                            fontWeight: 'var(--font-medium)',
-                                            flex: 1,
-                                        }}
-                                    >
-                                        {idea.title}
-                                    </p>
-                                    <span
-                                        style={{
-                                            fontSize: 'var(--text-xs)',
-                                            fontWeight: 'var(--font-medium)',
-                                            padding: 'var(--space-1) var(--space-2)',
-                                            borderRadius: 'var(--radius-full)',
-                                            background: statusColors[idea.status].bg,
-                                            color: statusColors[idea.status].text,
-                                        }}
-                                    >
-                                        {idea.status.replace('_', ' ')}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[
+                            { title: 'AI Art Showcase', tag: 'Instagram', img: 'bg-gradient-to-br from-purple-500 to-indigo-600', views: '2.4k' },
+                            { title: 'POV: Daily Life', tag: 'TikTok', img: 'bg-gradient-to-br from-pink-500 to-rose-500', views: '1.8k' },
+                            { title: 'Tech Layoffs', tag: 'LinkedIn', img: 'bg-gradient-to-br from-blue-500 to-cyan-500', views: '500' },
+                        ].map((trend, i) => (
+                            <div key={i} className="bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-lg transition-all group cursor-pointer border border-gray-100">
+                                <div className={`h-32 w-full ${trend.img} relative p-4 flex flex-col justify-between`}>
+                                    <span className="self-end bg-black/20 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-bold">
+                                        {trend.views} Uses
                                     </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1">
-                                        {idea.platforms.map((p) => (
-                                            <span key={p} style={{ fontSize: '14px' }}>
-                                                {platformIcons[p]}
-                                            </span>
-                                        ))}
+                                    <div className="w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                                        <PlayCircle size={16} fill="white" />
                                     </div>
-                                    <span
-                                        style={{
-                                            fontSize: 'var(--text-xs)',
-                                            color: priorityConfig[idea.priority].color,
-                                        }}
-                                    >
-                                        {priorityConfig[idea.priority].label}
+                                </div>
+                                <div className="p-4">
+                                    <span className="text-[10px] font-bold text-[#6C5DD3] bg-[#EBE9F7] px-2 py-1 rounded-md mb-2 inline-block">
+                                        {trend.tag}
                                     </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Upcoming Posts */}
-                <div className="card card-elevated">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 'var(--radius-md)',
-                                    background: 'rgba(34, 197, 94, 0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <Clock size={20} style={{ color: '#22c55e' }} />
-                            </div>
-                            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
-                                Upcoming Posts
-                            </h2>
-                        </div>
-                        <Link
-                            href="/dashboard/calendar"
-                            className="btn btn-ghost btn-sm"
-                            style={{ gap: 'var(--space-2)' }}
-                        >
-                            View calendar <ArrowRight size={14} />
-                        </Link>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                        {upcomingPosts.map((post) => (
-                            <div
-                                key={post.id}
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    background: 'var(--color-bg-tertiary)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    cursor: 'pointer',
-                                    transition: 'all var(--transition-fast)',
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-hover)'
-                                    e.currentTarget.style.transform = 'translateX(4px)'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-tertiary)'
-                                    e.currentTarget.style.transform = 'translateX(0)'
-                                }}
-                            >
-                                <div className="flex items-start justify-between mb-2">
-                                    <p
-                                        style={{
-                                            fontSize: 'var(--text-sm)',
-                                            fontWeight: 'var(--font-medium)',
-                                            flex: 1,
-                                        }}
-                                    >
-                                        {post.title}
-                                    </p>
-                                    <span
-                                        style={{
-                                            fontSize: 'var(--text-xs)',
-                                            fontWeight: 'var(--font-medium)',
-                                            padding: 'var(--space-1) var(--space-2)',
-                                            borderRadius: 'var(--radius-full)',
-                                            background: statusColors[post.status].bg,
-                                            color: statusColors[post.status].text,
-                                        }}
-                                    >
-                                        {post.status.replace('_', ' ')}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span style={{ fontSize: '14px' }}>{platformIcons[post.platform]}</span>
-                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                                        {new Date(post.scheduledFor).toLocaleDateString('en-US', {
-                                            weekday: 'short',
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: 'numeric',
-                                            minute: '2-digit',
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Trending Now */}
-                <div className="card card-elevated">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div
-                                style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: 'var(--radius-md)',
-                                    background: 'rgba(168, 85, 247, 0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <TrendingUp size={20} style={{ color: '#a855f7' }} />
-                            </div>
-                            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
-                                Trending Now
-                            </h2>
-                        </div>
-                        <Link
-                            href="/dashboard/trends"
-                            className="btn btn-ghost btn-sm"
-                            style={{ gap: 'var(--space-2)' }}
-                        >
-                            View all <ArrowRight size={14} />
-                        </Link>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                        {trendingNow.map((trend, index) => (
-                            <div
-                                key={trend.id}
-                                style={{
-                                    padding: 'var(--space-4)',
-                                    background: 'var(--color-bg-tertiary)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    cursor: 'pointer',
-                                    transition: 'all var(--transition-fast)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 'var(--space-4)',
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-hover)'
-                                    e.currentTarget.style.transform = 'translateX(4px)'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'var(--color-bg-tertiary)'
-                                    e.currentTarget.style.transform = 'translateX(0)'
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: 'var(--radius-md)',
-                                        background: 'var(--gradient-primary)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: 'var(--text-sm)',
-                                        fontWeight: 'var(--font-bold)',
-                                        color: 'white',
-                                    }}
-                                >
-                                    {index + 1}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <p
-                                        style={{
-                                            fontSize: 'var(--text-sm)',
-                                            fontWeight: 'var(--font-medium)',
-                                            marginBottom: 'var(--space-1)',
-                                        }}
-                                    >
+                                    <h3 className="text-sm font-bold text-[#11142D] group-hover:text-[#6C5DD3] transition-colors">
                                         {trend.title}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <span style={{ fontSize: '14px' }}>{platformIcons[trend.platform]}</span>
-                                        <span
-                                            style={{
-                                                fontSize: 'var(--text-xs)',
-                                                color: 'var(--color-text-muted)',
-                                            }}
-                                        >
-                                            {trend.type.replace('_', ' ')}
-                                        </span>
-                                    </div>
+                                    </h3>
+                                    <p className="text-xs text-gray-400 mt-1">High engagement potential</p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* AI Content Generator */}
-                <div
-                    className="card"
-                    style={{
-                        background: 'var(--gradient-primary)',
-                        border: 'none',
-                        position: 'relative',
-                        overflow: 'hidden',
-                    }}
-                >
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: -50,
-                            right: -50,
-                            width: 200,
-                            height: 200,
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            borderRadius: '50%',
-                            filter: 'blur(40px)',
-                        }}
-                    />
-                    <div style={{ position: 'relative' }}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div
-                                style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 'var(--radius-lg)',
-                                    background: 'rgba(255, 255, 255, 0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                <Sparkles size={24} color="white" />
+                {/* LIST SECTION (Replaces "Your Lesson") */}
+                <div>
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <h2 className="text-xl font-bold text-[#11142D]">Recent Ideas</h2>
+                        <Link href="/dashboard/ideas" className="text-sm font-semibold text-[#6C5DD3] hover:underline">See all</Link>
+                    </div>
+
+                    <div className="bg-white rounded-[24px] p-2 shadow-sm border border-gray-100">
+                        {[
+                            { title: 'Product Launch Teaser', platform: 'Instagram', author: 'Jason Ranti', date: '2/16/2024' },
+                            { title: 'Weekly Recap Thread', platform: 'Twitter', author: 'Sarah Chen', date: '2/15/2024' },
+                            { title: 'Tutorial: AI Features', platform: 'YouTube', author: 'Mike Johnson', date: '2/14/2024' },
+                        ].map((idea, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-colors group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden">
+                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${idea.author}`} className="w-full h-full" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-[#11142D] mb-1">{idea.title}</h4>
+                                        <p className="text-xs text-gray-400">{idea.date}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-8">
+                                    <span className="px-3 py-1 rounded-full bg-[#EBE9F7] text-[#6C5DD3] text-xs font-bold w-24 text-center hidden md:block">
+                                        {idea.platform}
+                                    </span>
+                                    <p className="text-xs font-semibold text-[#11142D] w-32 hidden md:block truncate">Created by {idea.author}</p>
+
+                                    <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-[#6C5DD3] hover:text-[#6C5DD3] transition-colors">
+                                        <ArrowRight size={14} className="-rotate-45" />
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <h2
-                                    style={{
-                                        fontSize: 'var(--text-lg)',
-                                        fontWeight: 'var(--font-semibold)',
-                                        color: 'white',
-                                    }}
-                                >
-                                    AI Content Ideas
-                                </h2>
-                                <p style={{ fontSize: 'var(--text-sm)', color: 'rgba(255, 255, 255, 0.8)' }}>
-                                    Generate fresh content ideas
-                                </p>
-                            </div>
-                        </div>
-                        <p
-                            style={{
-                                fontSize: 'var(--text-sm)',
-                                color: 'rgba(255, 255, 255, 0.9)',
-                                marginBottom: 'var(--space-6)',
-                                lineHeight: 'var(--leading-relaxed)',
-                            }}
-                        >
-                            Let AI analyze trends and generate personalized content ideas tailored to your brand and audience.
-                        </p>
-                        <Link
-                            href="/dashboard/ideas"
-                            className="btn"
-                            style={{
-                                background: 'white',
-                                color: 'var(--color-primary)',
-                                fontWeight: 'var(--font-semibold)',
-                            }}
-                        >
-                            <Sparkles size={16} />
-                            Generate Ideas
-                        </Link>
+                        ))}
                     </div>
                 </div>
             </div>
+
+
+            {/* RIGHT COLUMN - STATS PANEL */}
+            <div className="hidden xl:flex flex-col gap-8">
+
+                {/* Profile Card */}
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 text-center relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-bold text-[#11142D] text-left">Statistic</h3>
+                        <button className="text-gray-400 hover:text-[#6C5DD3]"><MoreVertical size={16} /></button>
+                    </div>
+
+                    <div className="relative w-24 h-24 mx-auto mb-4">
+                        {/* Ring SVG */}
+                        <svg className="w-full h-full rotate-[-90deg]" viewBox="0 0 36 36">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#EBE9F7" strokeWidth="2" />
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6C5DD3" strokeWidth="2" strokeDasharray="75, 100" />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center p-2">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jason" className="w-full h-full rounded-full bg-[#FFE2E5]" />
+                        </div>
+                        <span className="absolute top-0 right-0 bg-[#6C5DD3] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
+                            32%
+                        </span>
+                    </div>
+
+                    <h4 className="text-lg font-bold text-[#11142D]">Good Morning Jason 🔥</h4>
+                    <p className="text-xs text-gray-400 mt-1 mb-6">Continue your planning to achieve your target!</p>
+
+                    {/* Chart Area */}
+                    <div className="bg-[#F9FAFB] rounded-xl p-4 h-[180px] flex items-end justify-between gap-2">
+                        {[40, 65, 30, 85, 50].map((h, i) => (
+                            <div key={i} className="flex flex-col items-center gap-2 flex-1">
+                                <div
+                                    className="w-full bg-[#EBE9F7] rounded-t-md hover:bg-[#6C5DD3] transition-colors cursor-pointer relative group"
+                                    style={{ height: `${h}%` }}
+                                >
+                                    {/* Tooltip */}
+                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#11142D] text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        {h} Posts
+                                    </div>
+                                </div>
+                                <span className="text-[10px] text-gray-400 font-medium">Aug {10 + i}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Mentors / Team */}
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-[#11142D]">Your Team</h3>
+                        <button className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#6C5DD3] hover:border-[#6C5DD3]">
+                            <Plus size={12} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {[
+                            { name: 'Padhang Satrio', role: 'Designer', seed: 'Padhang' },
+                            { name: 'Zakir Horizontal', role: 'Editor', seed: 'Zakir' },
+                            { name: 'Leonardo Samsul', role: 'Admin', seed: 'Leonardo' },
+                        ].map((member, i) => (
+                            <div key={i} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden">
+                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.seed}`} className="w-full h-full" />
+                                    </div>
+                                    <div>
+                                        <h5 className="text-sm font-bold text-[#11142D]">{member.name}</h5>
+                                        <p className="text-[10px] text-gray-400 font-medium">{member.role}</p>
+                                    </div>
+                                </div>
+                                <button className="text-[#6C5DD3] text-xs font-bold border border-[#F0EFFB] px-3 py-1.5 rounded-full hover:bg-[#6C5DD3] hover:text-white transition-colors flex items-center gap-1">
+                                    <Users size={12} /> Chat
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button className="w-full mt-6 py-3 bg-[#F5F6FA] text-[#6C5DD3] rounded-xl text-xs font-bold hover:bg-[#EBE9F7] transition-colors">
+                        See All
+                    </button>
+                </div>
+
+            </div>
+
         </div>
     )
 }

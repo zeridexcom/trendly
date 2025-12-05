@@ -1,353 +1,112 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
+    Sparkles,
     LayoutDashboard,
     TrendingUp,
     Lightbulb,
     Calendar,
     Settings,
-    Users,
-    Bell,
     LogOut,
-    Menu,
-    X,
-    Clock,
-    Sparkles,
-    ChevronDown,
+    Users,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-interface User {
-    id: string
-    name: string
-    email: string
-    role: string
-    avatarUrl?: string
-}
-
-interface SidebarProps {
-    user: User | null
-}
-
-const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Trends', href: '/dashboard/trends', icon: TrendingUp },
-    { name: 'Ideas', href: '/dashboard/ideas', icon: Lightbulb },
-    { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
-]
-
-const adminNavigation = [
-    { name: 'Team', href: '/dashboard/admin/users', icon: Users },
-    { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings },
-    { name: 'Content Slots', href: '/dashboard/admin/slots', icon: Clock },
-]
-
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar() {
     const pathname = usePathname()
-    const router = useRouter()
-    const [isMobileOpen, setIsMobileOpen] = useState(false)
-    const [notifications, setNotifications] = useState<number>(3)
-    const [showNotifications, setShowNotifications] = useState(false)
-    const [showUserMenu, setShowUserMenu] = useState(false)
 
-    const isAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER'
+    const isActive = (path: string) => pathname === path || pathname?.startsWith(`${path}/`)
 
-    const handleLogout = async () => {
-        await fetch('/api/auth/logout', { method: 'POST' })
-        router.push('/login')
-    }
+    const links = [
+        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/dashboard/trends', label: 'Trends', icon: TrendingUp },
+        { href: '/dashboard/ideas', label: 'Ideas', icon: Lightbulb },
+        { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
+        { href: '/dashboard/admin/users', label: 'Team', icon: Users },
+    ]
 
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2)
-    }
+    const friends = [
+        { name: 'Sarah Chen', role: 'Designer', avatar: 'S', color: '#FF754C' },
+        { name: 'Mike Johnson', role: 'Editor', avatar: 'M', color: '#3F8CFF' },
+        { name: 'Emily Davis', role: 'Manager', avatar: 'E', color: '#6C5DD3' },
+    ]
 
     return (
-        <>
-            {/* Mobile Menu Button */}
-            <button
-                className="btn btn-ghost btn-icon show-mobile fixed top-4 left-4 z-50"
-                style={{ display: 'none' }}
-                onClick={() => setIsMobileOpen(!isMobileOpen)}
-            >
-                {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-
-            {/* Mobile Overlay */}
-            {isMobileOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 hide-desktop"
-                    onClick={() => setIsMobileOpen(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <aside
-                className={`sidebar ${isMobileOpen ? 'open' : ''}`}
-                style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    width: 'var(--sidebar-width)',
-                    background: 'var(--color-bg-secondary)',
-                    borderRight: '1px solid var(--color-border)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    zIndex: 45,
-                    transform: isMobileOpen ? 'translateX(0)' : undefined,
-                }}
-            >
-                {/* Logo */}
-                <div
-                    style={{
-                        padding: 'var(--space-6)',
-                        borderBottom: '1px solid var(--color-border)',
-                    }}
-                >
-                    <Link href="/dashboard" className="flex items-center gap-3">
-                        <div
-                            style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 'var(--radius-lg)',
-                                background: 'var(--gradient-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <Sparkles size={24} color="white" />
-                        </div>
-                        <span
-                            style={{
-                                fontSize: 'var(--text-xl)',
-                                fontWeight: 'var(--font-bold)',
-                            }}
-                            className="text-gradient"
-                        >
-                            Trendly
-                        </span>
-                    </Link>
+        <aside className="w-[250px] bg-white p-6 flex flex-col border-r border-transparent flex-shrink-0 h-screen sticky top-0 overflow-y-auto no-scrollbar">
+            {/* Logo */}
+            <div className="flex items-center gap-3 mb-10 px-2">
+                <div className="w-10 h-10 rounded-xl bg-[#6C5DD3] flex items-center justify-center shadow-lg shadow-[#6C5DD3]/20">
+                    <Sparkles className="w-6 h-6 text-white" />
                 </div>
+                <span className="text-xl font-bold text-[#11142D]">Trendly</span>
+            </div>
 
-                {/* Navigation */}
-                <nav style={{ flex: 1, padding: 'var(--space-4)', overflowY: 'auto' }}>
-                    <div style={{ marginBottom: 'var(--space-6)' }}>
-                        <p
-                            style={{
-                                fontSize: 'var(--text-xs)',
-                                fontWeight: 'var(--font-semibold)',
-                                color: 'var(--color-text-muted)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                padding: '0 var(--space-3)',
-                                marginBottom: 'var(--space-2)',
-                            }}
-                        >
-                            Main Menu
-                        </p>
-                        {navigation.map((item) => {
-                            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+            {/* Main Navigation */}
+            <div className="flex-1">
+                <div className="mb-8">
+                    <p className="px-4 text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wider">Overview</p>
+                    <nav className="space-y-1">
+                        {links.map((link) => {
+                            const Icon = link.icon
+                            const active = isActive(link.href)
                             return (
                                 <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    onClick={() => setIsMobileOpen(false)}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--space-3)',
-                                        padding: 'var(--space-3) var(--space-4)',
-                                        borderRadius: 'var(--radius-lg)',
-                                        marginBottom: 'var(--space-1)',
-                                        color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                                        background: isActive ? 'var(--color-primary-subtle)' : 'transparent',
-                                        fontWeight: isActive ? 'var(--font-medium)' : 'var(--font-normal)',
-                                        transition: 'all var(--transition-fast)',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!isActive) {
-                                            e.currentTarget.style.background = 'var(--color-glass-hover)'
-                                            e.currentTarget.style.color = 'var(--color-text-primary)'
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (!isActive) {
-                                            e.currentTarget.style.background = 'transparent'
-                                            e.currentTarget.style.color = 'var(--color-text-secondary)'
-                                        }
-                                    }}
-                                >
-                                    <item.icon size={20} style={{ opacity: isActive ? 1 : 0.7 }} />
-                                    <span style={{ fontSize: 'var(--text-sm)' }}>{item.name}</span>
-                                    {isActive && (
-                                        <div
-                                            style={{
-                                                marginLeft: 'auto',
-                                                width: 6,
-                                                height: 6,
-                                                borderRadius: 'var(--radius-full)',
-                                                background: 'var(--color-primary)',
-                                            }}
-                                        />
+                                    key={link.href}
+                                    href={link.href}
+                                    className={cn(
+                                        "sidebar-link",
+                                        active && "active"
                                     )}
+                                >
+                                    <Icon size={20} />
+                                    {link.label}
                                 </Link>
                             )
                         })}
-                    </div>
+                    </nav>
+                </div>
 
-                    {isAdmin && (
-                        <div>
-                            <p
-                                style={{
-                                    fontSize: 'var(--text-xs)',
-                                    fontWeight: 'var(--font-semibold)',
-                                    color: 'var(--color-text-muted)',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
-                                    padding: '0 var(--space-3)',
-                                    marginBottom: 'var(--space-2)',
-                                }}
-                            >
-                                Admin
-                            </p>
-                            {adminNavigation.map((item) => {
-                                const isActive = pathname === item.href
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        onClick={() => setIsMobileOpen(false)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 'var(--space-3)',
-                                            padding: 'var(--space-3) var(--space-4)',
-                                            borderRadius: 'var(--radius-lg)',
-                                            marginBottom: 'var(--space-1)',
-                                            color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                                            background: isActive ? 'var(--color-primary-subtle)' : 'transparent',
-                                            fontWeight: isActive ? 'var(--font-medium)' : 'var(--font-normal)',
-                                            transition: 'all var(--transition-fast)',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isActive) {
-                                                e.currentTarget.style.background = 'var(--color-glass-hover)'
-                                                e.currentTarget.style.color = 'var(--color-text-primary)'
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isActive) {
-                                                e.currentTarget.style.background = 'transparent'
-                                                e.currentTarget.style.color = 'var(--color-text-secondary)'
-                                            }
-                                        }}
-                                    >
-                                        <item.icon size={20} style={{ opacity: isActive ? 1 : 0.7 }} />
-                                        <span style={{ fontSize: 'var(--text-sm)' }}>{item.name}</span>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    )}
-                </nav>
-
-                {/* User Section */}
-                <div
-                    style={{
-                        padding: 'var(--space-4)',
-                        borderTop: '1px solid var(--color-border)',
-                    }}
-                >
-                    <div
-                        style={{
-                            position: 'relative',
-                        }}
-                    >
-                        <button
-                            onClick={() => setShowUserMenu(!showUserMenu)}
-                            style={{
-                                width: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--space-3)',
-                                padding: 'var(--space-3)',
-                                borderRadius: 'var(--radius-lg)',
-                                background: showUserMenu ? 'var(--color-glass-hover)' : 'transparent',
-                                transition: 'all var(--transition-fast)',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'var(--color-glass-hover)'
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!showUserMenu) {
-                                    e.currentTarget.style.background = 'transparent'
-                                }
-                            }}
-                        >
-                            <div className="avatar avatar-sm">
-                                {user?.avatarUrl ? (
-                                    <img src={user.avatarUrl} alt={user.name} />
-                                ) : (
-                                    getInitials(user?.name || 'U')
-                                )}
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'left' }}>
-                                <p
-                                    style={{
-                                        fontSize: 'var(--text-sm)',
-                                        fontWeight: 'var(--font-medium)',
-                                        color: 'var(--color-text-primary)',
-                                    }}
+                {/* Friends/Team Section */}
+                <div>
+                    <p className="px-4 text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wider">Team</p>
+                    <div className="space-y-3 px-2">
+                        {friends.map((friend) => (
+                            <div key={friend.name} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                                <div
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                    style={{ background: friend.color }}
                                 >
-                                    {user?.name || 'User'}
-                                </p>
-                                <p
-                                    style={{
-                                        fontSize: 'var(--text-xs)',
-                                        color: 'var(--color-text-muted)',
-                                    }}
-                                >
-                                    {user?.role || 'Member'}
-                                </p>
+                                    {friend.avatar}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-[#11142D]">{friend.name}</p>
+                                    <p className="text-xs text-gray-400">{friend.role}</p>
+                                </div>
                             </div>
-                            <ChevronDown
-                                size={16}
-                                style={{
-                                    color: 'var(--color-text-muted)',
-                                    transform: showUserMenu ? 'rotate(180deg)' : 'rotate(0)',
-                                    transition: 'transform var(--transition-fast)',
-                                }}
-                            />
-                        </button>
-
-                        {showUserMenu && (
-                            <div
-                                className="dropdown-menu"
-                                style={{
-                                    position: 'absolute',
-                                    bottom: '100%',
-                                    left: 0,
-                                    right: 0,
-                                    marginBottom: 'var(--space-2)',
-                                }}
-                            >
-                                <button className="dropdown-item dropdown-item-danger" onClick={handleLogout}>
-                                    <LogOut size={16} />
-                                    Sign out
-                                </button>
-                            </div>
-                        )}
+                        ))}
                     </div>
                 </div>
-            </aside>
-        </>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="mt-auto pt-6 border-t border-gray-100">
+                <Link
+                    href="/dashboard/admin/settings"
+                    className="sidebar-link"
+                >
+                    <Settings size={20} />
+                    Settings
+                </Link>
+                <button
+                    className="sidebar-link w-full text-red-400 hover:text-red-500 hover:bg-red-50"
+                >
+                    <LogOut size={20} />
+                    Logout
+                </button>
+            </div>
+        </aside>
     )
 }

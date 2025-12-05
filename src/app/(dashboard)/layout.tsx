@@ -7,45 +7,23 @@ export default async function DashboardLayout({
     children: React.ReactNode
 }) {
     // For demo purposes, use a mock user directly
-    // In production with proper database setup, this would verify the auth token
-    // and fetch the real user from the database
     const user = {
         id: 'demo-user',
-        name: 'Demo User',
-        email: 'demo@trendly.com',
+        name: 'Jason Ranti',
+        email: 'jason@trendly.com',
         role: 'ADMIN' as const,
         avatarUrl: undefined,
     }
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                minHeight: '100vh',
-            }}
-        >
-            <Sidebar user={user} />
-            <main
-                style={{
-                    flex: 1,
-                    marginLeft: 'var(--sidebar-width)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: '100vh',
-                }}
-            >
+        <div className="flex min-h-screen bg-[#F5F6FA]">
+            <Sidebar />
+            <div className="flex-1 flex flex-col min-h-screen relative">
                 <Header user={user} />
-                <div
-                    style={{
-                        flex: 1,
-                        padding: 'var(--space-6)',
-                        maxWidth: 'var(--content-max-width)',
-                        width: '100%',
-                    }}
-                >
+                <main className="flex-1 px-8 pb-8 pt-4 w-full max-w-[1600px] mx-auto">
                     {children}
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     )
 }
