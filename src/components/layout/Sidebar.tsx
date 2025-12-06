@@ -13,6 +13,7 @@ import {
     LogOut,
     Users,
     ChevronRight,
+    Video,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +26,7 @@ export default function Sidebar() {
         { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { href: '/dashboard/trends', label: 'Trends', icon: TrendingUp },
         { href: '/dashboard/ideas', label: 'Ideas', icon: Lightbulb },
+        { href: '/dashboard/scripts', label: 'Scripts', icon: Video },
         { href: '/dashboard/repurpose', label: 'Repurpose', icon: Sparkles },
         { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
         { href: '/dashboard/admin/users', label: 'Team', icon: Users },
