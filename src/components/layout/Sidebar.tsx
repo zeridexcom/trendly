@@ -19,6 +19,8 @@ import {
     Target,
     Zap,
     MessageCircle,
+    FileText,
+    Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +40,9 @@ export default function Sidebar() {
         { href: '/dashboard/best-time', label: 'Best Time', icon: Clock },
         { href: '/dashboard/competitors', label: 'Competitors', icon: Target },
         { href: '/dashboard/repurpose', label: 'Repurpose', icon: Sparkles },
+        { href: '/dashboard/workflows', label: 'Workflows', icon: FileText },
+        { href: '/dashboard/scheduler', label: 'Scheduler', icon: Clock },
+        { href: '/dashboard/activity', label: 'Activity', icon: Activity },
         { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
         { href: '/dashboard/admin/users', label: 'Team', icon: Users },
     ]
