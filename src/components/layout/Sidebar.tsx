@@ -18,6 +18,7 @@ import {
     Clock,
     Target,
     Zap,
+    MessageCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +33,7 @@ export default function Sidebar() {
         { href: '/dashboard/ideas', label: 'Ideas', icon: Lightbulb },
         { href: '/dashboard/scripts', label: 'Scripts', icon: Video },
         { href: '/dashboard/virality', label: 'Virality', icon: Zap },
+        { href: '/dashboard/comments', label: 'Comments', icon: MessageCircle },
         { href: '/dashboard/pillars', label: 'Pillars', icon: Layers },
         { href: '/dashboard/best-time', label: 'Best Time', icon: Clock },
         { href: '/dashboard/competitors', label: 'Competitors', icon: Target },
