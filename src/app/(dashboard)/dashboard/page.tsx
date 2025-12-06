@@ -1,247 +1,299 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { motion } from 'framer-motion'
 import {
-    ArrowUpRight,
     TrendingUp,
+    Lightbulb,
     Calendar,
+    Sparkles,
     ArrowRight,
-    BarChart3,
-    Clock,
     Eye,
     Heart,
     MessageCircle,
-    Share2,
+    Youtube,
+    Zap,
+    RefreshCw,
+    ExternalLink,
+    Target,
+    BarChart3,
+    Clock,
+    Flame,
     ChevronRight,
-    Plus,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
-import {
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-} from 'recharts'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
+
+interface YouTubeVideo {
+    id: string
+    title: string
+    thumbnail: string
+    channelTitle: string
+    formattedViews: string
+    engagementRate: string
+    url: string
+}
+
+interface TrendingTopic {
+    title: string
+    formattedTraffic: string
+}
 
 const container = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.06 } }
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
 }
 
 const item = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
 }
 
-// Mock data
-const engagementData = [
-    { name: 'Mon', value: 4000 },
-    { name: 'Tue', value: 5200 },
-    { name: 'Wed', value: 4800 },
-    { name: 'Thu', value: 7200 },
-    { name: 'Fri', value: 6800 },
-    { name: 'Sat', value: 8500 },
-    { name: 'Sun', value: 9200 },
-]
-
-const quickStats = [
-    { label: 'Total Reach', value: '2.4M', change: '+24%', icon: Eye },
-    { label: 'Engagement', value: '156K', change: '+18%', icon: Heart },
-    { label: 'Comments', value: '8.2K', change: '+32%', icon: MessageCircle },
-    { label: 'Shares', value: '12.4K', change: '+45%', icon: Share2 },
-]
-
-const trendingContent = [
-    { title: 'Day in Life Vlog', platform: 'TikTok', views: '245K', engagement: '12.5%' },
-    { title: 'Product Tutorial', platform: 'YouTube', views: '89K', engagement: '8.2%' },
-    { title: 'Behind the Scenes', platform: 'Instagram', views: '156K', engagement: '15.8%' },
-]
-
-const upcomingPosts = [
-    { title: 'Weekly Tips Thread', time: 'Today, 9:00 AM', platform: 'Twitter', status: 'ready' },
-    { title: 'New Product Reveal', time: 'Tomorrow, 12:00 PM', platform: 'Instagram', status: 'draft' },
-    { title: 'Tutorial Video', time: 'Dec 8, 3:00 PM', platform: 'YouTube', status: 'review' },
-]
-
-const quickActions = [
-    { label: 'Generate Ideas', href: '/dashboard/ideas', icon: Plus },
-    { label: 'Write Script', href: '/dashboard/scripts', icon: BarChart3 },
-    { label: 'Check Trends', href: '/dashboard/trends', icon: TrendingUp },
-    { label: 'Schedule', href: '/dashboard/calendar', icon: Calendar },
-]
-
 export default function DashboardPage() {
-    const [isMounted, setIsMounted] = useState(false)
-    useEffect(() => setIsMounted(true), [])
+    const [trendingVideos, setTrendingVideos] = useState<YouTubeVideo[]>([])
+    const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([])
+    const [loadingVideos, setLoadingVideos] = useState(true)
+    const [loadingTopics, setLoadingTopics] = useState(true)
+    const [greeting, setGreeting] = useState('')
 
-    const getGreeting = () => {
+    useEffect(() => {
+        // Set greeting based on time
         const hour = new Date().getHours()
-        if (hour < 12) return 'Good Morning'
-        if (hour < 17) return 'Good Afternoon'
-        return 'Good Evening'
+        if (hour < 12) setGreeting('Good morning')
+        else if (hour < 17) setGreeting('Good afternoon')
+        else setGreeting('Good evening')
+
+        fetchTrendingVideos()
+        fetchTrendingTopics()
+    }, [])
+
+    const fetchTrendingVideos = async () => {
+        setLoadingVideos(true)
+        try {
+            const response = await fetch('/api/youtube/trending?region=IN&limit=6')
+            const data = await response.json()
+            if (data.success) {
+                setTrendingVideos(data.data.videos.slice(0, 6))
+            }
+        } catch (err) {
+            console.error('Failed to fetch videos:', err)
+        } finally {
+            setLoadingVideos(false)
+        }
     }
+
+    const fetchTrendingTopics = async () => {
+        setLoadingTopics(true)
+        try {
+            const response = await fetch('/api/trends/google?geo=IN')
+            const data = await response.json()
+            if (data.success && data.data.trends) {
+                setTrendingTopics(data.data.trends.slice(0, 8))
+            }
+        } catch (err) {
+            console.error('Failed to fetch topics:', err)
+        } finally {
+            setLoadingTopics(false)
+        }
+    }
+
+    const quickActions = [
+        { label: 'Explore Trends', href: '/dashboard/trends', icon: TrendingUp, color: 'text-red-500 bg-red-100 dark:bg-red-900/30' },
+        { label: 'Generate Ideas', href: '/dashboard/ideas', icon: Lightbulb, color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30' },
+        { label: 'AI Scripts', href: '/dashboard/scripts', icon: Sparkles, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/30' },
+        { label: 'Content Calendar', href: '/dashboard/calendar', icon: Calendar, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30' },
+    ]
 
     return (
         <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
             {/* Header */}
-            <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
-                        {getGreeting()}
-                    </h1>
-                    <p className="text-[#7E7F83] mt-1">Here's what's happening with your content today.</p>
-                </div>
-                <Link
-                    href="/dashboard/ideas"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#D9C5B2] text-[#14110F] font-medium hover:bg-[#C4B09D] transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    New Content
-                </Link>
+            <motion.div variants={item}>
+                <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                    {greeting}! 👋
+                </h1>
+                <p className="text-[#7E7F83] mt-1">
+                    Here's what's trending right now - real-time data from YouTube & Google
+                </p>
             </motion.div>
 
-            {/* Stats Grid */}
-            <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {quickStats.map((stat, i) => (
-                    <div
-                        key={i}
-                        className="p-5 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]"
+            {/* Quick Actions */}
+            <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {quickActions.map((action) => (
+                    <Link
+                        key={action.label}
+                        href={action.href}
+                        className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group"
                     >
-                        <div className="flex items-center justify-between mb-3">
-                            <stat.icon className="w-5 h-5 text-[#7E7F83]" />
-                            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
-                                {stat.change}
-                            </span>
+                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", action.color)}>
+                            <action.icon className="w-5 h-5" />
                         </div>
-                        <p className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">{stat.value}</p>
-                        <p className="text-sm text-[#7E7F83] mt-1">{stat.label}</p>
-                    </div>
+                        <p className="font-medium text-[#14110F] dark:text-[#F3F3F4] group-hover:text-[#D9C5B2] transition-colors flex items-center gap-1">
+                            {action.label}
+                            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </p>
+                    </Link>
                 ))}
             </motion.div>
 
-            {/* Main Content Grid */}
-            <div className="grid lg:grid-cols-3 gap-6">
-                {/* Chart */}
-                <motion.div variants={item} className="lg:col-span-2 p-6 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Engagement Overview</h2>
-                            <p className="text-sm text-[#7E7F83]">Last 7 days performance</p>
-                        </div>
-                        <button className="text-sm text-[#7E7F83] hover:text-[#14110F] dark:hover:text-[#F3F3F4]">
-                            View All
-                        </button>
-                    </div>
+            {/* Trending Topics from Google */}
+            <motion.div variants={item}>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
+                        <Flame className="w-5 h-5 text-orange-500" />
+                        Trending on Google India
+                        <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
+                            LIVE
+                        </span>
+                    </h2>
+                    <button
+                        onClick={fetchTrendingTopics}
+                        disabled={loadingTopics}
+                        className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    >
+                        <RefreshCw className={cn("w-4 h-4 text-[#7E7F83]", loadingTopics && "animate-spin")} />
+                    </button>
+                </div>
 
-                    {isMounted && (
-                        <ResponsiveContainer width="100%" height={240}>
-                            <AreaChart data={engagementData}>
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#D9C5B2" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#D9C5B2" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#E8E8E9" vertical={false} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#7E7F83' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#7E7F83' }} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #E8E8E9',
-                                        borderRadius: '8px',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-                                    }}
-                                />
-                                <Area type="monotone" dataKey="value" stroke="#D9C5B2" strokeWidth={2} fill="url(#colorValue)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    )}
-                </motion.div>
-
-                {/* Trending Content */}
-                <motion.div variants={item} className="p-6 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Top Content</h2>
-                        <TrendingUp className="w-4 h-4 text-[#7E7F83]" />
-                    </div>
-
-                    <div className="space-y-4">
-                        {trendingContent.map((content, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
-                                <div className="w-10 h-10 rounded-lg bg-[#D9C5B2] flex items-center justify-center text-[#14110F] font-semibold">
-                                    {i + 1}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] truncate">{content.title}</p>
-                                    <p className="text-xs text-[#7E7F83]">{content.platform} • {content.views}</p>
-                                </div>
-                                <span className="text-xs font-medium text-emerald-600">{content.engagement}</span>
-                            </div>
+                {loadingTopics ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="animate-pulse h-16 rounded-xl bg-[#F3F3F4] dark:bg-[#34312D]" />
                         ))}
                     </div>
-                </motion.div>
-            </div>
-
-            {/* Bottom Row */}
-            <div className="grid lg:grid-cols-2 gap-6">
-                {/* Upcoming Posts */}
-                <motion.div variants={item} className="p-6 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Upcoming Posts</h2>
-                        <Link href="/dashboard/calendar" className="text-sm text-[#7E7F83] hover:text-[#14110F] dark:hover:text-[#F3F3F4] flex items-center gap-1">
-                            View Calendar <ChevronRight className="w-4 h-4" />
-                        </Link>
-                    </div>
-
-                    <div className="space-y-3">
-                        {upcomingPosts.map((post, i) => (
-                            <div key={i} className="flex items-center gap-4 p-3 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors">
-                                <div className="w-10 h-10 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D] flex items-center justify-center">
-                                    <Clock className="w-4 h-4 text-[#7E7F83]" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">{post.title}</p>
-                                    <p className="text-xs text-[#7E7F83]">{post.time} • {post.platform}</p>
-                                </div>
-                                <span className={cn(
-                                    "text-xs font-medium px-2 py-1 rounded-full capitalize",
-                                    post.status === 'ready' && "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20",
-                                    post.status === 'draft' && "bg-[#F3F3F4] text-[#7E7F83] dark:bg-[#34312D]",
-                                    post.status === 'review' && "bg-amber-50 text-amber-600 dark:bg-amber-900/20",
-                                )}>
-                                    {post.status}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
-
-                {/* Quick Actions */}
-                <motion.div variants={item} className="p-6 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-4">Quick Actions</h2>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {quickActions.map((action, i) => (
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {trendingTopics.map((topic, i) => (
                             <Link
                                 key={i}
-                                href={action.href}
-                                className="flex items-center gap-3 p-4 rounded-lg border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-all group"
+                                href={`/dashboard/ideas?topic=${encodeURIComponent(topic.title)}`}
+                                className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group"
                             >
-                                <div className="w-10 h-10 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D] flex items-center justify-center group-hover:bg-[#D9C5B2] transition-colors">
-                                    <action.icon className="w-5 h-5 text-[#7E7F83] group-hover:text-[#14110F]" />
+                                <div className="flex items-center gap-2 mb-1">
+                                    {i < 3 && <Zap className="w-3.5 h-3.5 text-amber-500" />}
+                                    <span className="text-xs text-[#7E7F83]">{topic.formattedTraffic}</span>
                                 </div>
-                                <span className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">{action.label}</span>
+                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 group-hover:text-[#D9C5B2] transition-colors">
+                                    {topic.title}
+                                </p>
                             </Link>
                         ))}
                     </div>
-                </motion.div>
-            </div>
+                )}
+            </motion.div>
+
+            {/* Trending YouTube Videos */}
+            <motion.div variants={item}>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
+                        <Youtube className="w-5 h-5 text-red-500" />
+                        Trending on YouTube India
+                        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full">
+                            LIVE
+                        </span>
+                    </h2>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={fetchTrendingVideos}
+                            disabled={loadingVideos}
+                            className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                        >
+                            <RefreshCw className={cn("w-4 h-4 text-[#7E7F83]", loadingVideos && "animate-spin")} />
+                        </button>
+                        <Link
+                            href="/dashboard/trends"
+                            className="text-sm text-[#D9C5B2] hover:underline flex items-center gap-1"
+                        >
+                            View All <ChevronRight className="w-4 h-4" />
+                        </Link>
+                    </div>
+                </div>
+
+                {loadingVideos ? (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="animate-pulse rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden">
+                                <div className="aspect-video bg-[#F3F3F4] dark:bg-[#34312D]" />
+                                <div className="p-4 space-y-3">
+                                    <div className="h-4 bg-[#F3F3F4] dark:bg-[#34312D] rounded w-3/4" />
+                                    <div className="h-3 bg-[#F3F3F4] dark:bg-[#34312D] rounded w-1/2" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {trendingVideos.map((video, i) => (
+                            <a
+                                key={video.id}
+                                href={video.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden hover:border-[#D9C5B2] transition-all group"
+                            >
+                                <div className="relative aspect-video">
+                                    <img src={video.thumbnail} alt="" className="w-full h-full object-cover" />
+                                    {i < 3 && (
+                                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-medium flex items-center gap-1">
+                                            <Zap className="w-3 h-3" />
+                                            #{i + 1}
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
+                                        <ExternalLink className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                </div>
+                                <div className="p-4">
+                                    <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-2 group-hover:text-[#D9C5B2] transition-colors">
+                                        {video.title}
+                                    </h3>
+                                    <div className="flex items-center justify-between text-xs text-[#7E7F83]">
+                                        <span>{video.channelTitle}</span>
+                                        <span className="flex items-center gap-1">
+                                            <Eye className="w-3.5 h-3.5" />
+                                            {video.formattedViews}
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                )}
+            </motion.div>
+
+            {/* AI Assistant Promo */}
+            <motion.div variants={item}>
+                <div className="p-6 rounded-xl bg-gradient-to-br from-[#D9C5B2]/30 to-[#D9C5B2]/10 border border-[#D9C5B2]/30">
+                    <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-[#D9C5B2]">
+                            <Sparkles className="w-6 h-6 text-[#14110F]" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-1">
+                                Your AI Marketing Manager
+                            </h3>
+                            <p className="text-sm text-[#7E7F83] mb-4">
+                                I analyze real-time trends, generate viral content ideas, and help you understand why videos go viral. Click on any trending video to get deep insights!
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                <Link
+                                    href="/dashboard/trends"
+                                    className="px-4 py-2 rounded-lg bg-[#D9C5B2] text-[#14110F] text-sm font-medium hover:bg-[#C4B09D] transition-colors flex items-center gap-2"
+                                >
+                                    <TrendingUp className="w-4 h-4" />
+                                    Analyze Trends
+                                </Link>
+                                <Link
+                                    href="/dashboard/ideas"
+                                    className="px-4 py-2 rounded-lg bg-white dark:bg-[#1A1714] text-[#14110F] dark:text-[#F3F3F4] text-sm font-medium border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-colors flex items-center gap-2"
+                                >
+                                    <Lightbulb className="w-4 h-4" />
+                                    Generate Ideas
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
         </motion.div>
     )
 }
