@@ -1,488 +1,416 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-    DndContext,
-    DragOverlay,
-    closestCorners,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragStartEvent,
-    DragEndEvent,
-} from '@dnd-kit/core'
-import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    useSortable,
-    verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import {
-    Plus,
-    MoreHorizontal,
-    ThumbsUp,
-    Calendar,
+    Lightbulb,
     Sparkles,
-    X,
-    CheckCircle,
-    ArrowUpRight,
+    TrendingUp,
+    Search,
+    RefreshCw,
+    Clock,
+    Eye,
+    Target,
+    Hash,
+    Zap,
+    Copy,
+    Check,
+    ArrowRight,
+    Youtube,
+    Instagram,
+    Twitter,
+    Loader2,
+    ChevronRight,
+    Star,
+    Flame,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Types
-interface Idea {
-    id: string
+interface TrendingTopic {
     title: string
-    description?: string
-    status: string
-    platforms: string[]
-    priority: string
-    upvoteCount: number
-    hasUpvoted: boolean
-    createdBy: { name: string }
-    createdAt: string
-    linkedTrend?: { title: string }
-    hook?: string
-    aiGenerated?: boolean
+    traffic: string
+    formattedTraffic: string
+    imageUrl?: string
 }
 
-interface GeneratedIdea {
+interface ContentAngle {
+    angle: string
+    platform: string
+    format: string
     title: string
-    description: string
-    suggestedPlatform: string
-    suggestedFormat: string
-    hook?: string
-    estimatedEngagement?: string
-    contentPillars?: string[]
+    hook: string
+    outline: string[]
+    cta: string
+    estimatedViews: string
+    difficulty: string
 }
 
-// Mock data
-const initialIdeas: Idea[] = [
-    {
-        id: '1',
-        title: 'Behind the scenes content series',
-        description: 'Show the team working on new features and daily operations',
-        status: 'NEW',
-        platforms: ['INSTAGRAM', 'TIKTOK'],
-        priority: 'HIGH',
-        upvoteCount: 5,
-        hasUpvoted: false,
-        createdBy: { name: 'Sarah Chen' },
-        createdAt: '2024-01-12T10:00:00Z',
-    },
-    {
-        id: '2',
-        title: 'User testimonial carousel',
-        description: 'Compile best customer reviews into carousel format',
-        status: 'SHORTLISTED',
-        platforms: ['INSTAGRAM'],
-        priority: 'NORMAL',
-        upvoteCount: 3,
-        hasUpvoted: true,
-        createdBy: { name: 'Mike Johnson' },
-        createdAt: '2024-01-11T14:30:00Z',
-    },
-    {
-        id: '3',
-        title: 'Industry trend analysis thread',
-        description: 'Deep dive into Q1 industry trends',
-        status: 'IN_BRIEFING',
-        platforms: ['TWITTER', 'LINKEDIN'],
-        priority: 'HIGH',
-        upvoteCount: 8,
-        hasUpvoted: false,
-        createdBy: { name: 'Emily Davis' },
-        createdAt: '2024-01-10T09:15:00Z',
-        linkedTrend: { title: 'Tech industry discussion' },
-    },
-    {
-        id: '4',
-        title: 'Product feature showcase reel',
-        description: 'Quick demo of new dashboard features',
-        status: 'IN_PRODUCTION',
-        platforms: ['INSTAGRAM', 'YOUTUBE'],
-        priority: 'NORMAL',
-        upvoteCount: 2,
-        hasUpvoted: false,
-        createdBy: { name: 'Alex Kim' },
-        createdAt: '2024-01-09T16:45:00Z',
-    },
-]
-
-const columns = [
-    { id: 'NEW', title: 'New', color: 'bg-zinc-500' },
-    { id: 'SHORTLISTED', title: 'Shortlisted', color: 'bg-blue-500' },
-    { id: 'IN_BRIEFING', title: 'In Briefing', color: 'bg-amber-500' },
-    { id: 'IN_PRODUCTION', title: 'In Production', color: 'bg-purple-500' },
-]
-
-const platformIcons: Record<string, string> = {
-    INSTAGRAM: 'Instagram',
-    TIKTOK: 'TikTok',
-    YOUTUBE: 'YouTube',
-    TWITTER: 'Twitter',
-    LINKEDIN: 'LinkedIn',
+interface ContentIdeas {
+    topicInsight: string
+    audienceInterest: string
+    contentAngles: ContentAngle[]
+    hashtags: string[]
+    bestTimeToPost: string
+    trendLifespan: string
+    competitorTip: string
 }
 
-// Sortable Idea Card Component
-function IdeaCard({
-    idea,
-    onUpvote,
-    onCreatePost,
-}: {
-    idea: Idea
-    onUpvote: (id: string) => void
-    onCreatePost: (idea: Idea) => void
-}) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: idea.id })
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-    }
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="group relative flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
-        >
-            <div className="flex items-start justify-between">
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                            {idea.priority}
-                        </span>
-                        {idea.aiGenerated && (
-                            <span className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100 font-medium">
-                                <Sparkles size={8} /> AI
-                            </span>
-                        )}
-                    </div>
-                    <h4 className="font-semibold text-sm leading-tight text-card-foreground">
-                        {idea.title}
-                    </h4>
-                </div>
-                <button className="text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreHorizontal size={14} />
-                </button>
-            </div>
-
-            {idea.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                    {idea.description}
-                </p>
-            )}
-
-            {idea.hook && (
-                <div className="bg-amber-50 border border-amber-100 rounded p-2 text-xs italic text-amber-700">
-                    "{idea.hook}"
-                </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2 border-t mt-1">
-                <div className="flex gap-2">
-                    {idea.platforms.slice(0, 2).map(p => (
-                        <span key={p} className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                            {platformIcons[p]?.charAt(0) || p.charAt(0)}
-                        </span>
-                    ))}
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        className={cn("flex items-center gap-1 text-xs hover:text-primary transition-colors", idea.hasUpvoted ? "text-primary font-medium" : "text-muted-foreground")}
-                        onClick={(e) => { e.stopPropagation(); onUpvote(idea.id) }}
-                    >
-                        <ThumbsUp size={12} fill={idea.hasUpvoted ? "currentColor" : "none"} />
-                        {idea.upvoteCount}
-                    </button>
-                    <button
-                        className="text-muted-foreground hover:text-primary transition-colors"
-                        onClick={(e) => { e.stopPropagation(); onCreatePost(idea) }}
-                    >
-                        <Calendar size={12} />
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
+const container = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
 }
 
-// Static Card for Drag Overlay
-function StaticIdeaCard({ idea }: { idea: Idea }) {
-    return (
-        <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-xl cursor-grabbing rotate-2 scale-105">
-            <h4 className="font-semibold text-sm leading-tight text-card-foreground">
-                {idea.title}
-            </h4>
-        </div>
-    )
+const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
+}
+
+const platformIcons: Record<string, any> = {
+    'YouTube': Youtube,
+    'Instagram': Instagram,
+    'Twitter': Twitter,
 }
 
 export default function IdeasPage() {
-    // ... State logic same as before (copying simplified version) ...
-    const [ideas, setIdeas] = useState(initialIdeas)
-    const [activeId, setActiveId] = useState<string | null>(null)
-    const [showCreateModal, setShowCreateModal] = useState(false)
-    const [showAIModal, setShowAIModal] = useState(false)
-    const [isGenerating, setIsGenerating] = useState(false)
-    const [generatedIdeas, setGeneratedIdeas] = useState<GeneratedIdea[]>([])
-    const [formData, setFormData] = useState({ title: '', description: '', platforms: ['INSTAGRAM'], priority: 'NORMAL' })
-    const [aiFormData, setAiFormData] = useState({ contentType: '', audience: '', goal: 'AWARENESS', platforms: ['INSTAGRAM', 'TIKTOK'], numberOfIdeas: 5 })
+    const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([])
+    const [loadingTrends, setLoadingTrends] = useState(true)
+    const [selectedTopic, setSelectedTopic] = useState<string>('')
+    const [customTopic, setCustomTopic] = useState('')
+    const [ideas, setIdeas] = useState<ContentIdeas | null>(null)
+    const [generatingIdeas, setGeneratingIdeas] = useState(false)
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+    const [error, setError] = useState<string | null>(null)
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-    )
+    useEffect(() => {
+        fetchTrendingTopics()
+    }, [])
 
-    const getColumnIdeas = (status: string) => ideas.filter((idea) => idea.status === status)
-
-    const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string)
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event
-        setActiveId(null)
-        if (!over) return
-
-        const activeIdea = ideas.find((i) => i.id === active.id)
-        if (!activeIdea) return
-
-        const targetColumn = columns.find((c) => c.id === over.id)
-        if (targetColumn) {
-            setIdeas(ideas.map((idea) => idea.id === active.id ? { ...idea, status: targetColumn.id } : idea))
-            return
-        }
-
-        const overIdea = ideas.find((i) => i.id === over.id)
-        if (overIdea && activeIdea.status !== overIdea.status) {
-            setIdeas(ideas.map((idea) => idea.id === active.id ? { ...idea, status: overIdea.status } : idea))
-        }
-    }
-
-    const handleUpvote = (id: string) => {
-        setIdeas(ideas.map(i => i.id === id ? { ...i, hasUpvoted: !i.hasUpvoted, upvoteCount: i.hasUpvoted ? i.upvoteCount - 1 : i.upvoteCount + 1 } : i))
-    }
-
-    const handleCreatePost = (idea: Idea) => console.log('Create post:', idea)
-
-    const handleCreateIdea = () => {
-        const newIdea: Idea = {
-            id: Date.now().toString(),
-            ...formData,
-            status: 'NEW',
-            upvoteCount: 0,
-            hasUpvoted: false,
-            createdBy: { name: 'Demo User' },
-            createdAt: new Date().toISOString(),
-        }
-        setIdeas([newIdea, ...ideas])
-        setShowCreateModal(false)
-        setFormData({ title: '', description: '', platforms: ['INSTAGRAM'], priority: 'NORMAL' })
-    }
-
-    // AI Logic (Simplified for brevity but functional)
-    const handleGenerateIdeas = async () => {
-        if (!aiFormData.contentType) return alert('Describe content type')
-        setIsGenerating(true)
+    const fetchTrendingTopics = async () => {
+        setLoadingTrends(true)
         try {
-            // Mocking AI response for immediate UI feedback if API fails or for demo speed
-            // Use actual fetch logic here as before
-            const response = await fetch('/api/ai/ideas', {
+            const response = await fetch('/api/trends/google?geo=IN')
+            const data = await response.json()
+
+            if (data.success && data.data.trends) {
+                setTrendingTopics(data.data.trends)
+            }
+        } catch (err) {
+            console.error('Failed to fetch trends:', err)
+        } finally {
+            setLoadingTrends(false)
+        }
+    }
+
+    const generateIdeas = async (topic: string) => {
+        if (!topic.trim()) return
+
+        setSelectedTopic(topic)
+        setGeneratingIdeas(true)
+        setIdeas(null)
+        setError(null)
+
+        try {
+            const response = await fetch('/api/trends/google', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...aiFormData, brandName: 'Brand', brandNiche: aiFormData.contentType }),
+                body: JSON.stringify({
+                    topic,
+                    platforms: ['YouTube', 'Instagram', 'Twitter'],
+                }),
             })
             const data = await response.json()
-            if (data.ideas) setGeneratedIdeas(data.ideas)
-            else setGeneratedIdeas([{ title: 'AI Idea 1', description: 'Generated content', suggestedPlatform: 'Instagram', suggestedFormat: 'Reel', hook: 'Hook text' }])
-        } catch (e) { console.error(e); alert('Failed') }
-        finally { setIsGenerating(false) }
-    }
 
-    const handleAddGeneratedIdea = (genIdea: GeneratedIdea) => {
-        const newIdea: Idea = {
-            id: Date.now().toString(),
-            title: genIdea.title,
-            description: genIdea.description,
-            status: 'NEW',
-            platforms: [genIdea.suggestedPlatform],
-            priority: 'NORMAL',
-            upvoteCount: 0,
-            hasUpvoted: false,
-            createdBy: { name: 'AI' },
-            createdAt: new Date().toISOString(),
-            hook: genIdea.hook,
-            aiGenerated: true
+            if (data.success) {
+                setIdeas(data.data.ideas)
+            } else {
+                setError(data.error)
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to generate ideas')
+        } finally {
+            setGeneratingIdeas(false)
         }
-        setIdeas([newIdea, ...ideas])
-        setGeneratedIdeas(generatedIdeas.filter(i => i.title !== genIdea.title))
     }
 
-    const activeIdea = activeId ? ideas.find((i) => i.id === activeId) : null
+    const copyToClipboard = (text: string, index: number) => {
+        navigator.clipboard.writeText(text)
+        setCopiedIndex(index)
+        setTimeout(() => setCopiedIndex(null), 2000)
+    }
+
+    const handleCustomSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (customTopic.trim()) {
+            generateIdeas(customTopic)
+        }
+    }
+
+    const getDifficultyColor = (difficulty: string) => {
+        switch (difficulty.toLowerCase()) {
+            case 'easy': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+            case 'medium': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            case 'hard': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            default: return 'bg-gray-100 text-gray-700'
+        }
+    }
 
     return (
-        <div className="h-full flex flex-col animate-fadeIn">
+        <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <motion.div variants={item} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Content Ideas</h1>
-                    <p className="text-muted-foreground mt-1">Manage and organize your content pipeline.</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <Lightbulb className="w-6 h-6 text-amber-500" />
+                        <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                            AI Content Ideas
+                        </h1>
+                        <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">
+                            REAL-TIME
+                        </span>
+                    </div>
+                    <p className="text-[#7E7F83]">
+                        Generate viral content ideas from trending topics
+                    </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
-                        onClick={() => setShowAIModal(true)}
-                    >
-                        <Sparkles size={16} className="mr-2" /> AI Generate
-                    </button>
-                    <button
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
-                        onClick={() => setShowCreateModal(true)}
-                    >
-                        <Plus size={16} className="mr-2" /> New Idea
-                    </button>
-                </div>
-            </div>
+            </motion.div>
 
-            {/* Board */}
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCorners}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                <div className="flex-1 overflow-x-auto pb-4">
-                    <div className="flex min-w-full gap-6 h-full">
-                        {columns.map((column) => {
-                            const columnIdeas = getColumnIdeas(column.id)
-                            return (
-                                <div key={column.id} className="flex-1 min-w-[300px] flex flex-col bg-muted/30 rounded-xl border border-border/50">
-                                    <div className="p-4 flex items-center justify-between border-b border-border/50">
-                                        <div className="flex items-center gap-2 font-medium text-sm">
-                                            <div className={`w-2 h-2 rounded-full ${column.color}`} />
-                                            {column.title}
-                                            <span className="text-muted-foreground ml-1 font-normal bg-muted px-1.5 rounded-full text-xs">
-                                                {columnIdeas.length}
-                                            </span>
-                                        </div>
-                                        <button className="text-muted-foreground hover:text-foreground">
-                                            <Plus size={16} onClick={() => { setFormData({ ...formData, title: '' }); setShowCreateModal(true) }} />
-                                        </button>
-                                    </div>
-                                    <div className="p-3 flex-1 overflow-y-auto space-y-3 min-h-[500px]">
-                                        <SortableContext items={columnIdeas.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                                            {columnIdeas.map(idea => (
-                                                <IdeaCard
-                                                    key={idea.id}
-                                                    idea={idea}
-                                                    onUpvote={handleUpvote}
-                                                    onCreatePost={handleCreatePost}
-                                                />
-                                            ))}
-                                        </SortableContext>
-                                    </div>
+            {/* Custom Topic Input */}
+            <motion.form variants={item} onSubmit={handleCustomSubmit} className="flex gap-3">
+                <div className="flex-1 relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7E7F83]" />
+                    <input
+                        type="text"
+                        value={customTopic}
+                        onChange={(e) => setCustomTopic(e.target.value)}
+                        placeholder="Enter any topic (e.g., 'AI tools', 'fitness tips', 'travel hacks')"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] text-[#14110F] dark:text-[#F3F3F4] placeholder:text-[#7E7F83] focus:outline-none focus:border-[#D9C5B2]"
+                    />
+                </div>
+                <button
+                    type="submit"
+                    disabled={generatingIdeas || !customTopic.trim()}
+                    className="px-6 py-3 rounded-xl bg-[#D9C5B2] text-[#14110F] font-medium hover:bg-[#C4B09D] transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                    <Sparkles className={cn("w-5 h-5", generatingIdeas && "animate-pulse")} />
+                    Generate Ideas
+                </button>
+            </motion.form>
+
+            {/* Trending Topics */}
+            <motion.div variants={item}>
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
+                        <Flame className="w-5 h-5 text-orange-500" />
+                        Trending Now in India
+                    </h2>
+                    <button
+                        onClick={fetchTrendingTopics}
+                        disabled={loadingTrends}
+                        className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    >
+                        <RefreshCw className={cn("w-4 h-4 text-[#7E7F83]", loadingTrends && "animate-spin")} />
+                    </button>
+                </div>
+
+                {loadingTrends ? (
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="animate-pulse shrink-0 w-40 h-20 rounded-xl bg-[#F3F3F4] dark:bg-[#34312D]" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        {trendingTopics.map((topic, i) => (
+                            <button
+                                key={i}
+                                onClick={() => generateIdeas(topic.title)}
+                                disabled={generatingIdeas}
+                                className={cn(
+                                    "shrink-0 p-4 rounded-xl border transition-all text-left",
+                                    selectedTopic === topic.title
+                                        ? "border-[#D9C5B2] bg-[#D9C5B2]/10"
+                                        : "border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] bg-white dark:bg-[#1A1714]"
+                                )}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    {i < 3 && <Zap className="w-3.5 h-3.5 text-amber-500" />}
+                                    <span className="text-xs text-[#7E7F83]">{topic.formattedTraffic} searches</span>
                                 </div>
-                            )
-                        })}
+                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 max-w-[180px]">
+                                    {topic.title}
+                                </p>
+                            </button>
+                        ))}
                     </div>
-                </div>
-                <DragOverlay>
-                    {activeIdea ? <StaticIdeaCard idea={activeIdea} /> : null}
-                </DragOverlay>
-            </DndContext>
+                )}
+            </motion.div>
 
-            {/* Modals Code (Simplified Wrapper - keeping functional logic) */}
-            {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg animate-fadeIn">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold">New Idea</h2>
-                            <button onClick={() => setShowCreateModal(false)}><X size={20} className="text-muted-foreground" /></button>
-                        </div>
-                        <input
-                            className="w-full bg-background border rounded-md px-3 py-2 mb-4 text-sm"
-                            placeholder="Idea title"
-                            value={formData.title}
-                            onChange={e => setFormData({ ...formData, title: e.target.value })}
-                            autoFocus
-                        />
-                        <textarea
-                            className="w-full bg-background border rounded-md px-3 py-2 mb-6 text-sm"
-                            placeholder="Description"
-                            rows={3}
-                            value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        />
-                        <div className="flex justify-end gap-3">
-                            <button className="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                            <button className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md" onClick={handleCreateIdea}>Create Idea</button>
-                        </div>
-                    </div>
-                </div>
+            {/* Error */}
+            {error && (
+                <motion.div variants={item} className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
+                    {error}
+                </motion.div>
             )}
 
-            {showAIModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-2xl rounded-lg border bg-card p-6 shadow-lg animate-fadeIn h-[80vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold flex items-center gap-2"><Sparkles size={18} /> AI Generator</h2>
-                            {!isGenerating && <button onClick={() => setShowAIModal(false)}><X size={20} className="text-muted-foreground" /></button>}
+            {/* Loading State */}
+            {generatingIdeas && (
+                <motion.div variants={item} className="text-center py-12">
+                    <Loader2 className="w-10 h-10 mx-auto text-[#D9C5B2] animate-spin mb-4" />
+                    <p className="text-[#7E7F83]">AI is generating viral content ideas for "{selectedTopic}"...</p>
+                </motion.div>
+            )}
+
+            {/* Generated Ideas */}
+            <AnimatePresence>
+                {ideas && !generatingIdeas && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="space-y-6"
+                    >
+                        {/* Topic Insight */}
+                        <div className="p-6 rounded-xl bg-gradient-to-br from-[#D9C5B2]/20 to-[#D9C5B2]/5 border border-[#D9C5B2]/30">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="p-2 rounded-lg bg-[#D9C5B2]">
+                                    <Target className="w-5 h-5 text-[#14110F]" />
+                                </div>
+                                <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Topic Insight: {selectedTopic}</h3>
+                            </div>
+                            <p className="text-sm text-[#7E7F83] mb-4">{ideas.topicInsight}</p>
+
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <div className="p-3 rounded-lg bg-white dark:bg-[#1A1714]">
+                                    <p className="text-xs text-[#7E7F83] mb-1">Audience Interest</p>
+                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{ideas.audienceInterest}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-white dark:bg-[#1A1714]">
+                                    <p className="text-xs text-[#7E7F83] mb-1">Best Time to Post</p>
+                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{ideas.bestTimeToPost}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-white dark:bg-[#1A1714]">
+                                    <p className="text-xs text-[#7E7F83] mb-1">Trend Lifespan</p>
+                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{ideas.trendLifespan}</p>
+                                </div>
+                            </div>
                         </div>
 
-                        {!generatedIdeas.length ? (
-                            <div className="space-y-4">
+                        {/* Hashtags */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Hash className="w-4 h-4 text-blue-500" />
+                            {ideas.hashtags.map((tag, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => copyToClipboard(`#${tag}`, i)}
+                                    className="px-3 py-1 text-sm rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                >
+                                    #{tag}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Content Ideas */}
+                        <div>
+                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-4 flex items-center gap-2">
+                                <Lightbulb className="w-5 h-5 text-amber-500" />
+                                Content Ideas ({ideas.contentAngles.length})
+                            </h3>
+
+                            <div className="grid lg:grid-cols-2 gap-4">
+                                {ideas.contentAngles.map((angle, i) => {
+                                    const PlatformIcon = platformIcons[angle.platform] || Target
+                                    return (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                            className="p-5 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all"
+                                        >
+                                            {/* Header */}
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-2 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
+                                                        <PlatformIcon className="w-4 h-4 text-[#7E7F83]" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-[#7E7F83]">{angle.platform} • {angle.format}</p>
+                                                        <span className={cn("text-xs px-2 py-0.5 rounded-full", getDifficultyColor(angle.difficulty))}>
+                                                            {angle.difficulty}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                    {angle.estimatedViews}
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <h4 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-2">{angle.title}</h4>
+                                            <p className="text-sm text-[#7E7F83] mb-3">{angle.angle}</p>
+
+                                            {/* Hook */}
+                                            <div className="p-3 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D] mb-3">
+                                                <p className="text-xs text-[#7E7F83] mb-1">Opening Hook:</p>
+                                                <p className="text-sm text-[#14110F] dark:text-[#F3F3F4] italic">"{angle.hook}"</p>
+                                            </div>
+
+                                            {/* Outline */}
+                                            <div className="mb-3">
+                                                <p className="text-xs text-[#7E7F83] mb-2">Content Outline:</p>
+                                                <ul className="space-y-1">
+                                                    {angle.outline.map((point, j) => (
+                                                        <li key={j} className="text-sm text-[#14110F] dark:text-[#F3F3F4] flex items-start gap-2">
+                                                            <ChevronRight className="w-3.5 h-3.5 mt-0.5 text-[#D9C5B2] shrink-0" />
+                                                            {point}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            {/* CTA */}
+                                            <div className="pt-3 border-t border-[#E8E8E9] dark:border-[#34312D] flex items-center justify-between">
+                                                <p className="text-xs text-[#7E7F83]">CTA: {angle.cta}</p>
+                                                <button
+                                                    onClick={() => copyToClipboard(`${angle.title}\n\nHook: ${angle.hook}\n\nOutline:\n${angle.outline.map(p => `• ${p}`).join('\n')}\n\nCTA: ${angle.cta}`, 100 + i)}
+                                                    className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                                >
+                                                    {copiedIndex === 100 + i ? (
+                                                        <Check className="w-4 h-4 text-emerald-500" />
+                                                    ) : (
+                                                        <Copy className="w-4 h-4 text-[#7E7F83]" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Pro Tip */}
+                        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                            <div className="flex items-start gap-3">
+                                <Star className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                                 <div>
-                                    <label className="text-sm font-medium mb-1 block">Content Topic</label>
-                                    <input
-                                        className="w-full bg-background border rounded-md px-3 py-2 text-sm"
-                                        placeholder="e.g. Sustainable Fashion Tips"
-                                        value={aiFormData.contentType}
-                                        onChange={e => setAiFormData({ ...aiFormData, contentType: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex justify-end">
-                                    <button
-                                        className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium flex items-center gap-2"
-                                        onClick={handleGenerateIdeas}
-                                        disabled={isGenerating}
-                                    >
-                                        {isGenerating ? 'Generating...' : 'Generate Ideas'}
-                                        {!isGenerating && <ArrowUpRight size={16} />}
-                                    </button>
+                                    <p className="font-medium text-sm text-amber-700 dark:text-amber-400 mb-1">Pro Tip: Stand Out</p>
+                                    <p className="text-sm text-amber-600 dark:text-amber-300">{ideas.competitorTip}</p>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm text-muted-foreground">Generated results:</p>
-                                    <button className="text-xs text-primary font-medium hover:underline" onClick={() => setGeneratedIdeas([])}>Clear results</button>
-                                </div>
-                                {generatedIdeas.map((idea, idx) => (
-                                    <div key={idx} className="p-4 border rounded-lg bg-muted/20 flex flex-col gap-2">
-                                        <div className="flex justify-between items-start">
-                                            <h4 className="font-semibold text-sm">{idea.title}</h4>
-                                            <button className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-md" onClick={() => handleAddGeneratedIdea(idea)}>Add</button>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">{idea.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Empty State */}
+            {!generatingIdeas && !ideas && trendingTopics.length > 0 && (
+                <motion.div variants={item} className="text-center py-12">
+                    <Lightbulb className="w-12 h-12 mx-auto text-[#7E7F83] mb-4" />
+                    <h3 className="font-medium text-[#14110F] dark:text-[#F3F3F4] mb-2">Ready to Generate Ideas</h3>
+                    <p className="text-sm text-[#7E7F83]">Click on any trending topic above or enter your own topic</p>
+                </motion.div>
             )}
-        </div>
+        </motion.div>
     )
 }
