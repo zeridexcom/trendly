@@ -16,6 +16,7 @@ import {
     Video,
     Layers,
     Clock,
+    Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +32,7 @@ export default function Sidebar() {
         { href: '/dashboard/scripts', label: 'Scripts', icon: Video },
         { href: '/dashboard/pillars', label: 'Pillars', icon: Layers },
         { href: '/dashboard/best-time', label: 'Best Time', icon: Clock },
+        { href: '/dashboard/competitors', label: 'Competitors', icon: Target },
         { href: '/dashboard/repurpose', label: 'Repurpose', icon: Sparkles },
         { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
         { href: '/dashboard/admin/users', label: 'Team', icon: Users },
