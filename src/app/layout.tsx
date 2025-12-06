@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -9,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Trendly - Social Media Content Planning",
-  description: "Unify content ideas, trends, and calendar workflow for your social media team",
+  title: "Trendly - AI Social Media Content Suite",
+  description: "Unify content ideas, trends, and calendar workflow with AI-powered tools",
   keywords: ["social media", "content planning", "content calendar", "trends", "ideas", "AI"],
 };
 
@@ -20,8 +21,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

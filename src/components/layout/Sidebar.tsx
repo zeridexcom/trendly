@@ -24,6 +24,7 @@ import {
     Crown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function Sidebar() {
     const pathname = usePathname()
@@ -128,7 +129,7 @@ export default function Sidebar() {
 
                 {/* Workflow */}
                 <div>
-                    <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Workflow</p>
+                    <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Workflow</p>
                     <div className="space-y-1">
                         {renderLinks(workflowLinks)}
                     </div>
@@ -136,14 +137,14 @@ export default function Sidebar() {
             </nav>
 
             {/* Bottom Section */}
-            <div className="p-3 border-t border-slate-100">
+            <div className="p-3 border-t border-slate-100 dark:border-slate-800">
                 <Link
                     href="/dashboard/admin/users"
                     className={cn(
                         "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all",
                         isActive('/dashboard/admin')
                             ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg"
-                            : "text-slate-600 hover:bg-slate-100"
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     )}
                 >
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white shadow-md">
@@ -152,17 +153,22 @@ export default function Sidebar() {
                     <span>Team</span>
                 </Link>
 
+                {/* Theme Toggle */}
+                <div className="mt-3 flex items-center justify-center">
+                    <ThemeToggle />
+                </div>
+
                 {/* User Profile */}
-                <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 border border-purple-100">
+                <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 border border-purple-100 dark:border-purple-900">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                             U
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 truncate">Pro User</p>
-                            <p className="text-xs text-slate-500">Premium Plan</p>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">Pro User</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Premium Plan</p>
                         </div>
-                        <button className="p-1.5 rounded-lg hover:bg-white/50 transition-colors text-slate-400 hover:text-slate-600">
+                        <button className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                             <Settings className="h-4 w-4" />
                         </button>
                     </div>
@@ -171,3 +177,4 @@ export default function Sidebar() {
         </aside>
     )
 }
+
