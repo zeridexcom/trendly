@@ -1,350 +1,487 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
-    Plus,
-    Search,
+    Music,
+    Hash,
+    Play,
+    TrendingUp,
+    Globe,
     Filter,
+    RefreshCw,
     ExternalLink,
-    MoreHorizontal,
-    Edit,
-    Trash2,
-    Lightbulb,
-    X,
+    Flame,
+    Clock,
+    Youtube,
+    Instagram,
+    Twitter,
     Sparkles,
-    Zap,
-    CheckCircle,
+    Search,
+    ChevronRight,
     ArrowUpRight,
+    Zap
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
+// TikTok icon
+const TikTokIcon = ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+    </svg>
+)
+
 // Types
-interface Trend {
+interface TrendingSong {
     id: string
     title: string
+    artist: string
     platform: string
-    type: string
-    url?: string
-    notes?: string
-    createdBy: { name: string }
-    createdAt: string
-    aiGenerated?: boolean
-    reason?: string
+    uses: string
+    growth: string
+    coverUrl: string
 }
 
-interface DiscoveredTrend {
+interface TrendingHashtag {
+    id: string
+    tag: string
+    platform: string
+    posts: string
+    growth: string
+    category: string
+}
+
+interface ViralClip {
+    id: string
     title: string
+    creator: string
     platform: string
-    type: string
-    reason: string
+    views: string
+    likes: string
+    category: string
+    thumbnailUrl: string
+    duration: string
 }
 
-interface TrendAnalysis {
-    score: number
-    potential: string
-    insights: string[]
-    contentIdeas: string[]
-    bestTimeToPost: string
-    predictedLifespan: string
+interface TrendingTopic {
+    id: string
+    topic: string
+    description: string
+    platforms: string[]
+    hotness: number
+    category: string
+    region: string
 }
 
-// Mock data
-const mockTrends: Trend[] = [
-    {
-        id: '1',
-        title: 'AI-generated art showcase',
-        platform: 'INSTAGRAM',
-        type: 'MEME_FORMAT',
-        url: 'https://instagram.com/example',
-        notes: 'Users are sharing AI art with specific prompts. Great for engagement.',
-        createdBy: { name: 'Sarah Chen' },
-        createdAt: '2024-01-12T10:00:00Z',
-    },
-    {
-        id: '2',
-        title: 'Day in my life audio trend',
-        platform: 'TIKTOK',
-        type: 'SOUND_AUDIO',
-        url: 'https://tiktok.com/example',
-        notes: 'Trending audio for DITL content. Works well with lifestyle brands.',
-        createdBy: { name: 'Mike Johnson' },
-        createdAt: '2024-01-11T14:30:00Z',
-    },
-    {
-        id: '3',
-        title: '#2024Goals challenge',
-        platform: 'TWITTER',
-        type: 'HASHTAG',
-        notes: 'New year goal setting hashtag gaining traction.',
-        createdBy: { name: 'Emily Davis' },
-        createdAt: '2024-01-10T09:15:00Z',
-    },
+interface DiscoveryData {
+    lastUpdated: string
+    region: string
+    songs: TrendingSong[]
+    hashtags: TrendingHashtag[]
+    clips: ViralClip[]
+    topics: TrendingTopic[]
+    youtubeKeywords: string[]
+}
+
+const tabs = [
+    { id: 'topics', label: 'Trending Topics', icon: TrendingUp },
+    { id: 'songs', label: 'Trending Songs', icon: Music },
+    { id: 'hashtags', label: 'Hashtags', icon: Hash },
+    { id: 'clips', label: 'Viral Clips', icon: Play },
+    { id: 'keywords', label: 'YouTube SEO', icon: Youtube },
 ]
 
-const platformConfig: Record<string, { icon: string; name: string }> = {
-    INSTAGRAM: { icon: 'Instagram', name: 'Instagram' },
-    TIKTOK: { icon: 'TikTok', name: 'TikTok' },
-    YOUTUBE: { icon: 'YouTube', name: 'YouTube' },
-    TWITTER: { icon: 'Twitter', name: 'X (Twitter)' },
-    LINKEDIN: { icon: 'LinkedIn', name: 'LinkedIn' },
-    OTHER: { icon: 'Other', name: 'Other' },
+const regions = [
+    { value: 'global', label: '🌍 Global' },
+    { value: 'us', label: '🇺🇸 United States' },
+    { value: 'uk', label: '🇬🇧 United Kingdom' },
+    { value: 'in', label: '🇮🇳 India' },
+    { value: 'br', label: '🇧🇷 Brazil' },
+    { value: 'jp', label: '🇯🇵 Japan' },
+    { value: 'kr', label: '🇰🇷 South Korea' },
+    { value: 'de', label: '🇩🇪 Germany' },
+]
+
+const categories = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'entertainment', label: 'Entertainment' },
+    { value: 'lifestyle', label: 'Lifestyle' },
+    { value: 'tech', label: 'Tech' },
+    { value: 'fashion', label: 'Fashion' },
+    { value: 'food', label: 'Food' },
+    { value: 'fitness', label: 'Fitness' },
+    { value: 'business', label: 'Business' },
+    { value: 'comedy', label: 'Comedy' },
+]
+
+const platformIcons: Record<string, React.ElementType> = {
+    tiktok: TikTokIcon,
+    instagram: Instagram,
+    youtube: Youtube,
+    twitter: Twitter,
+    spotify: Music,
 }
 
-const typeConfig: Record<string, { label: string }> = {
-    HASHTAG: { label: 'Hashtag' },
-    SOUND_AUDIO: { label: 'Sound/Audio' },
-    MEME_FORMAT: { label: 'Meme/Format' },
-    VIDEO_STYLE: { label: 'Video Style' },
-    CHALLENGE: { label: 'Challenge' },
-    TOPIC: { label: 'Topic' },
-    OTHER: { label: 'Other' },
+const platformColors: Record<string, string> = {
+    tiktok: 'bg-black text-white',
+    instagram: 'bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 text-white',
+    youtube: 'bg-red-600 text-white',
+    twitter: 'bg-sky-500 text-white',
+    spotify: 'bg-green-500 text-white',
 }
 
 export default function TrendsPage() {
-    const [trends, setTrends] = useState(mockTrends)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [filterPlatform, setFilterPlatform] = useState<string>('')
-    const [filterType, setFilterType] = useState<string>('')
-    const [showFilters, setShowFilters] = useState(false)
-    const [showCreateModal, setShowCreateModal] = useState(false)
-    const [showAIModal, setShowAIModal] = useState(false)
-    const [showAnalysisModal, setShowAnalysisModal] = useState(false)
-    const [selectedTrend, setSelectedTrend] = useState<Trend | null>(null)
-    const [isDiscovering, setIsDiscovering] = useState(false)
-    const [isAnalyzing, setIsAnalyzing] = useState(false)
-    const [discoveredTrends, setDiscoveredTrends] = useState<DiscoveredTrend[]>([])
-    const [trendAnalysis, setTrendAnalysis] = useState<TrendAnalysis | null>(null)
-    const [formData, setFormData] = useState({ title: '', platform: 'INSTAGRAM', type: 'MEME_FORMAT', url: '', notes: '' })
-    const [aiFormData, setAiFormData] = useState({ platforms: ['INSTAGRAM', 'TIKTOK'], niche: '' })
+    const [activeTab, setActiveTab] = useState('topics')
+    const [region, setRegion] = useState('global')
+    const [category, setCategory] = useState('all')
+    const [data, setData] = useState<DiscoveryData | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
-    const filteredTrends = trends.filter((trend) => {
-        const matchesSearch = trend.title.toLowerCase().includes(searchQuery.toLowerCase()) || trend.notes?.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesPlatform = !filterPlatform || trend.platform === filterPlatform
-        const matchesType = !filterType || trend.type === filterType
-        return matchesSearch && matchesPlatform && matchesType
-    })
+    const fetchTrends = useCallback(async (showRefresh = false) => {
+        if (showRefresh) setIsRefreshing(true)
+        else setIsLoading(true)
 
-    const handleCreateTrend = () => {
-        const newTrend: Trend = { id: Date.now().toString(), ...formData, createdBy: { name: 'Demo User' }, createdAt: new Date().toISOString() }
-        setTrends([newTrend, ...trends])
-        setShowCreateModal(false)
-        setFormData({ title: '', platform: 'INSTAGRAM', type: 'MEME_FORMAT', url: '', notes: '' })
-    }
-
-    const handleDeleteTrend = (id: string) => setTrends(trends.filter((t) => t.id !== id))
-    const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-
-    const handleDiscoverTrends = async () => {
-        setIsDiscovering(true)
-        setDiscoveredTrends([])
         try {
-            const response = await fetch('/api/ai/trends', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'discover', platforms: aiFormData.platforms, niche: aiFormData.niche }),
-            })
-            const data = await response.json()
-            if (data.trends && data.trends.length > 0) setDiscoveredTrends(data.trends)
-            else setDiscoveredTrends([{ title: 'Short-form educational content', platform: 'TIKTOK', type: 'VIDEO_STYLE', reason: 'Educational reels' }])
-        } catch (error) { console.error(error); alert('Failed to discover trends') } finally { setIsDiscovering(false) }
-    }
+            const response = await fetch(
+                `/api/ai/trends/discover?region=${region}&category=${category}`
+            )
+            const result = await response.json()
+            setData(result)
+            setLastUpdate(new Date())
+        } catch (error) {
+            console.error('Failed to fetch trends:', error)
+        } finally {
+            setIsLoading(false)
+            setIsRefreshing(false)
+        }
+    }, [region, category])
 
-    const handleAddDiscoveredTrend = (discovered: DiscoveredTrend) => {
-        const newTrend: Trend = { id: Date.now().toString(), title: discovered.title, platform: discovered.platform, type: discovered.type, notes: discovered.reason, createdBy: { name: 'AI' }, createdAt: new Date().toISOString(), aiGenerated: true, reason: discovered.reason }
-        setTrends([newTrend, ...trends])
-        setDiscoveredTrends(discoveredTrends.filter(t => t.title !== discovered.title))
-    }
+    // Initial load and filter changes
+    useEffect(() => {
+        fetchTrends()
+    }, [fetchTrends])
 
-    const handleAnalyzeTrend = async (trend: Trend) => {
-        setSelectedTrend(trend)
-        setShowAnalysisModal(true)
-        setIsAnalyzing(true)
-        setTrendAnalysis(null)
-        try {
-            const response = await fetch('/api/ai/trends', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'analyze', title: trend.title, platform: trend.platform, type: trend.type, description: trend.notes }),
-            })
-            const data = await response.json()
-            setTrendAnalysis(data)
-        } catch (error) { setTrendAnalysis({ score: 75, potential: 'MEDIUM', insights: ['Trending steady'], contentIdeas: ['Tutorial'], bestTimeToPost: '9 AM', predictedLifespan: '2 weeks' }) }
-        finally { setIsAnalyzing(false) }
+    // Auto-refresh every 5 minutes
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchTrends(true)
+        }, 5 * 60 * 1000)
+        return () => clearInterval(interval)
+    }, [fetchTrends])
+
+    const formatTimeAgo = (date: Date) => {
+        const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
+        if (seconds < 60) return 'Just now'
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+        return `${Math.floor(seconds / 3600)}h ago`
     }
 
     return (
-        <div className="space-y-6 animate-fadeIn h-full flex flex-col">
-            <div className="flex items-center justify-between">
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Trends</h1>
-                    <p className="text-muted-foreground mt-1">Discover, track, and analyze viral topics.</p>
+                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                        <Flame className="h-8 w-8 text-orange-500" />
+                        Trends Discovery
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                        Real-time trending content across all platforms
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className={`btn btn-sm ${showFilters ? 'bg-muted text-foreground' : 'btn-ghost'}`} onClick={() => setShowFilters(!showFilters)}>
-                        <Filter size={16} className="mr-2" /> Filters
-                    </button>
-                    <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 h-9 px-4 py-2" onClick={() => setShowAIModal(true)}>
-                        <Sparkles size={16} className="mr-2" /> Discover
-                    </button>
-                    <button className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2" onClick={() => setShowCreateModal(true)}>
-                        <Plus size={16} className="mr-2" /> Add Trend
+                    {lastUpdate && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Updated {formatTimeAgo(lastUpdate)}
+                        </span>
+                    )}
+                    <button
+                        onClick={() => fetchTrends(true)}
+                        disabled={isRefreshing}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                    >
+                        <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
+                        Refresh
                     </button>
                 </div>
             </div>
 
-            {/* Search */}
-            <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                    type="text"
-                    placeholder="Search trends..."
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <select
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
+                        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                        {regions.map((r) => (
+                            <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                        {categories.map((c) => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
-            {/* Main Table */}
-            <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden flex-1 flex flex-col">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/50 border-b text-xs uppercase font-medium text-muted-foreground">
-                            <tr>
-                                <th className="px-6 py-4">Title</th>
-                                <th className="px-6 py-4">Platform</th>
-                                <th className="px-6 py-4">Type</th>
-                                <th className="px-6 py-4 hidden md:table-cell">Created</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {filteredTrends.map(trend => (
-                                <tr key={trend.id} className="group hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => handleAnalyzeTrend(trend)}>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="font-medium text-foreground">{trend.title}</span>
-                                            {trend.notes && <span className="text-muted-foreground text-xs line-clamp-1">{trend.notes}</span>}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-                                            {platformConfig[trend.platform]?.name || trend.platform}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-muted-foreground">
-                                        {typeConfig[trend.type]?.label || trend.type}
-                                    </td>
-                                    <td className="px-6 py-4 text-muted-foreground hidden md:table-cell">
-                                        {formatDate(trend.createdAt)}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {trend.url && (
-                                                <a href={trend.url} target="_blank" rel="noopener" className="p-2 hover:bg-muted rounded-md" onClick={e => e.stopPropagation()}>
-                                                    <ExternalLink size={14} />
-                                                </a>
-                                            )}
-                                            <button className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-md" onClick={(e) => { e.stopPropagation(); handleDeleteTrend(trend.id); }}>
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredTrends.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
-                                        No trends found. Try creating one or using AI to discover.
-                                    </td>
-                                </tr>
+            {/* Tabs */}
+            <div className="border-b">
+                <nav className="flex gap-4 overflow-x-auto pb-px" aria-label="Tabs">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                "flex items-center gap-2 whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors",
+                                activeTab === tab.id
+                                    ? "border-primary text-foreground"
+                                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
                             )}
-                        </tbody>
-                    </table>
-                </div>
+                        >
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
             </div>
 
-            {/* AI Discover Modal */}
-            {showAIModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-2xl rounded-lg border bg-card p-6 shadow-lg animate-fadeIn h-[80vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold flex items-center gap-2"><Sparkles size={18} /> Discover Trends</h2>
-                            {!isDiscovering && <button onClick={() => setShowAIModal(false)}><X size={20} className="text-muted-foreground" /></button>}
-                        </div>
-
-                        {!discoveredTrends.length ? (
-                            <div className="space-y-4">
-                                <div className="flex justify-end">
-                                    <button
-                                        className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium flex items-center gap-2"
-                                        onClick={handleDiscoverTrends}
-                                        disabled={isDiscovering}
+            {/* Content */}
+            {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                    <div className="flex flex-col items-center gap-4">
+                        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground">Discovering trends...</p>
+                    </div>
+                </div>
+            ) : (
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {/* Trending Topics */}
+                        {activeTab === 'topics' && data?.topics && (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {data.topics.map((topic, i) => (
+                                    <motion.div
+                                        key={topic.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="group rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-primary/30"
                                     >
-                                        {isDiscovering ? 'Discovering...' : 'Start Discovery'}
-                                        {!isDiscovering && <ArrowUpRight size={16} />}
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex-1 overflow-y-auto space-y-3">
-                                {discoveredTrends.map((trend, idx) => (
-                                    <div key={idx} className="p-4 border rounded-lg hover:bg-muted/30 transition-colors flex justify-between items-center group">
-                                        <div>
-                                            <h4 className="font-semibold text-sm">{trend.title}</h4>
-                                            <p className="text-xs text-muted-foreground line-clamp-1">{trend.reason}</p>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold group-hover:text-primary transition-colors">{topic.topic}</h3>
+                                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{topic.description}</p>
+                                            </div>
+                                            <div className="flex-shrink-0 ml-3">
+                                                <div className={cn(
+                                                    "flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full",
+                                                    topic.hotness >= 90 ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
+                                                        topic.hotness >= 80 ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" :
+                                                            "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                                )}>
+                                                    <Flame className="h-3 w-3" />
+                                                    {topic.hotness}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <button className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md" onClick={() => handleAddDiscoveredTrend(trend)}>Add</button>
-                                    </div>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{topic.category}</span>
+                                            <div className="flex gap-1">
+                                                {topic.platforms.map((p) => {
+                                                    const Icon = platformIcons[p] || Globe
+                                                    return <Icon key={p} className="h-3.5 w-3.5 text-muted-foreground" />
+                                                })}
+                                            </div>
+                                        </div>
+                                    </motion.div>
                                 ))}
                             </div>
                         )}
-                    </div>
-                </div>
-            )}
 
-            {/* Create Modal */}
-            {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg animate-fadeIn">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold">New Trend</h2>
-                            <button onClick={() => setShowCreateModal(false)}><X size={20} className="text-muted-foreground" /></button>
-                        </div>
-                        <input className="w-full bg-background border rounded-md px-3 py-2 mb-4 text-sm" placeholder="Title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} autoFocus />
-                        <div className="flex justify-end gap-3">
-                            <button className="px-4 py-2 text-sm font-medium hover:bg-muted rounded-md" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                            <button className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md" onClick={handleCreateTrend}>Add Trend</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Analysis Modal */}
-            {showAnalysisModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg animate-fadeIn">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold flex items-center gap-2"><Zap size={18} /> Analysis</h2>
-                            <button onClick={() => setShowAnalysisModal(false)}><X size={20} className="text-muted-foreground" /></button>
-                        </div>
-                        {isAnalyzing || !trendAnalysis ? (
-                            <div className="py-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="p-4 bg-muted/50 rounded-lg border">
-                                    <div className="text-sm font-medium text-muted-foreground">Score</div>
-                                    <div className="text-3xl font-bold">{trendAnalysis.score}<span className="text-sm text-muted-foreground font-normal">/100</span></div>
-                                </div>
-                                <div>
-                                    <h4 className="font-medium text-sm mb-2">Insights</h4>
-                                    <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
-                                        {trendAnalysis.insights.map((insight, i) => <li key={i}>{insight}</li>)}
-                                    </ul>
+                        {/* Trending Songs */}
+                        {activeTab === 'songs' && data?.songs && (
+                            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                                <div className="divide-y">
+                                    {data.songs.map((song, i) => {
+                                        const PlatformIcon = platformIcons[song.platform] || Music
+                                        return (
+                                            <motion.div
+                                                key={song.id}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors group"
+                                            >
+                                                <span className="text-lg font-bold text-muted-foreground w-6">{i + 1}</span>
+                                                <div className="relative">
+                                                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl">
+                                                        🎵
+                                                    </div>
+                                                    <div className={cn(
+                                                        "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center",
+                                                        platformColors[song.platform]
+                                                    )}>
+                                                        <PlatformIcon className="h-3 w-3" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium truncate group-hover:text-primary transition-colors">{song.title}</p>
+                                                    <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-semibold">{song.uses}</p>
+                                                    <p className="text-xs text-green-500 flex items-center justify-end gap-0.5">
+                                                        <ArrowUpRight className="h-3 w-3" />
+                                                        {song.growth}
+                                                    </p>
+                                                </div>
+                                                <button className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
+                                                    <ExternalLink className="h-4 w-4" />
+                                                </button>
+                                            </motion.div>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
+
+                        {/* Trending Hashtags */}
+                        {activeTab === 'hashtags' && data?.hashtags && (
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {data.hashtags.map((hashtag, i) => {
+                                    const PlatformIcon = platformIcons[hashtag.platform] || Hash
+                                    return (
+                                        <motion.div
+                                            key={hashtag.id}
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: i * 0.03 }}
+                                            className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group hover:border-primary/30"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                                                    platformColors[hashtag.platform]
+                                                )}>
+                                                    <PlatformIcon className="h-4 w-4" />
+                                                </div>
+                                                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{hashtag.category}</span>
+                                            </div>
+                                            <p className="font-semibold text-lg group-hover:text-primary transition-colors">{hashtag.tag}</p>
+                                            <div className="flex items-center justify-between mt-2 text-sm">
+                                                <span className="text-muted-foreground">{hashtag.posts} posts</span>
+                                                <span className="text-green-500 font-medium">{hashtag.growth}</span>
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
+                            </div>
+                        )}
+
+                        {/* Viral Clips */}
+                        {activeTab === 'clips' && data?.clips && (
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                                {data.clips.map((clip, i) => {
+                                    const PlatformIcon = platformIcons[clip.platform] || Play
+                                    return (
+                                        <motion.div
+                                            key={clip.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.05 }}
+                                            className="group rounded-xl border bg-card shadow-sm overflow-hidden hover:shadow-lg transition-all cursor-pointer"
+                                        >
+                                            <div className="relative aspect-[9/16] bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                                                <Play className="h-12 w-12 text-white/50 group-hover:text-white group-hover:scale-110 transition-all" />
+                                                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                                                    {clip.duration}
+                                                </div>
+                                                <div className={cn(
+                                                    "absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center",
+                                                    platformColors[clip.platform]
+                                                )}>
+                                                    <PlatformIcon className="h-3 w-3" />
+                                                </div>
+                                            </div>
+                                            <div className="p-3">
+                                                <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{clip.title}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">{clip.creator}</p>
+                                                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                                    <span>{clip.views} views</span>
+                                                    <span>{clip.likes} likes</span>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
+                            </div>
+                        )}
+
+                        {/* YouTube SEO Keywords */}
+                        {activeTab === 'keywords' && data?.youtubeKeywords && (
+                            <div className="space-y-4">
+                                <div className="rounded-xl border bg-card p-6 shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 rounded-lg bg-red-500/10">
+                                            <Youtube className="h-5 w-5 text-red-500" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold">Trending YouTube Keywords</h3>
+                                            <p className="text-sm text-muted-foreground">High-volume search terms for SEO optimization</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {data.youtubeKeywords.map((keyword, i) => (
+                                            <motion.button
+                                                key={i}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: i * 0.03 }}
+                                                onClick={() => navigator.clipboard.writeText(keyword)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-background text-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all group"
+                                            >
+                                                <Search className="h-3 w-3 text-muted-foreground group-hover:text-primary-foreground" />
+                                                {keyword}
+                                            </motion.button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-gradient-to-br from-red-500/5 via-orange-500/5 to-yellow-500/5 p-6">
+                                    <div className="flex items-start gap-3">
+                                        <Zap className="h-5 w-5 text-yellow-500 mt-0.5" />
+                                        <div>
+                                            <h3 className="font-semibold">Pro Tip</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Click any keyword to copy it. Use these in your video titles, descriptions, and tags to improve discoverability.
+                                                Combine 2-3 related keywords for maximum impact.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
             )}
         </div>
     )
