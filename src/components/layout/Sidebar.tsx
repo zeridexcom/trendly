@@ -15,6 +15,7 @@ import {
     ChevronRight,
     Video,
     Layers,
+    Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +30,7 @@ export default function Sidebar() {
         { href: '/dashboard/ideas', label: 'Ideas', icon: Lightbulb },
         { href: '/dashboard/scripts', label: 'Scripts', icon: Video },
         { href: '/dashboard/pillars', label: 'Pillars', icon: Layers },
+        { href: '/dashboard/best-time', label: 'Best Time', icon: Clock },
         { href: '/dashboard/repurpose', label: 'Repurpose', icon: Sparkles },
         { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
         { href: '/dashboard/admin/users', label: 'Team', icon: Users },
