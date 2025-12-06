@@ -1,29 +1,61 @@
+'use client'
+
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
+import MobileNav from '@/components/layout/MobileNav'
+import Breadcrumbs from '@/components/layout/Breadcrumbs'
+import { SidebarProvider, useSidebar } from '@/components/layout/SidebarContext'
+import { cn } from '@/lib/utils'
 
-export default async function DashboardLayout({
+function DashboardContent({ children }: { children: React.ReactNode }) {
+    const [mobileNavOpen, setMobileNavOpen] = useState(false)
+    const { isCollapsed } = useSidebar()
+
+    return (
+        <div className="flex bg-slate-50 dark:bg-slate-950 min-h-screen font-sans antialiased">
+            {/* Desktop Sidebar */}
+            <Sidebar />
+
+            {/* Mobile Navigation */}
+            <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+
+            {/* Main Content */}
+            <motion.div
+                animate={{
+                    marginLeft: isCollapsed ? 80 : 256,
+                }}
+                transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+                className="flex-1 flex flex-col min-h-screen lg:ml-64"
+                style={{ marginLeft: 0 }} // Mobile default
+            >
+                {/* Sticky Header */}
+                <Header onMobileMenuOpen={() => setMobileNavOpen(true)} />
+
+                {/* Main Content Area */}
+                <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+                    <div className="max-w-[1400px] mx-auto">
+                        {/* Breadcrumbs */}
+                        <Breadcrumbs />
+
+                        {/* Page Content */}
+                        {children}
+                    </div>
+                </main>
+            </motion.div>
+        </div>
+    )
+}
+
+export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    // For demo purposes, use a mock user directly
-    const user = {
-        id: 'demo-user',
-        name: 'Jason Ranti',
-        email: 'jason@trendly.com',
-        role: 'ADMIN' as const,
-        avatarUrl: undefined,
-    }
-
     return (
-        <div className="flex bg-background min-h-screen font-sans antialiased text-foreground">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
-                <Header user={user} />
-                <main className="flex-1 w-full max-w-[1600px] mx-auto p-6 overflow-y-auto scroll-smooth">
-                    {children}
-                </main>
-            </div>
-        </div>
+        <SidebarProvider>
+            <DashboardContent>{children}</DashboardContent>
+        </SidebarProvider>
     )
 }

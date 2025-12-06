@@ -10,9 +10,9 @@ import {
     Lightbulb,
     Calendar,
     Settings,
-    LogOut,
     Users,
     ChevronRight,
+    ChevronLeft,
     Video,
     Layers,
     Clock,
@@ -22,12 +22,17 @@ import {
     FileText,
     Activity,
     Crown,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import ThemeToggle from '@/components/ThemeToggle'
+import { useSidebar } from './SidebarContext'
+import Tooltip from '@/components/ui/Tooltip'
 
 export default function Sidebar() {
     const pathname = usePathname()
+    const { isCollapsed, toggle } = useSidebar()
 
     const isActive = (path: string) => pathname === path || pathname?.startsWith(`${path}/`)
 
@@ -54,45 +59,64 @@ export default function Sidebar() {
         { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar, gradient: 'from-blue-400 to-indigo-500' },
     ]
 
-    const renderLinks = (links: typeof mainLinks) => (
+    const renderLinks = (links: typeof mainLinks, showLabel: boolean) => (
         links.map((link) => {
             const active = isActive(link.href)
-            return (
+            const linkContent = (
                 <Link
-                    key={link.href}
                     href={link.href}
                     className={cn(
                         "group relative flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300",
+                        isCollapsed && "justify-center px-2",
                         active
-                            ? "bg-gradient-to-r text-white shadow-lg"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                            ? "text-white shadow-lg"
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     )}
-                    style={active ? { backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))` } : {}}
                 >
+                    {active && (
+                        <motion.div
+                            layoutId="sidebar-active"
+                            className={cn("absolute inset-0 rounded-xl bg-gradient-to-r", link.gradient)}
+                            transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                    )}
                     <div className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
+                        "relative flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
                         active ? "bg-white/20" : `bg-gradient-to-br ${link.gradient} text-white shadow-md`
                     )}>
                         <link.icon className="h-4 w-4" />
                     </div>
-                    <span className="flex-1">{link.label}</span>
-                    {active && (
-                        <ChevronRight className="h-4 w-4 opacity-70" />
+                    {!isCollapsed && (
+                        <span className="relative flex-1">{link.label}</span>
                     )}
-                    {active && (
-                        <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-r opacity-100", link.gradient)} style={{ zIndex: -1 }} />
+                    {!isCollapsed && active && (
+                        <ChevronRight className="relative h-4 w-4 opacity-70" />
                     )}
                 </Link>
             )
+
+            if (isCollapsed) {
+                return (
+                    <Tooltip key={link.href} content={link.label} side="right">
+                        {linkContent}
+                    </Tooltip>
+                )
+            }
+
+            return <div key={link.href}>{linkContent}</div>
         })
     )
 
     return (
-        <aside className="fixed top-0 left-0 h-screen w-64 flex flex-col border-r bg-gradient-to-b from-slate-50 via-white to-slate-50 overflow-y-auto">
+        <motion.aside
+            animate={{ width: isCollapsed ? 80 : 256 }}
+            transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+            className="fixed top-0 left-0 h-screen flex-col border-r bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 overflow-y-auto hidden lg:flex z-50"
+        >
             {/* Logo */}
-            <div className="p-5">
+            <div className={cn("p-5 flex items-center", isCollapsed && "justify-center p-3")}>
                 <Link href="/dashboard" className="flex items-center gap-3 group">
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 transition-shadow">
                             <Sparkles className="h-5 w-5 text-white" />
                         </div>
@@ -100,81 +124,136 @@ export default function Sidebar() {
                             <Crown className="h-2.5 w-2.5 text-white" />
                         </div>
                     </div>
-                    <div>
-                        <span className="font-bold text-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
-                            Trendly
-                        </span>
-                        <span className="block text-[10px] text-slate-400 font-medium tracking-wider uppercase">AI Creator Suite</span>
-                    </div>
+                    <AnimatePresence>
+                        {!isCollapsed && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                            >
+                                <span className="font-bold text-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
+                                    Trendly
+                                </span>
+                                <span className="block text-[10px] text-slate-400 font-medium tracking-wider uppercase">AI Creator Suite</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </Link>
             </div>
 
+            {/* Toggle Button */}
+            <button
+                onClick={toggle}
+                className={cn(
+                    "mx-3 mb-4 p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center",
+                    isCollapsed && "mx-auto"
+                )}
+            >
+                {isCollapsed ? (
+                    <PanelLeftOpen className="h-4 w-4 text-slate-500" />
+                ) : (
+                    <PanelLeftClose className="h-4 w-4 text-slate-500" />
+                )}
+            </button>
+
             {/* Navigation */}
-            <nav className="flex-1 px-3 space-y-6 pb-4">
+            <nav className={cn("flex-1 px-3 space-y-6 pb-4", isCollapsed && "px-2")}>
                 {/* Main */}
                 <div>
-                    <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Main</p>
+                    {!isCollapsed && (
+                        <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Main</p>
+                    )}
                     <div className="space-y-1">
-                        {renderLinks(mainLinks)}
+                        {renderLinks(mainLinks, !isCollapsed)}
                     </div>
                 </div>
 
                 {/* AI Tools */}
                 <div>
-                    <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">AI Tools</p>
+                    {!isCollapsed && (
+                        <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">AI Tools</p>
+                    )}
                     <div className="space-y-1">
-                        {renderLinks(toolLinks)}
+                        {renderLinks(toolLinks, !isCollapsed)}
                     </div>
                 </div>
 
                 {/* Workflow */}
                 <div>
-                    <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Workflow</p>
+                    {!isCollapsed && (
+                        <p className="px-3 mb-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Workflow</p>
+                    )}
                     <div className="space-y-1">
-                        {renderLinks(workflowLinks)}
+                        {renderLinks(workflowLinks, !isCollapsed)}
                     </div>
                 </div>
             </nav>
 
             {/* Bottom Section */}
-            <div className="p-3 border-t border-slate-100 dark:border-slate-800">
-                <Link
-                    href="/dashboard/admin/users"
-                    className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all",
-                        isActive('/dashboard/admin')
-                            ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg"
-                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                    )}
-                >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white shadow-md">
-                        <Users className="h-4 w-4" />
-                    </div>
-                    <span>Team</span>
-                </Link>
-
-                {/* Theme Toggle */}
-                <div className="mt-3 flex items-center justify-center">
-                    <ThemeToggle />
-                </div>
+            <div className={cn("p-3 border-t border-slate-100 dark:border-slate-800", isCollapsed && "p-2")}>
+                {/* Team Link */}
+                {isCollapsed ? (
+                    <Tooltip content="Team" side="right">
+                        <Link
+                            href="/dashboard/admin/users"
+                            className={cn(
+                                "flex items-center justify-center p-2 rounded-xl transition-all",
+                                isActive('/dashboard/admin')
+                                    ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg"
+                                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white shadow-md">
+                                <Users className="h-4 w-4" />
+                            </div>
+                        </Link>
+                    </Tooltip>
+                ) : (
+                    <Link
+                        href="/dashboard/admin/users"
+                        className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all",
+                            isActive('/dashboard/admin')
+                                ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg"
+                                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        )}
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white shadow-md">
+                            <Users className="h-4 w-4" />
+                        </div>
+                        <span>Team</span>
+                    </Link>
+                )}
 
                 {/* User Profile */}
-                <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 border border-purple-100 dark:border-purple-900">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                            U
+                {!isCollapsed && (
+                    <div className="mt-3 p-3 rounded-xl bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 border border-purple-100 dark:border-purple-900">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                                U
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">Pro User</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Premium Plan</p>
+                            </div>
+                            <button className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                <Settings className="h-4 w-4" />
+                            </button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">Pro User</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Premium Plan</p>
-                        </div>
-                        <button className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-700 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                            <Settings className="h-4 w-4" />
-                        </button>
                     </div>
-                </div>
+                )}
+
+                {/* Collapsed user avatar */}
+                {isCollapsed && (
+                    <Tooltip content="Pro User" side="right">
+                        <div className="mt-3 flex justify-center">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                                U
+                            </div>
+                        </div>
+                    </Tooltip>
+                )}
             </div>
-        </aside>
+        </motion.aside>
     )
 }
-

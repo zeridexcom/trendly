@@ -1,46 +1,85 @@
 'use client'
 
-import { Bell, Search, Command } from 'lucide-react'
+import React from 'react'
+import { motion } from 'framer-motion'
+import { Bell, Search, Command, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import ThemeToggle from '@/components/ThemeToggle'
+import { MobileMenuButton } from './MobileNav'
+
+interface HeaderProps {
+    onMobileMenuOpen: () => void
+    title?: string
+    subtitle?: string
+    actions?: React.ReactNode
+}
 
 export default function Header({
-    user
-}: {
-    user: { name: string, email: string, avatarUrl?: string }
-}) {
+    onMobileMenuOpen,
+    title,
+    subtitle,
+    actions
+}: HeaderProps) {
     return (
-        <header className="h-16 border-b bg-background/50 backdrop-blur-xl flex items-center justify-between px-6 sticky top-0 z-10 w-full">
+        <motion.header
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800"
+        >
+            <div className="flex items-center justify-between px-4 lg:px-6 h-16">
+                {/* Left side */}
+                <div className="flex items-center gap-4">
+                    <MobileMenuButton onClick={onMobileMenuOpen} />
 
-            {/* Search / Command Trigger */}
-            <button className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md text-sm border transition-colors w-64 group text-left">
-                <Search size={14} className="group-hover:text-foreground" />
-                <span className="flex-1">Search...</span>
-                <kbd className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono bg-background border px-1.5 rounded text-muted-foreground group-hover:text-foreground">
-                    <Command size={10} /> K
-                </kbd>
-            </button>
+                    {title && (
+                        <div className="hidden sm:block">
+                            <h1 className="font-bold text-lg text-slate-900 dark:text-white">{title}</h1>
+                            {subtitle && (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+                            )}
+                        </div>
+                    )}
+                </div>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-4">
-                <button className="relative text-muted-foreground hover:text-foreground transition-colors p-1">
-                    <Bell size={18} />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 border-2 border-background rounded-full"></span>
-                </button>
+                {/* Center - Search */}
+                <div className="hidden md:flex flex-1 max-w-md mx-8">
+                    <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <Search className="h-4 w-4" />
+                        <span className="flex-1 text-left text-sm">Search...</span>
+                        <kbd className="hidden lg:flex items-center gap-1 px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-xs font-mono">
+                            <Command className="h-3 w-3" />K
+                        </kbd>
+                    </button>
+                </div>
 
-                <div className="w-px h-6 bg-border mx-1"></div>
+                {/* Right side */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Actions */}
+                    {actions}
 
-                <div className="flex items-center gap-3">
-                    <div className="text-right hidden md:block">
-                        <p className="text-sm font-medium leading-none">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                    {/* Quick Create */}
+                    <button className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow">
+                        <Plus className="h-4 w-4" />
+                        <span className="hidden lg:inline">Create</span>
+                    </button>
+
+                    {/* Notifications */}
+                    <button className="relative p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <Bell className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                        <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-gradient-to-r from-red-500 to-rose-500 ring-2 ring-white dark:ring-slate-900" />
+                    </button>
+
+                    {/* Theme Toggle */}
+                    <div className="hidden sm:block">
+                        <ThemeToggle />
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-200 to-gray-300 border ring-2 ring-background overflow-hidden relative">
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jason"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
+
+                    {/* User Avatar */}
+                    <button className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-white dark:ring-slate-900">
+                        U
+                    </button>
                 </div>
             </div>
-        </header>
+        </motion.header>
     )
 }
