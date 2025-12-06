@@ -1,488 +1,382 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Music,
-    Hash,
-    Play,
     TrendingUp,
-    Globe,
-    Filter,
-    RefreshCw,
-    ExternalLink,
-    Flame,
+    Play,
+    Eye,
+    Heart,
+    MessageCircle,
     Clock,
-    Youtube,
-    Instagram,
-    Twitter,
+    ExternalLink,
     Sparkles,
     Search,
+    RefreshCw,
+    Lightbulb,
+    Hash,
+    Target,
+    Zap,
+    Youtube,
+    Filter,
     ChevronRight,
-    ArrowUpRight,
-    Zap
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
-// TikTok icon
-const TikTokIcon = ({ className }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-    </svg>
-)
-
-// Types
-interface TrendingSong {
+interface YouTubeVideo {
     id: string
     title: string
-    artist: string
-    platform: string
-    uses: string
-    growth: string
-    coverUrl: string
-}
-
-interface TrendingHashtag {
-    id: string
-    tag: string
-    platform: string
-    posts: string
-    growth: string
-    category: string
-}
-
-interface ViralClip {
-    id: string
-    title: string
-    creator: string
-    platform: string
-    views: string
-    likes: string
-    category: string
-    thumbnailUrl: string
-    duration: string
-}
-
-interface TrendingTopic {
-    id: string
-    topic: string
     description: string
-    platforms: string[]
-    hotness: number
-    category: string
-    region: string
+    thumbnail: string
+    channelTitle: string
+    publishedAt: string
+    viewCount: number
+    likeCount: number
+    commentCount: number
+    engagementRate: string
+    formattedViews: string
+    formattedLikes: string
+    formattedComments: string
+    formattedDuration: string
+    categoryName: string
+    tags: string[]
+    url: string
 }
 
-interface DiscoveryData {
-    lastUpdated: string
-    region: string
-    songs: TrendingSong[]
-    hashtags: TrendingHashtag[]
-    clips: ViralClip[]
-    topics: TrendingTopic[]
-    youtubeKeywords: string[]
+interface AIAnalysis {
+    whyTrending: string
+    commonPatterns: string[]
+    recommendedTopics: string[]
+    contentIdeas: { title: string; hook: string; format: string }[]
+    bestHashtags: string[]
+    optimalLength: string
+    postingAdvice: string
 }
 
-const tabs = [
-    { id: 'topics', label: 'Trending Topics', icon: TrendingUp },
-    { id: 'songs', label: 'Trending Songs', icon: Music },
-    { id: 'hashtags', label: 'Hashtags', icon: Hash },
-    { id: 'clips', label: 'Viral Clips', icon: Play },
-    { id: 'keywords', label: 'YouTube SEO', icon: Youtube },
-]
-
-const regions = [
-    { value: 'global', label: '🌍 Global' },
-    { value: 'us', label: '🇺🇸 United States' },
-    { value: 'uk', label: '🇬🇧 United Kingdom' },
-    { value: 'in', label: '🇮🇳 India' },
-    { value: 'br', label: '🇧🇷 Brazil' },
-    { value: 'jp', label: '🇯🇵 Japan' },
-    { value: 'kr', label: '🇰🇷 South Korea' },
-    { value: 'de', label: '🇩🇪 Germany' },
-]
-
-const categories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'entertainment', label: 'Entertainment' },
-    { value: 'lifestyle', label: 'Lifestyle' },
-    { value: 'tech', label: 'Tech' },
-    { value: 'fashion', label: 'Fashion' },
-    { value: 'food', label: 'Food' },
-    { value: 'fitness', label: 'Fitness' },
-    { value: 'business', label: 'Business' },
-    { value: 'comedy', label: 'Comedy' },
-]
-
-const platformIcons: Record<string, React.ElementType> = {
-    tiktok: TikTokIcon,
-    instagram: Instagram,
-    youtube: Youtube,
-    twitter: Twitter,
-    spotify: Music,
+const container = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
 }
 
-const platformColors: Record<string, string> = {
-    tiktok: 'bg-black text-white',
-    instagram: 'bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 text-white',
-    youtube: 'bg-red-600 text-white',
-    twitter: 'bg-sky-500 text-white',
-    spotify: 'bg-green-500 text-white',
+const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
 }
 
 export default function TrendsPage() {
-    const [activeTab, setActiveTab] = useState('topics')
-    const [region, setRegion] = useState('global')
-    const [category, setCategory] = useState('all')
-    const [data, setData] = useState<DiscoveryData | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const [isRefreshing, setIsRefreshing] = useState(false)
-    const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+    const [videos, setVideos] = useState<YouTubeVideo[]>([])
+    const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchInput, setSearchInput] = useState('')
+    const [analyzing, setAnalyzing] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [lastFetched, setLastFetched] = useState<string>('')
 
-    const fetchTrends = useCallback(async (showRefresh = false) => {
-        if (showRefresh) setIsRefreshing(true)
-        else setIsLoading(true)
+    // Fetch trending videos on load
+    useEffect(() => {
+        fetchTrending()
+    }, [])
 
+    const fetchTrending = async () => {
+        setLoading(true)
+        setError(null)
         try {
-            const response = await fetch(
-                `/api/ai/trends/discover?region=${region}&category=${category}`
-            )
-            const result = await response.json()
-            setData(result)
-            setLastUpdate(new Date())
-        } catch (error) {
-            console.error('Failed to fetch trends:', error)
+            const response = await fetch('/api/youtube/trending?region=IN&limit=20')
+            const data = await response.json()
+
+            if (data.success) {
+                setVideos(data.data.videos)
+                setLastFetched(new Date(data.data.fetchedAt).toLocaleTimeString())
+                setSearchQuery('')
+                setAiAnalysis(null)
+            } else {
+                setError(data.error)
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch trends')
         } finally {
-            setIsLoading(false)
-            setIsRefreshing(false)
+            setLoading(false)
         }
-    }, [region, category])
+    }
 
-    // Initial load and filter changes
-    useEffect(() => {
-        fetchTrends()
-    }, [fetchTrends])
+    const searchAndAnalyze = async () => {
+        if (!searchInput.trim()) return
 
-    // Auto-refresh every 5 minutes
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchTrends(true)
-        }, 5 * 60 * 1000)
-        return () => clearInterval(interval)
-    }, [fetchTrends])
+        setAnalyzing(true)
+        setError(null)
+        try {
+            const response = await fetch('/api/youtube/trending', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: searchInput,
+                    analyzeWithAI: true,
+                }),
+            })
+            const data = await response.json()
 
-    const formatTimeAgo = (date: Date) => {
-        const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
-        if (seconds < 60) return 'Just now'
-        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-        return `${Math.floor(seconds / 3600)}h ago`
+            if (data.success) {
+                setVideos(data.data.videos)
+                setAiAnalysis(data.data.aiAnalysis)
+                setSearchQuery(searchInput)
+                setLastFetched(new Date(data.data.fetchedAt).toLocaleTimeString())
+            } else {
+                setError(data.error)
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to search')
+        } finally {
+            setAnalyzing(false)
+        }
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            searchAndAnalyze()
+        }
     }
 
     return (
-        <div className="space-y-6">
+        <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
             {/* Header */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <motion.div variants={item} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <Flame className="h-8 w-8 text-orange-500" />
-                        Trends Discovery
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Real-time trending content across all platforms
+                    <div className="flex items-center gap-2 mb-1">
+                        <Youtube className="w-6 h-6 text-red-500" />
+                        <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                            Real-Time Trends
+                        </h1>
+                        <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
+                            LIVE
+                        </span>
+                    </div>
+                    <p className="text-[#7E7F83]">
+                        {searchQuery ? `Results for "${searchQuery}"` : 'Trending on YouTube India right now'}
+                        {lastFetched && <span className="ml-2 text-xs">• Updated {lastFetched}</span>}
                     </p>
                 </div>
+
                 <div className="flex items-center gap-3">
-                    {lastUpdate && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Updated {formatTimeAgo(lastUpdate)}
-                        </span>
-                    )}
                     <button
-                        onClick={() => fetchTrends(true)}
-                        disabled={isRefreshing}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                        onClick={fetchTrending}
+                        disabled={loading}
+                        className="p-2.5 rounded-lg border border-[#E8E8E9] dark:border-[#34312D] hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
                     >
-                        <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
-                        Refresh
+                        <RefreshCw className={cn("w-5 h-5 text-[#7E7F83]", loading && "animate-spin")} />
                     </button>
                 </div>
-            </div>
+            </motion.div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <select
-                        value={region}
-                        onChange={(e) => setRegion(e.target.value)}
-                        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                        {regions.map((r) => (
-                            <option key={r.value} value={r.value}>{r.label}</option>
-                        ))}
-                    </select>
+            {/* Search */}
+            <motion.div variants={item} className="flex gap-3">
+                <div className="flex-1 relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7E7F83]" />
+                    <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Search trends (e.g., 'tech reviews', 'cooking recipes', 'fitness')"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] text-[#14110F] dark:text-[#F3F3F4] placeholder:text-[#7E7F83] focus:outline-none focus:border-[#D9C5B2]"
+                    />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                        {categories.map((c) => (
-                            <option key={c.value} value={c.value}>{c.label}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
+                <button
+                    onClick={searchAndAnalyze}
+                    disabled={analyzing || !searchInput.trim()}
+                    className="px-6 py-3 rounded-xl bg-[#D9C5B2] text-[#14110F] font-medium hover:bg-[#C4B09D] transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                    <Sparkles className={cn("w-5 h-5", analyzing && "animate-pulse")} />
+                    {analyzing ? 'Analyzing...' : 'Search & Analyze'}
+                </button>
+            </motion.div>
 
-            {/* Tabs */}
-            <div className="border-b">
-                <nav className="flex gap-4 overflow-x-auto pb-px" aria-label="Tabs">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                "flex items-center gap-2 whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors",
-                                activeTab === tab.id
-                                    ? "border-primary text-foreground"
-                                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
-                            )}
-                        >
-                            <tab.icon className="h-4 w-4" />
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-            </div>
+            {/* Error */}
+            {error && (
+                <motion.div variants={item} className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
+                    {error}
+                </motion.div>
+            )}
 
-            {/* Content */}
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <div className="flex flex-col items-center gap-4">
-                        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-muted-foreground">Discovering trends...</p>
-                    </div>
-                </div>
-            ) : (
-                <AnimatePresence mode="wait">
+            {/* AI Analysis Panel */}
+            <AnimatePresence>
+                {aiAnalysis && (
                     <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
                     >
-                        {/* Trending Topics */}
-                        {activeTab === 'topics' && data?.topics && (
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {data.topics.map((topic, i) => (
-                                    <motion.div
-                                        key={topic.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.05 }}
-                                        className="group rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-primary/30"
-                                    >
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="flex-1">
-                                                <h3 className="font-semibold group-hover:text-primary transition-colors">{topic.topic}</h3>
-                                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{topic.description}</p>
-                                            </div>
-                                            <div className="flex-shrink-0 ml-3">
-                                                <div className={cn(
-                                                    "flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full",
-                                                    topic.hotness >= 90 ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
-                                                        topic.hotness >= 80 ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" :
-                                                            "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                                )}>
-                                                    <Flame className="h-3 w-3" />
-                                                    {topic.hotness}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-3">
-                                            <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{topic.category}</span>
-                                            <div className="flex gap-1">
-                                                {topic.platforms.map((p) => {
-                                                    const Icon = platformIcons[p] || Globe
-                                                    return <Icon key={p} className="h-3.5 w-3.5 text-muted-foreground" />
-                                                })}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Trending Songs */}
-                        {activeTab === 'songs' && data?.songs && (
-                            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                                <div className="divide-y">
-                                    {data.songs.map((song, i) => {
-                                        const PlatformIcon = platformIcons[song.platform] || Music
-                                        return (
-                                            <motion.div
-                                                key={song.id}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: i * 0.05 }}
-                                                className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors group"
-                                            >
-                                                <span className="text-lg font-bold text-muted-foreground w-6">{i + 1}</span>
-                                                <div className="relative">
-                                                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl">
-                                                        🎵
-                                                    </div>
-                                                    <div className={cn(
-                                                        "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center",
-                                                        platformColors[song.platform]
-                                                    )}>
-                                                        <PlatformIcon className="h-3 w-3" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium truncate group-hover:text-primary transition-colors">{song.title}</p>
-                                                    <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="font-semibold">{song.uses}</p>
-                                                    <p className="text-xs text-green-500 flex items-center justify-end gap-0.5">
-                                                        <ArrowUpRight className="h-3 w-3" />
-                                                        {song.growth}
-                                                    </p>
-                                                </div>
-                                                <button className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
-                                                    <ExternalLink className="h-4 w-4" />
-                                                </button>
-                                            </motion.div>
-                                        )
-                                    })}
+                        <div className="p-6 rounded-xl bg-gradient-to-br from-[#D9C5B2]/20 to-[#D9C5B2]/5 dark:from-[#D9C5B2]/10 dark:to-transparent border border-[#D9C5B2]/30">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="p-2 rounded-lg bg-[#D9C5B2]">
+                                    <Sparkles className="w-5 h-5 text-[#14110F]" />
                                 </div>
+                                <h2 className="font-semibold text-lg text-[#14110F] dark:text-[#F3F3F4]">AI Marketing Analysis</h2>
                             </div>
-                        )}
 
-                        {/* Trending Hashtags */}
-                        {activeTab === 'hashtags' && data?.hashtags && (
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                {data.hashtags.map((hashtag, i) => {
-                                    const PlatformIcon = platformIcons[hashtag.platform] || Hash
-                                    return (
-                                        <motion.div
-                                            key={hashtag.id}
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            transition={{ delay: i * 0.03 }}
-                                            className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group hover:border-primary/30"
-                                        >
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className={cn(
-                                                    "w-8 h-8 rounded-lg flex items-center justify-center",
-                                                    platformColors[hashtag.platform]
-                                                )}>
-                                                    <PlatformIcon className="h-4 w-4" />
-                                                </div>
-                                                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{hashtag.category}</span>
-                                            </div>
-                                            <p className="font-semibold text-lg group-hover:text-primary transition-colors">{hashtag.tag}</p>
-                                            <div className="flex items-center justify-between mt-2 text-sm">
-                                                <span className="text-muted-foreground">{hashtag.posts} posts</span>
-                                                <span className="text-green-500 font-medium">{hashtag.growth}</span>
-                                            </div>
-                                        </motion.div>
-                                    )
-                                })}
-                            </div>
-                        )}
-
-                        {/* Viral Clips */}
-                        {activeTab === 'clips' && data?.clips && (
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                                {data.clips.map((clip, i) => {
-                                    const PlatformIcon = platformIcons[clip.platform] || Play
-                                    return (
-                                        <motion.div
-                                            key={clip.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: i * 0.05 }}
-                                            className="group rounded-xl border bg-card shadow-sm overflow-hidden hover:shadow-lg transition-all cursor-pointer"
-                                        >
-                                            <div className="relative aspect-[9/16] bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                                                <Play className="h-12 w-12 text-white/50 group-hover:text-white group-hover:scale-110 transition-all" />
-                                                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
-                                                    {clip.duration}
-                                                </div>
-                                                <div className={cn(
-                                                    "absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center",
-                                                    platformColors[clip.platform]
-                                                )}>
-                                                    <PlatformIcon className="h-3 w-3" />
-                                                </div>
-                                            </div>
-                                            <div className="p-3">
-                                                <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{clip.title}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">{clip.creator}</p>
-                                                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                                                    <span>{clip.views} views</span>
-                                                    <span>{clip.likes} likes</span>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )
-                                })}
-                            </div>
-                        )}
-
-                        {/* YouTube SEO Keywords */}
-                        {activeTab === 'keywords' && data?.youtubeKeywords && (
-                            <div className="space-y-4">
-                                <div className="rounded-xl border bg-card p-6 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="p-2 rounded-lg bg-red-500/10">
-                                            <Youtube className="h-5 w-5 text-red-500" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold">Trending YouTube Keywords</h3>
-                                            <p className="text-sm text-muted-foreground">High-volume search terms for SEO optimization</p>
-                                        </div>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* Why Trending */}
+                                <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Why Trending</h3>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {data.youtubeKeywords.map((keyword, i) => (
-                                            <motion.button
-                                                key={i}
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: i * 0.03 }}
-                                                onClick={() => navigator.clipboard.writeText(keyword)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border bg-background text-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all group"
-                                            >
-                                                <Search className="h-3 w-3 text-muted-foreground group-hover:text-primary-foreground" />
-                                                {keyword}
-                                            </motion.button>
+                                    <p className="text-sm text-[#7E7F83]">{aiAnalysis.whyTrending}</p>
+                                </div>
+
+                                {/* Best Hashtags */}
+                                <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Hash className="w-4 h-4 text-blue-500" />
+                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Best Hashtags</h3>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {aiAnalysis.bestHashtags.map((tag, i) => (
+                                            <span key={i} className="px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                                #{tag}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="rounded-xl border bg-gradient-to-br from-red-500/5 via-orange-500/5 to-yellow-500/5 p-6">
-                                    <div className="flex items-start gap-3">
-                                        <Zap className="h-5 w-5 text-yellow-500 mt-0.5" />
-                                        <div>
-                                            <h3 className="font-semibold">Pro Tip</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                Click any keyword to copy it. Use these in your video titles, descriptions, and tags to improve discoverability.
-                                                Combine 2-3 related keywords for maximum impact.
-                                            </p>
-                                        </div>
+                                {/* Optimal Length */}
+                                <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Clock className="w-4 h-4 text-amber-500" />
+                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Optimal Length</h3>
+                                    </div>
+                                    <p className="text-sm text-[#7E7F83]">{aiAnalysis.optimalLength}</p>
+                                </div>
+
+                                {/* Content Ideas */}
+                                <div className="md:col-span-2 lg:col-span-3 p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Lightbulb className="w-4 h-4 text-amber-500" />
+                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Content Ideas For You</h3>
+                                    </div>
+                                    <div className="grid md:grid-cols-3 gap-3">
+                                        {aiAnalysis.contentIdeas.map((idea, i) => (
+                                            <div key={i} className="p-3 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
+                                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-1">{idea.title}</p>
+                                                <p className="text-xs text-[#7E7F83] mb-2">Hook: "{idea.hook}"</p>
+                                                <span className="px-2 py-0.5 text-xs rounded-full bg-[#D9C5B2] text-[#14110F]">{idea.format}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </motion.div>
-                </AnimatePresence>
+                )}
+            </AnimatePresence>
+
+            {/* Loading State */}
+            {loading && (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="animate-pulse rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden">
+                            <div className="aspect-video bg-[#F3F3F4] dark:bg-[#34312D]" />
+                            <div className="p-4 space-y-3">
+                                <div className="h-4 bg-[#F3F3F4] dark:bg-[#34312D] rounded w-3/4" />
+                                <div className="h-3 bg-[#F3F3F4] dark:bg-[#34312D] rounded w-1/2" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
-        </div>
+
+            {/* Videos Grid */}
+            {!loading && videos.length > 0 && (
+                <motion.div variants={item} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {videos.map((video, index) => (
+                        <motion.a
+                            key={video.id}
+                            href={video.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="group rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden hover:border-[#D9C5B2] transition-all hover:shadow-lg"
+                        >
+                            {/* Thumbnail */}
+                            <div className="relative aspect-video">
+                                <img
+                                    src={video.thumbnail}
+                                    alt={video.title}
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-white text-xs font-medium">
+                                    {video.formattedDuration}
+                                </div>
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
+                                    <Play className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                                {index < 3 && (
+                                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-medium flex items-center gap-1">
+                                        <Zap className="w-3 h-3" />
+                                        #{index + 1} Trending
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4">
+                                <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-2 group-hover:text-[#D9C5B2] transition-colors">
+                                    {video.title}
+                                </h3>
+                                <p className="text-xs text-[#7E7F83] mb-3">{video.channelTitle}</p>
+
+                                {/* Stats */}
+                                <div className="flex items-center gap-3 text-xs text-[#7E7F83]">
+                                    <span className="flex items-center gap-1">
+                                        <Eye className="w-3.5 h-3.5" />
+                                        {video.formattedViews}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <Heart className="w-3.5 h-3.5" />
+                                        {video.formattedLikes}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                        {video.formattedComments}
+                                    </span>
+                                </div>
+
+                                {/* Engagement Rate */}
+                                <div className="mt-3 pt-3 border-t border-[#E8E8E9] dark:border-[#34312D] flex items-center justify-between">
+                                    <span className="text-xs text-[#7E7F83]">{video.categoryName}</span>
+                                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                        {video.engagementRate} engagement
+                                    </span>
+                                </div>
+
+                                {/* Tags */}
+                                {video.tags.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1">
+                                        {video.tags.slice(0, 3).map((tag, i) => (
+                                            <span key={i} className="px-1.5 py-0.5 text-[10px] rounded bg-[#F3F3F4] dark:bg-[#34312D] text-[#7E7F83]">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </motion.a>
+                    ))}
+                </motion.div>
+            )}
+
+            {/* Empty State */}
+            {!loading && videos.length === 0 && !error && (
+                <motion.div variants={item} className="text-center py-12">
+                    <Youtube className="w-12 h-12 mx-auto text-[#7E7F83] mb-4" />
+                    <h3 className="font-medium text-[#14110F] dark:text-[#F3F3F4] mb-2">No videos found</h3>
+                    <p className="text-sm text-[#7E7F83]">Try a different search query or refresh trending</p>
+                </motion.div>
+            )}
+        </motion.div>
     )
 }

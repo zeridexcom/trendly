@@ -26,6 +26,29 @@ export const isAIAvailable = () => {
     return !!(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY)
 }
 
+// Generic content generation function
+export async function generateContent(prompt: string): Promise<string> {
+    const openai = getOpenAI()
+    if (!openai) {
+        throw new Error('AI service not configured')
+    }
+
+    const response = await openai.chat.completions.create({
+        model: 'google/gemini-2.0-flash-001',
+        messages: [
+            {
+                role: 'system',
+                content: 'You are an expert digital marketing strategist and content creator. Provide actionable, specific advice.'
+            },
+            { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+    })
+
+    return response.choices[0]?.message?.content || ''
+}
+
 // ============================================
 // DASHBOARD AI INSIGHTS
 // ============================================
