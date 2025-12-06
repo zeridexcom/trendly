@@ -18,11 +18,15 @@ import {
     Target,
     Zap,
     Youtube,
-    Filter,
-    ChevronRight,
+    X,
+    CheckCircle,
+    AlertTriangle,
+    ArrowRight,
+    Copy,
+    ThumbsUp,
+    BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import Image from 'next/image'
 
 interface YouTubeVideo {
     id: string
@@ -54,6 +58,25 @@ interface AIAnalysis {
     postingAdvice: string
 }
 
+interface VideoAnalysis {
+    viralScore: number
+    whyViral: string
+    keyFactors: { factor: string; analysis: string; impact: string }[]
+    thumbnailInsights: string
+    titleAnalysis: string
+    contentStrategy: string
+    audienceAppeal: string
+    recreateStrategy: {
+        yourTitle: string
+        yourHook: string
+        yourFormat: string
+        yourAngle: string
+        keyElements: string[]
+    }
+    doThis: string[]
+    avoidThis: string[]
+}
+
 const container = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.05 } }
@@ -74,7 +97,11 @@ export default function TrendsPage() {
     const [error, setError] = useState<string | null>(null)
     const [lastFetched, setLastFetched] = useState<string>('')
 
-    // Fetch trending videos on load
+    // Video analysis modal state
+    const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
+    const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null)
+    const [analyzingVideo, setAnalyzingVideo] = useState(false)
+
     useEffect(() => {
         fetchTrending()
     }, [])
@@ -130,6 +157,38 @@ export default function TrendsPage() {
         } finally {
             setAnalyzing(false)
         }
+    }
+
+    const analyzeVideo = async (video: YouTubeVideo) => {
+        setSelectedVideo(video)
+        setVideoAnalysis(null)
+        setAnalyzingVideo(true)
+
+        try {
+            const response = await fetch('/api/youtube/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video }),
+            })
+            const data = await response.json()
+
+            if (data.success) {
+                setVideoAnalysis(data.data.analysis)
+            }
+        } catch (err: any) {
+            console.error('Analysis error:', err)
+        } finally {
+            setAnalyzingVideo(false)
+        }
+    }
+
+    const closeModal = () => {
+        setSelectedVideo(null)
+        setVideoAnalysis(null)
+    }
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -217,7 +276,6 @@ export default function TrendsPage() {
                             </div>
 
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {/* Why Trending */}
                                 <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
                                     <div className="flex items-center gap-2 mb-2">
                                         <TrendingUp className="w-4 h-4 text-emerald-500" />
@@ -226,7 +284,6 @@ export default function TrendsPage() {
                                     <p className="text-sm text-[#7E7F83]">{aiAnalysis.whyTrending}</p>
                                 </div>
 
-                                {/* Best Hashtags */}
                                 <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Hash className="w-4 h-4 text-blue-500" />
@@ -241,7 +298,6 @@ export default function TrendsPage() {
                                     </div>
                                 </div>
 
-                                {/* Optimal Length */}
                                 <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Clock className="w-4 h-4 text-amber-500" />
@@ -250,7 +306,6 @@ export default function TrendsPage() {
                                     <p className="text-sm text-[#7E7F83]">{aiAnalysis.optimalLength}</p>
                                 </div>
 
-                                {/* Content Ideas */}
                                 <div className="md:col-span-2 lg:col-span-3 p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Lightbulb className="w-4 h-4 text-amber-500" />
@@ -291,18 +346,15 @@ export default function TrendsPage() {
             {!loading && videos.length > 0 && (
                 <motion.div variants={item} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {videos.map((video, index) => (
-                        <motion.a
+                        <motion.div
                             key={video.id}
-                            href={video.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
                             className="group rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden hover:border-[#D9C5B2] transition-all hover:shadow-lg"
                         >
                             {/* Thumbnail */}
-                            <div className="relative aspect-video">
+                            <a href={video.url} target="_blank" rel="noopener noreferrer" className="relative block aspect-video">
                                 <img
                                     src={video.thumbnail}
                                     alt={video.title}
@@ -320,11 +372,11 @@ export default function TrendsPage() {
                                         #{index + 1} Trending
                                     </div>
                                 )}
-                            </div>
+                            </a>
 
                             {/* Content */}
                             <div className="p-4">
-                                <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-2 group-hover:text-[#D9C5B2] transition-colors">
+                                <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-2">
                                     {video.title}
                                 </h3>
                                 <p className="text-xs text-[#7E7F83] mb-3">{video.channelTitle}</p>
@@ -345,26 +397,21 @@ export default function TrendsPage() {
                                     </span>
                                 </div>
 
-                                {/* Engagement Rate */}
+                                {/* Engagement Rate & Analyze Button */}
                                 <div className="mt-3 pt-3 border-t border-[#E8E8E9] dark:border-[#34312D] flex items-center justify-between">
-                                    <span className="text-xs text-[#7E7F83]">{video.categoryName}</span>
                                     <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                                         {video.engagementRate} engagement
                                     </span>
+                                    <button
+                                        onClick={() => analyzeVideo(video)}
+                                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#D9C5B2] text-[#14110F] hover:bg-[#C4B09D] transition-colors flex items-center gap-1"
+                                    >
+                                        <Sparkles className="w-3 h-3" />
+                                        Why Viral?
+                                    </button>
                                 </div>
-
-                                {/* Tags */}
-                                {video.tags.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-1">
-                                        {video.tags.slice(0, 3).map((tag, i) => (
-                                            <span key={i} className="px-1.5 py-0.5 text-[10px] rounded bg-[#F3F3F4] dark:bg-[#34312D] text-[#7E7F83]">
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
-                        </motion.a>
+                        </motion.div>
                     ))}
                 </motion.div>
             )}
@@ -377,6 +424,196 @@ export default function TrendsPage() {
                     <p className="text-sm text-[#7E7F83]">Try a different search query or refresh trending</p>
                 </motion.div>
             )}
+
+            {/* Video Analysis Modal */}
+            <AnimatePresence>
+                {selectedVideo && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={closeModal}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#1A1714] rounded-2xl shadow-2xl"
+                        >
+                            {/* Modal Header */}
+                            <div className="sticky top-0 z-10 flex items-start gap-4 p-6 border-b border-[#E8E8E9] dark:border-[#34312D] bg-white dark:bg-[#1A1714]">
+                                <img src={selectedVideo.thumbnail} alt="" className="w-32 h-20 object-cover rounded-lg" />
+                                <div className="flex-1 min-w-0">
+                                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-1">
+                                        {selectedVideo.title}
+                                    </h2>
+                                    <p className="text-sm text-[#7E7F83]">{selectedVideo.channelTitle}</p>
+                                    <div className="flex items-center gap-3 mt-2 text-xs text-[#7E7F83]">
+                                        <span>{selectedVideo.formattedViews} views</span>
+                                        <span>{selectedVideo.engagementRate} engagement</span>
+                                    </div>
+                                </div>
+                                <button onClick={closeModal} className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D]">
+                                    <X className="w-5 h-5 text-[#7E7F83]" />
+                                </button>
+                            </div>
+
+                            {/* Analysis Content */}
+                            <div className="p-6 space-y-6">
+                                {analyzingVideo ? (
+                                    <div className="text-center py-12">
+                                        <Sparkles className="w-10 h-10 mx-auto text-[#D9C5B2] animate-pulse mb-4" />
+                                        <p className="text-[#7E7F83]">AI is analyzing why this video went viral...</p>
+                                    </div>
+                                ) : videoAnalysis ? (
+                                    <>
+                                        {/* Viral Score */}
+                                        <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20">
+                                            <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white text-2xl font-bold">
+                                                {videoAnalysis.viralScore}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Viral Score</h3>
+                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.whyViral}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Key Factors */}
+                                        <div>
+                                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-3 flex items-center gap-2">
+                                                <BarChart3 className="w-5 h-5 text-[#D9C5B2]" />
+                                                Key Viral Factors
+                                            </h3>
+                                            <div className="grid md:grid-cols-2 gap-3">
+                                                {videoAnalysis.keyFactors.map((factor, i) => (
+                                                    <div key={i} className="p-4 rounded-xl bg-[#F3F3F4] dark:bg-[#34312D]">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">{factor.factor}</span>
+                                                            <span className={cn(
+                                                                "px-2 py-0.5 text-xs rounded-full font-medium",
+                                                                factor.impact === 'HIGH' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                                                                factor.impact === 'MEDIUM' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                                                                factor.impact === 'LOW' && "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                                                            )}>
+                                                                {factor.impact}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-[#7E7F83]">{factor.analysis}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Deep Insights */}
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
+                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">🎬 Thumbnail Strategy</h4>
+                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.thumbnailInsights}</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
+                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">📝 Title Analysis</h4>
+                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.titleAnalysis}</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
+                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">🎯 Content Strategy</h4>
+                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.contentStrategy}</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
+                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">👥 Audience Appeal</h4>
+                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.audienceAppeal}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Recreate Strategy */}
+                                        <div className="p-5 rounded-xl bg-gradient-to-br from-[#D9C5B2]/20 to-transparent border border-[#D9C5B2]/30">
+                                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-4 flex items-center gap-2">
+                                                <Lightbulb className="w-5 h-5 text-[#D9C5B2]" />
+                                                How YOU Can Recreate This
+                                            </h3>
+                                            <div className="space-y-3">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Your Title:</span>
+                                                    <div className="flex-1 flex items-center gap-2">
+                                                        <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{videoAnalysis.recreateStrategy.yourTitle}</p>
+                                                        <button onClick={() => copyToClipboard(videoAnalysis.recreateStrategy.yourTitle)} className="p-1 rounded hover:bg-[#D9C5B2]/20">
+                                                            <Copy className="w-3.5 h-3.5 text-[#7E7F83]" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Your Hook:</span>
+                                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">"{videoAnalysis.recreateStrategy.yourHook}"</p>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Format:</span>
+                                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{videoAnalysis.recreateStrategy.yourFormat}</p>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Your Angle:</span>
+                                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{videoAnalysis.recreateStrategy.yourAngle}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Do This / Avoid This */}
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                                                <h4 className="font-medium text-sm text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Do This
+                                                </h4>
+                                                <ul className="space-y-2">
+                                                    {videoAnalysis.doThis.map((tip, i) => (
+                                                        <li key={i} className="text-sm text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
+                                                            <ArrowRight className="w-3 h-3 mt-1 shrink-0" />
+                                                            {tip}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                                                <h4 className="font-medium text-sm text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
+                                                    <AlertTriangle className="w-4 h-4" />
+                                                    Avoid This
+                                                </h4>
+                                                <ul className="space-y-2">
+                                                    {videoAnalysis.avoidThis.map((tip, i) => (
+                                                        <li key={i} className="text-sm text-red-700 dark:text-red-400 flex items-start gap-2">
+                                                            <X className="w-3 h-3 mt-1 shrink-0" />
+                                                            {tip}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-3 pt-4 border-t border-[#E8E8E9] dark:border-[#34312D]">
+                                            <a
+                                                href={selectedVideo.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-medium text-center hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Youtube className="w-5 h-5" />
+                                                Watch on YouTube
+                                            </a>
+                                            <button
+                                                onClick={closeModal}
+                                                className="flex-1 py-3 rounded-xl border border-[#E8E8E9] dark:border-[#34312D] text-[#14110F] dark:text-[#F3F3F4] font-medium hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : null}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     )
 }
