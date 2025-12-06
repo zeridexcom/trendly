@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header'
 import MobileNav from '@/components/layout/MobileNav'
 import Breadcrumbs from '@/components/layout/Breadcrumbs'
 import { SidebarProvider, useSidebar } from '@/components/layout/SidebarContext'
+import CommandPalette from '@/components/CommandPalette'
 import { cn } from '@/lib/utils'
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -14,12 +15,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const { isCollapsed } = useSidebar()
 
     return (
-        <div className="flex bg-slate-50 dark:bg-slate-950 min-h-screen font-sans antialiased">
+        <div className="flex bg-white dark:bg-[#14110F] min-h-screen font-sans antialiased">
             {/* Desktop Sidebar */}
             <Sidebar />
 
             {/* Mobile Navigation */}
             <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+
+            {/* Command Palette (⌘K) */}
+            <CommandPalette />
 
             {/* Main Content */}
             <motion.div
@@ -34,7 +38,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 <Header onMobileMenuOpen={() => setMobileNavOpen(true)} />
 
                 {/* Main Content Area */}
-                <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+                <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-[#F3F3F4] dark:bg-[#14110F]">
                     <div className="max-w-[1400px] mx-auto">
                         {/* Breadcrumbs */}
                         <Breadcrumbs />

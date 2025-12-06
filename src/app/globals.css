@@ -12,23 +12,24 @@
 
 @layer base {
   :root {
-    /* Light mode - clean & minimal */
-    --background: 0 0% 97%;
-    /* Platinum-ish */
+    /* Light mode - CLEAN WHITE */
+    --background: 0 0% 100%;
+    /* Pure White */
     --foreground: 20 11% 7%;
     /* Pitch Black */
     --card: 0 0% 100%;
+    /* White */
     --card-foreground: 20 11% 7%;
     --popover: 0 0% 100%;
     --popover-foreground: 20 11% 7%;
     --primary: 30 19% 77%;
     /* Pale Oak */
     --primary-foreground: 20 11% 7%;
-    --secondary: 0 0% 95%;
-    /* Platinum */
+    --secondary: 0 0% 97%;
+    /* Off-white */
     --secondary-foreground: 20 12% 18%;
     /* Graphite */
-    --muted: 0 0% 95%;
+    --muted: 0 0% 97%;
     --muted-foreground: 0 1% 50%;
     /* Grey */
     --accent: 30 19% 77%;
@@ -36,8 +37,8 @@
     --accent-foreground: 20 11% 7%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
     --ring: 30 19% 77%;
     /* Pale Oak */
     --radius: 0.75rem;
