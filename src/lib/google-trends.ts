@@ -19,19 +19,20 @@ interface TrendData {
     relatedQueries: string[]
 }
 
-// Fetch daily trending searches for a region
+// Fetch daily trending searches for a region (server-side backup)
 export async function getDailyTrends(geo: string = 'IN'): Promise<TrendingSearch[]> {
     try {
-        // Use Google Trends daily search API (returns JSON wrapped in callback)
-        const response = await fetch(
-            `https://trends.google.com/trends/api/dailytrends?hl=en-${geo}&tz=-330&geo=${geo}&ns=15`,
-            {
-                next: { revalidate: 3600 }, // Cache for 1 hour
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            }
-        )
+        // Try fetching from Google Trends via a CORS proxy
+        const proxyUrl = 'https://api.allorigins.win/raw?url='
+        const trendsUrl = encodeURIComponent(`https://trends.google.com/trends/api/dailytrends?hl=en-${geo}&tz=-330&geo=${geo}&ns=15`)
+
+        const response = await fetch(`${proxyUrl}${trendsUrl}`, {
+            next: { revalidate: 3600 }, // Cache for 1 hour
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch from proxy')
+        }
 
         const text = await response.text()
 
