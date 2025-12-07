@@ -22,39 +22,44 @@ interface TrendData {
 // Fetch daily trending searches for a region
 export async function getDailyTrends(geo: string = 'IN'): Promise<TrendingSearch[]> {
     try {
-        // Using a proxy or direct fetch - Google Trends doesn't have official API
-        // For production, consider using SerpAPI or similar service
+        // Use Google Trends daily search API (returns JSON wrapped in callback)
         const response = await fetch(
-            `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`,
-            { next: { revalidate: 3600 } } // Cache for 1 hour
+            `https://trends.google.com/trends/api/dailytrends?hl=en-${geo}&tz=-330&geo=${geo}&ns=15`,
+            {
+                next: { revalidate: 3600 }, // Cache for 1 hour
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            }
         )
 
         const text = await response.text()
 
-        // Parse RSS feed
+        // Remove the ")]}'" prefix that Google adds for security
+        const jsonText = text.replace(/^\)\]\}'\n/, '')
+        const data = JSON.parse(jsonText)
+
         const trends: TrendingSearch[] = []
-        const itemRegex = /<item>([\s\S]*?)<\/item>/g
-        const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/
-        const trafficRegex = /<ht:approx_traffic>(.*?)<\/ht:approx_traffic>/
-        const newsRegex = /<ht:news_item_url>(.*?)<\/ht:news_item_url>/
-        const imageRegex = /<ht:picture>(.*?)<\/ht:picture>/
 
-        let match
-        while ((match = itemRegex.exec(text)) !== null) {
-            const item = match[1]
-            const title = titleRegex.exec(item)?.[1] || ''
-            const traffic = trafficRegex.exec(item)?.[1] || '0'
-            const newsUrl = newsRegex.exec(item)?.[1]
-            const imageUrl = imageRegex.exec(item)?.[1]
+        // Parse the response - structure is default.trendingSearchesDays[0].trendingSearches
+        const trendingDays = data?.default?.trendingSearchesDays || []
 
-            if (title) {
-                trends.push({
-                    title,
-                    traffic,
-                    relatedQueries: [],
-                    newsUrl,
-                    imageUrl,
-                })
+        for (const day of trendingDays) {
+            for (const search of day.trendingSearches || []) {
+                const title = search.title?.query || ''
+                const traffic = search.formattedTraffic || '0'
+                const imageUrl = search.image?.imageUrl
+                const newsUrl = search.articles?.[0]?.url
+
+                if (title) {
+                    trends.push({
+                        title,
+                        traffic,
+                        relatedQueries: search.relatedQueries?.map((q: any) => q.query) || [],
+                        newsUrl,
+                        imageUrl,
+                    })
+                }
             }
         }
 
