@@ -4,14 +4,8 @@ import { cookies } from 'next/headers'
 import { Sparkles, ArrowRight, TrendingUp, Calendar, Lightbulb, Zap } from 'lucide-react'
 
 export default async function HomePage() {
-  // Check if user is logged in
-  const cookieStore = await cookies()
-  const token = cookieStore.get('auth-token')?.value
-
-  // If logged in, redirect to dashboard
-  if (token) {
-    redirect('/dashboard')
-  }
+  // Always redirect to dashboard
+  redirect('/dashboard')
 
   return (
     <div
