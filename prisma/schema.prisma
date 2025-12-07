@@ -89,6 +89,29 @@ enum NotificationType {
   MENTION
 }
 
+enum UserType {
+  CONTENT_CREATOR
+  BUSINESS
+  JOURNALIST
+  STUDENT
+  OTHER
+}
+
+enum ContentNiche {
+  ENTERTAINMENT
+  TECH
+  GAMING
+  FASHION
+  FINANCE
+  HEALTH
+  EDUCATION
+  NEWS
+  SPORTS
+  FOOD
+  TRAVEL
+  OTHER
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -97,12 +120,22 @@ model User {
   id            String   @id @default(cuid())
   name          String
   email         String   @unique
-  passwordHash  String
+  passwordHash  String?
   role          UserRole @default(CREATOR)
   isActive      Boolean  @default(true)
   avatarUrl     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  // OAuth fields
+  googleId      String?  @unique
+  emailVerified Boolean  @default(false)
+  
+  // Onboarding preferences
+  userType           UserType?
+  niche              ContentNiche?
+  preferredPlatforms Platform[]
+  onboardingComplete Boolean @default(false)
 
   // Relations
   trendsCreated    Trend[]
@@ -115,6 +148,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@index([googleId])
 }
 
 model Workspace {
