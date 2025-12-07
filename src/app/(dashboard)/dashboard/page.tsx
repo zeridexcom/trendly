@@ -84,53 +84,67 @@ export default function DashboardPage() {
 
     const fetchTrendingTopics = async () => {
         setLoadingTopics(true)
-        try {
-            // Fetch directly from Google Trends via CORS proxy (client-side)
-            const proxyUrl = 'https://api.allorigins.win/raw?url='
-            const trendsUrl = encodeURIComponent('https://trends.google.com/trends/api/dailytrends?hl=en-IN&tz=-330&geo=IN&ns=15')
 
-            const response = await fetch(`${proxyUrl}${trendsUrl}`)
+        // Multiple CORS proxies to try
+        const corsProxies = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://api.codetabs.com/v1/proxy?quest=',
+        ]
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch trends')
-            }
+        const trendsUrl = 'https://trends.google.com/trends/api/dailytrends?hl=en-IN&tz=-330&geo=IN&ns=15'
 
-            const text = await response.text()
+        for (const proxyUrl of corsProxies) {
+            try {
+                const response = await fetch(`${proxyUrl}${encodeURIComponent(trendsUrl)}`)
 
-            // Remove the ")]}'" prefix that Google adds
-            const jsonText = text.replace(/^\)\]\}'\n/, '')
-            const data = JSON.parse(jsonText)
+                if (!response.ok) {
+                    continue // Try next proxy
+                }
 
-            const trends: TrendingTopic[] = []
-            const trendingDays = data?.default?.trendingSearchesDays || []
+                const text = await response.text()
 
-            for (const day of trendingDays) {
-                for (const search of day.trendingSearches || []) {
-                    const title = search.title?.query || ''
-                    const traffic = search.formattedTraffic || '0'
+                // Remove the ")]}'" prefix that Google adds
+                const jsonText = text.replace(/^\)\]\}'\n/, '')
+                const data = JSON.parse(jsonText)
 
-                    if (title) {
-                        trends.push({
-                            title,
-                            formattedTraffic: traffic,
-                        })
+                const trends: TrendingTopic[] = []
+                const trendingDays = data?.default?.trendingSearchesDays || []
+
+                for (const day of trendingDays) {
+                    for (const search of day.trendingSearches || []) {
+                        const title = search.title?.query || ''
+                        const traffic = search.formattedTraffic || '0'
+
+                        if (title) {
+                            trends.push({
+                                title,
+                                formattedTraffic: traffic,
+                            })
+                        }
                     }
                 }
-            }
 
-            setTrendingTopics(trends.slice(0, 8))
-        } catch (err) {
-            console.error('Failed to fetch topics:', err)
-            // Fallback to backend API if CORS proxy fails
-            try {
-                const response = await fetch('/api/trends/google?geo=IN')
-                const data = await response.json()
-                if (data.success && data.data.trends) {
-                    setTrendingTopics(data.data.trends.slice(0, 8))
+                if (trends.length > 0) {
+                    setTrendingTopics(trends.slice(0, 8))
+                    setLoadingTopics(false)
+                    return // Success!
                 }
-            } catch (backendErr) {
-                console.error('Backend API also failed:', backendErr)
+            } catch (err) {
+                console.error(`Proxy ${proxyUrl} failed:`, err)
+                continue // Try next proxy
             }
+        }
+
+        // Fallback to backend API if all CORS proxies fail
+        try {
+            const response = await fetch('/api/trends/google?geo=IN')
+            const data = await response.json()
+            if (data.success && data.data.trends && data.data.trends.length > 0) {
+                setTrendingTopics(data.data.trends.slice(0, 8))
+            }
+        } catch (backendErr) {
+            console.error('Backend API also failed:', backendErr)
         } finally {
             setLoadingTopics(false)
         }
