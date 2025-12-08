@@ -27,21 +27,24 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import VideoDetailModal from '@/components/VideoDetailModal'
 
 interface YouTubeVideo {
     id: string
     title: string
     thumbnail: string
     channelTitle: string
+    description: string
+    tags: string[]
+    viewCount: number
+    likeCount: number
+    commentCount: number
     formattedViews: string
+    formattedLikes: string
+    formattedComments: string
     engagementRate: string
     url: string
     daysAgo?: number
-    aiInsight?: {
-        whyPopular: string
-        keyTakeaway: string
-        contentIdea: string
-    }
 }
 
 interface TrendingTopic {
@@ -74,6 +77,8 @@ export default function DashboardPage() {
     const [personalization, setPersonalization] = useState<Personalization | null>(null)
     const [savingTrend, setSavingTrend] = useState<string | null>(null)
     const [youtubePersonalization, setYoutubePersonalization] = useState<{ industry: string | null; isPersonalized: boolean; matchingVideos: number } | null>(null)
+    const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
+    const [modalOpen, setModalOpen] = useState(false)
 
     useEffect(() => {
         // Set greeting based on time
@@ -89,10 +94,10 @@ export default function DashboardPage() {
     const fetchTrendingVideos = async () => {
         setLoadingVideos(true)
         try {
-            const response = await fetch('/api/youtube/trending?region=IN&limit=6')
+            const response = await fetch('/api/youtube/trending?region=IN&limit=30')
             const data = await response.json()
             if (data.success) {
-                setTrendingVideos(data.data.videos.slice(0, 6))
+                setTrendingVideos(data.data.videos)
                 if (data.data.personalization) {
                     setYoutubePersonalization(data.data.personalization)
                 }
@@ -102,6 +107,11 @@ export default function DashboardPage() {
         } finally {
             setLoadingVideos(false)
         }
+    }
+
+    const openVideoModal = (video: YouTubeVideo) => {
+        setSelectedVideo(video)
+        setModalOpen(true)
     }
 
     const saveTrend = async (e: React.MouseEvent, trend: any) => {
@@ -327,64 +337,60 @@ export default function DashboardPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {trendingVideos.map((video, i) => (
-                            <a
+                            <div
                                 key={video.id}
-                                href={video.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden hover:border-[#D9C5B2] transition-all group"
+                                onClick={() => openVideoModal(video)}
+                                className="rounded-xl bg-white dark:bg-[#1A1714] border-2 border-black dark:border-gray-700 overflow-hidden hover:shadow-[4px_4px_0px_0px_#FFC900] transition-all group cursor-pointer"
                             >
                                 <div className="relative aspect-video">
                                     <img src={video.thumbnail} alt="" className="w-full h-full object-cover" />
                                     {i < 3 && (
-                                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-medium flex items-center gap-1">
+                                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center gap-1">
                                             <Zap className="w-3 h-3" />
                                             #{i + 1}
                                         </div>
                                     )}
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
-                                        <ExternalLink className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-[10px] font-bold flex items-center gap-1">
+                                        <Sparkles className="w-3 h-3 text-[#FFC900]" />
+                                        AI Analysis
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
+                                        <div className="bg-[#FFC900] text-black font-bold px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4" />
+                                            View AI Insights
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-4">
+                                <div className="p-3">
                                     <div className="flex items-center gap-2 mb-1">
                                         {video.daysAgo !== undefined && (
                                             <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                                                {video.daysAgo === 0 ? 'TODAY' : video.daysAgo === 1 ? '1 DAY AGO' : `${video.daysAgo} DAYS AGO`}
+                                                {video.daysAgo === 0 ? 'TODAY' : video.daysAgo === 1 ? '1D AGO' : `${video.daysAgo}D AGO`}
                                             </span>
                                         )}
+                                        <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                                            50K+ Views
+                                        </span>
                                     </div>
-                                    <h3 className="font-bold text-sm text-black dark:text-white line-clamp-2 mb-2 group-hover:text-[#D9C5B2] transition-colors">
+                                    <h3 className="font-bold text-sm text-black dark:text-white line-clamp-2 mb-1">
                                         {video.title}
                                     </h3>
-                                    <div className="flex items-center justify-between text-xs text-[#34312D] dark:text-[#B0ADB0] mb-2">
-                                        <span className="font-medium">{video.channelTitle}</span>
-                                        <span className="flex items-center gap-1 font-bold">
+                                    <div className="flex items-center justify-between text-xs text-[#34312D] dark:text-[#B0ADB0]">
+                                        <span className="font-medium truncate">{video.channelTitle}</span>
+                                        <span className="flex items-center gap-1 font-bold text-black dark:text-white">
                                             <Eye className="w-3.5 h-3.5" />
                                             {video.formattedViews}
                                         </span>
                                     </div>
-                                    {video.aiInsight && (
-                                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                                            <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase mb-1 flex items-center gap-1">
-                                                <Sparkles className="w-3 h-3" /> AI Insight
-                                            </div>
-                                            <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 mb-1">
-                                                <span className="font-semibold">Why Viral:</span> {video.aiInsight.whyPopular}
-                                            </p>
-                                            <p className="text-xs text-green-700 dark:text-green-400 line-clamp-1">
-                                                <span className="font-semibold">💡 Content Idea:</span> {video.aiInsight.contentIdea}
-                                            </p>
-                                        </div>
-                                    )}
                                 </div>
-                            </a>
+                            </div>
                         ))}
                     </div>
                 )}
             </motion.div>
+
 
             {/* AI Assistant Promo */}
             <motion.div variants={item}>
@@ -420,6 +426,19 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </motion.div>
+
+            {/* Video Detail Modal */}
+            {selectedVideo && (
+                <VideoDetailModal
+                    video={selectedVideo}
+                    userIndustry={youtubePersonalization?.industry || 'GENERAL'}
+                    isOpen={modalOpen}
+                    onClose={() => {
+                        setModalOpen(false)
+                        setSelectedVideo(null)
+                    }}
+                />
+            )}
         </motion.div>
     )
 }
