@@ -36,6 +36,12 @@ interface YouTubeVideo {
     formattedViews: string
     engagementRate: string
     url: string
+    daysAgo?: number
+    aiInsight?: {
+        whyPopular: string
+        keyTakeaway: string
+        contentIdea: string
+    }
 }
 
 interface TrendingTopic {
@@ -178,7 +184,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
                         <Flame className="w-5 h-5 text-orange-500" />
-                        <span>
+                        <span className="font-bold text-black dark:text-white">
                             {personalization?.industry && personalization.industry !== 'ALL'
                                 ? `${personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()} Trends`
                                 : 'Trending Now'
@@ -271,7 +277,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
                         <Youtube className="w-5 h-5 text-red-500" />
-                        <span>
+                        <span className="font-bold text-black dark:text-white">
                             {youtubePersonalization?.isPersonalized && youtubePersonalization.industry
                                 ? `${youtubePersonalization.industry.charAt(0) + youtubePersonalization.industry.slice(1).toLowerCase()} Videos`
                                 : 'Trending on YouTube India'
@@ -343,16 +349,36 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                                 <div className="p-4">
-                                    <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-2 group-hover:text-[#D9C5B2] transition-colors">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        {video.daysAgo !== undefined && (
+                                            <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                                {video.daysAgo === 0 ? 'TODAY' : video.daysAgo === 1 ? '1 DAY AGO' : `${video.daysAgo} DAYS AGO`}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="font-bold text-sm text-black dark:text-white line-clamp-2 mb-2 group-hover:text-[#D9C5B2] transition-colors">
                                         {video.title}
                                     </h3>
-                                    <div className="flex items-center justify-between text-xs text-[#7E7F83]">
-                                        <span>{video.channelTitle}</span>
-                                        <span className="flex items-center gap-1">
+                                    <div className="flex items-center justify-between text-xs text-[#34312D] dark:text-[#B0ADB0] mb-2">
+                                        <span className="font-medium">{video.channelTitle}</span>
+                                        <span className="flex items-center gap-1 font-bold">
                                             <Eye className="w-3.5 h-3.5" />
                                             {video.formattedViews}
                                         </span>
                                     </div>
+                                    {video.aiInsight && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                            <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase mb-1 flex items-center gap-1">
+                                                <Sparkles className="w-3 h-3" /> AI Insight
+                                            </div>
+                                            <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2 mb-1">
+                                                <span className="font-semibold">Why Viral:</span> {video.aiInsight.whyPopular}
+                                            </p>
+                                            <p className="text-xs text-green-700 dark:text-green-400 line-clamp-1">
+                                                <span className="font-semibold">💡 Content Idea:</span> {video.aiInsight.contentIdea}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </a>
                         ))}
