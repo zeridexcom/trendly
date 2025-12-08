@@ -394,29 +394,29 @@ export default function DashboardPage() {
 
             {/* AI Assistant Promo */}
             <motion.div variants={item}>
-                <div className="p-6 rounded-xl bg-gradient-to-br from-[#D9C5B2]/30 to-[#D9C5B2]/10 border border-[#D9C5B2]/30">
+                <div className="p-6 rounded-xl bg-[#FFC900] border-2 border-black shadow-[4px_4px_0px_0px_#000]">
                     <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-xl bg-[#D9C5B2]">
-                            <Sparkles className="w-6 h-6 text-[#14110F]" />
+                        <div className="p-3 rounded-xl bg-black">
+                            <Sparkles className="w-6 h-6 text-[#FFC900]" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-1">
+                            <h3 className="font-black text-lg text-black uppercase mb-1">
                                 Your AI Marketing Manager
                             </h3>
-                            <p className="text-sm text-[#7E7F83] mb-4">
+                            <p className="text-sm text-black font-medium mb-4">
                                 I analyze real-time trends, generate viral content ideas, and help you understand why videos go viral. Click on any trending video to get deep insights!
                             </p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-3">
                                 <Link
                                     href="/dashboard/trends"
-                                    className="px-4 py-2 rounded-lg bg-[#D9C5B2] text-[#14110F] text-sm font-medium hover:bg-[#C4B09D] transition-colors flex items-center gap-2"
+                                    className="px-5 py-3 bg-black text-white text-sm font-black uppercase hover:bg-gray-800 transition-colors flex items-center gap-2 border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
                                 >
                                     <TrendingUp className="w-4 h-4" />
                                     Analyze Trends
                                 </Link>
                                 <Link
                                     href="/dashboard/ideas"
-                                    className="px-4 py-2 rounded-lg bg-white dark:bg-[#1A1714] text-[#14110F] dark:text-[#F3F3F4] text-sm font-medium border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-colors flex items-center gap-2"
+                                    className="px-5 py-3 bg-white text-black text-sm font-black uppercase hover:bg-gray-100 transition-colors flex items-center gap-2 border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
                                 >
                                     <Lightbulb className="w-4 h-4" />
                                     Generate Ideas
