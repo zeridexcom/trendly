@@ -169,7 +169,7 @@ export default function DashboardPage() {
                 ))}
             </motion.div>
 
-            {/* Trending Topics - Personalized */}
+            {/* Trending Topics - AI Verified */}
             <motion.div variants={item}>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
@@ -186,6 +186,11 @@ export default function DashboardPage() {
                                     personalization.location === 'US' ? 'United States' :
                                         personalization.location === 'GB' ? 'United Kingdom' :
                                             personalization.location}
+                            </span>
+                        )}
+                        {(personalization as any)?.aiFiltered && (
+                            <span className="px-2 py-0.5 text-xs font-bold bg-[#B1F202] text-black border border-black rounded-sm uppercase">
+                                🤖 AI Verified
                             </span>
                         )}
                         <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
@@ -206,6 +211,22 @@ export default function DashboardPage() {
                         {Array.from({ length: 8 }).map((_, i) => (
                             <div key={i} className="animate-pulse h-16 rounded-xl bg-[#F3F3F4] dark:bg-[#34312D]" />
                         ))}
+                    </div>
+                ) : trendingTopics.length === 0 && personalization?.industry ? (
+                    <div className="p-8 bg-white border-2 border-black text-center">
+                        <p className="font-black text-xl mb-2">🔍 No 95%+ Relevant Trends Found</p>
+                        <p className="text-gray-600 mb-4">
+                            No trends matching {personalization.industry.toLowerCase()} right now.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            We only show trends that are highly relevant to your niche. Check back later or explore general trends.
+                        </p>
+                        <Link
+                            href="/dashboard/trends"
+                            className="inline-block mt-4 px-6 py-3 bg-[#FFC900] border-2 border-black font-bold shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                        >
+                            Explore All Trends →
+                        </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

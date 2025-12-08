@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPersonalizedTrends, getDailyTrends } from '@/lib/google-trends'
+import { getDailyTrends } from '@/lib/google-trends'
 import { createClient } from '@/lib/supabase/server'
+import { filterTrendsByRelevance } from '@/lib/ai'
 
 export async function GET(request: NextRequest) {
     try {
@@ -24,12 +25,38 @@ export async function GET(request: NextRequest) {
             // Not authenticated, use query params
         }
 
-        // Get personalized trends
-        let trends
-        if (industry) {
-            trends = await getPersonalizedTrends(location, industry)
-        } else {
-            trends = await getDailyTrends(location)
+        // Get all trends from Google
+        const allTrends = await getDailyTrends(location)
+
+        // If user has an industry, use AI to filter for 95%+ relevance
+        let trends = allTrends
+        let aiFiltered = false
+
+        if (industry && industry !== 'ALL' && industry !== 'OTHER') {
+            try {
+                const aiResults = await filterTrendsByRelevance(allTrends, industry, 95)
+
+                if (aiResults.length > 0) {
+                    // Transform AI results to include content ideas
+                    trends = aiResults.map(r => ({
+                        title: r.title,
+                        traffic: allTrends.find(t => t.title === r.title)?.traffic || '0',
+                        relatedQueries: allTrends.find(t => t.title === r.title)?.relatedQueries || [],
+                        industry: industry,
+                        relevanceScore: r.relevanceScore,
+                        reason: r.reason,
+                        contentIdea: r.contentIdea,
+                        formattedTraffic: allTrends.find(t => t.title === r.title)?.traffic || 'Trending',
+                    }))
+                    aiFiltered = true
+                } else {
+                    // No 95%+ matches - show message instead of wrong trends
+                    trends = []
+                }
+            } catch (error) {
+                console.error('AI filtering failed, returning empty for accuracy:', error)
+                trends = [] // Better to show nothing than wrong data
+            }
         }
 
         return NextResponse.json({
@@ -38,6 +65,10 @@ export async function GET(request: NextRequest) {
             personalization: {
                 location,
                 industry: industry || 'ALL',
+                aiFiltered,
+                message: trends.length === 0 && industry
+                    ? `No 95%+ relevant trends found for ${industry} right now. Check back later!`
+                    : null
             }
         })
     } catch (error) {
