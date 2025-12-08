@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
     Sparkles, ArrowRight, ArrowLeft, Loader2, Check,
     Cpu, Film, Briefcase, Heart, Gamepad2, Shirt, BookOpen, UtensilsCrossed, Plane, Newspaper,
     Globe, MapPin,
     Youtube, Instagram, Twitter, Linkedin, PenTool, Video,
-    Zap, Flame, Calendar, Target
+    Zap, Flame, Calendar, Target, Rocket
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -52,6 +53,97 @@ const FREQUENCIES = [
     { id: 'OCCASIONAL', label: 'Occasionally', description: 'When inspiration strikes', icon: Target },
 ]
 
+// Avatar dialogue for each step
+const AVATAR_DIALOGUE = [
+    {
+        greeting: "Hey there! 👋",
+        message: "I'm Trendy, your content assistant. Let me learn about you so I can find trends you'll actually care about!",
+        tip: "Pick the niche closest to your content style.",
+    },
+    {
+        greeting: "Nice choice! 🎯",
+        message: "Now let's figure out where your audience hangs out. This helps me prioritize trends from their region.",
+        tip: "Most of your viewers are probably from here.",
+    },
+    {
+        greeting: "Looking good! 🔥",
+        message: "Which platforms are you creating for? I'll tailor content ideas specifically for each one.",
+        tip: "Select all that apply - you can change later!",
+    },
+    {
+        greeting: "Almost done! ⚡",
+        message: "Last question - how often do you post? This helps me know when to send you urgent trend alerts.",
+        tip: "Be honest - we'll adapt to your pace!",
+    },
+    {
+        greeting: "You're all set! 🚀",
+        message: "Time to discover your first viral trends. Your personalized dashboard is ready!",
+        tip: "",
+    },
+]
+
+// Trendy Avatar Component with expressions
+function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expression?: 'happy' | 'excited' | 'thinking' | 'celebrating', isAnimating?: boolean }) {
+    const faces = {
+        happy: { eyes: '◠ ◠', mouth: '‿' },
+        excited: { eyes: '★ ★', mouth: 'D' },
+        thinking: { eyes: '◔ ◔', mouth: '~' },
+        celebrating: { eyes: '✦ ✦', mouth: 'O' },
+    }
+
+    const face = faces[expression]
+
+    return (
+        <motion.div
+            animate={isAnimating ? { y: [0, -10, 0], rotate: [0, 5, -5, 0] } : {}}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            className="relative"
+        >
+            {/* Body */}
+            <div className="w-32 h-32 bg-[#FF90E8] border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex flex-col items-center justify-center relative overflow-hidden">
+                {/* Sparkle accessory */}
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FFC900] border-2 border-black flex items-center justify-center rounded-full">
+                    <Sparkles className="w-4 h-4" />
+                </div>
+
+                {/* Face */}
+                <div className="text-3xl font-black tracking-widest mb-1">{face.eyes}</div>
+                <div className="text-2xl font-black">{face.mouth}</div>
+            </div>
+
+            {/* Name tag */}
+            <div className="mt-3 bg-black text-white px-4 py-1 font-black text-sm uppercase tracking-wide text-center border-2 border-black">
+                TRENDY
+            </div>
+        </motion.div>
+    )
+}
+
+// Speech Bubble Component
+function SpeechBubble({ greeting, message, tip }: { greeting: string, message: string, tip?: string }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: -20, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="relative bg-white border-3 border-black p-5 shadow-[4px_4px_0px_0px_#000] max-w-xs"
+        >
+            {/* Pointer */}
+            <div className="absolute -left-3 top-6 w-0 h-0 border-t-[10px] border-t-transparent border-r-[12px] border-r-black border-b-[10px] border-b-transparent" />
+            <div className="absolute -left-2 top-6 w-0 h-0 border-t-[10px] border-t-transparent border-r-[12px] border-r-white border-b-[10px] border-b-transparent" />
+
+            <p className="text-xl font-black mb-2">{greeting}</p>
+            <p className="text-sm font-medium text-gray-700 leading-relaxed">{message}</p>
+            {tip && (
+                <p className="mt-3 text-xs font-bold text-[#FF90E8] uppercase border-t border-gray-200 pt-2">
+                    💡 {tip}
+                </p>
+            )}
+        </motion.div>
+    )
+}
+
 export default function OnboardingPage() {
     const router = useRouter()
     const [step, setStep] = useState(1)
@@ -60,12 +152,23 @@ export default function OnboardingPage() {
     const [location, setLocation] = useState('')
     const [platforms, setPlatforms] = useState<string[]>([])
     const [frequency, setFrequency] = useState('')
-    const [animateIn, setAnimateIn] = useState(true)
+    const [avatarExpression, setAvatarExpression] = useState<'happy' | 'excited' | 'thinking' | 'celebrating'>('happy')
+    const [isAvatarAnimating, setIsAvatarAnimating] = useState(false)
+
+    // Animate avatar on selection
+    const animateAvatar = (expression: 'happy' | 'excited' | 'thinking' | 'celebrating' = 'excited') => {
+        setAvatarExpression(expression)
+        setIsAvatarAnimating(true)
+        setTimeout(() => setIsAvatarAnimating(false), 500)
+    }
 
     useEffect(() => {
-        setAnimateIn(true)
-        const timer = setTimeout(() => setAnimateIn(false), 500)
-        return () => clearTimeout(timer)
+        // Reset expression when step changes
+        if (step === 5) {
+            setAvatarExpression('celebrating')
+        } else {
+            setAvatarExpression('happy')
+        }
     }, [step])
 
     const togglePlatform = (platformId: string) => {
@@ -74,10 +177,12 @@ export default function OnboardingPage() {
                 ? prev.filter(p => p !== platformId)
                 : [...prev, platformId]
         )
+        animateAvatar('excited')
     }
 
     const handleComplete = async () => {
         setIsLoading(true)
+        animateAvatar('celebrating')
         try {
             // Save preferences to API
             await fetch('/api/user/preferences', {
@@ -96,8 +201,11 @@ export default function OnboardingPage() {
     }
 
     const goToStep = (newStep: number) => {
-        setAnimateIn(true)
-        setTimeout(() => setStep(newStep), 100)
+        animateAvatar('thinking')
+        setTimeout(() => {
+            setStep(newStep)
+            setAvatarExpression('happy')
+        }, 200)
     }
 
     const canProceed = () => {
@@ -108,211 +216,245 @@ export default function OnboardingPage() {
         return false
     }
 
-    const stepData = [
-        { title: "WHAT'S YOUR NICHE?", subtitle: "We'll show you relevant trends in your field" },
-        { title: "WHERE'S YOUR AUDIENCE?", subtitle: "We'll prioritize trends from your target region" },
-        { title: "PICK YOUR PLATFORMS", subtitle: "Select all platforms you create content for" },
-        { title: "POSTING SCHEDULE", subtitle: "We'll tailor trend urgency to your workflow" },
-    ]
+    const handleSelection = (setter: (val: string) => void, value: string) => {
+        setter(value)
+        animateAvatar('excited')
+    }
 
     return (
-        <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-4 font-sans text-black">
-            <div className="w-full max-w-2xl">
-                {/* Main Card */}
-                <div className="bg-[#FFC900] border-4 border-black p-8 relative shadow-[8px_8px_0px_0px_#000]">
+        <div className="min-h-screen bg-[#FFC900] flex items-center justify-center p-4 font-sans text-black">
+            <div className="w-full max-w-5xl">
+                {/* Main Container */}
+                <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-start">
 
-                    {/* Header Section */}
-                    <div className="text-center mb-8 relative z-10">
-                        <div className="w-16 h-16 bg-black border-2 border-white shadow-[4px_4px_0px_0px_#FFF] flex items-center justify-center mx-auto mb-6 transform rotate-3 hover:rotate-6 transition-transform">
-                            <Sparkles className="w-8 h-8 text-white" />
+                    {/* Avatar Section - Left Side */}
+                    <div className="hidden lg:flex flex-col items-center gap-6 sticky top-8">
+                        <TrendyAvatar expression={avatarExpression} isAnimating={isAvatarAnimating} />
+                        <AnimatePresence mode="wait">
+                            <SpeechBubble
+                                key={step}
+                                greeting={AVATAR_DIALOGUE[step - 1].greeting}
+                                message={AVATAR_DIALOGUE[step - 1].message}
+                                tip={AVATAR_DIALOGUE[step - 1].tip}
+                            />
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Form Section - Right Side */}
+                    <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_#000]">
+
+                        {/* Mobile Avatar (shows on small screens) */}
+                        <div className="lg:hidden flex items-center gap-4 mb-6 pb-6 border-b-2 border-black">
+                            <div className="w-16 h-16 bg-[#FF90E8] border-2 border-black rounded-xl flex items-center justify-center">
+                                <span className="text-lg">◠‿◠</span>
+                            </div>
+                            <div>
+                                <p className="font-black text-lg">{AVATAR_DIALOGUE[step - 1].greeting}</p>
+                                <p className="text-sm text-gray-600">{AVATAR_DIALOGUE[step - 1].message}</p>
+                            </div>
                         </div>
-                        <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-2">
-                            {stepData[step - 1].title}
+
+                        {/* Progress */}
+                        <div className="flex items-center justify-between mb-8">
+                            <span className="font-black uppercase text-sm tracking-wide">Step {step} of 4</span>
+                            <div className="flex gap-2">
+                                {[1, 2, 3, 4].map(s => (
+                                    <div
+                                        key={s}
+                                        className={cn(
+                                            "w-10 h-2 border-2 border-black transition-all",
+                                            s < step ? "bg-black" : s === step ? "bg-[#FF90E8]" : "bg-white"
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Step Title */}
+                        <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tighter mb-8">
+                            {step === 1 && "What's Your Niche?"}
+                            {step === 2 && "Where's Your Audience?"}
+                            {step === 3 && "Pick Your Platforms"}
+                            {step === 4 && "Posting Schedule"}
                         </h1>
-                        <p className="text-lg font-bold text-black/70 border-b-2 border-black inline-block pb-1">
-                            {stepData[step - 1].subtitle}
-                        </p>
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className="flex gap-3 mb-8 px-4">
-                        {[1, 2, 3, 4].map(s => (
-                            <div
-                                key={s}
-                                onClick={() => s < step && goToStep(s)}
-                                className={cn(
-                                    "h-3 flex-1 border-2 border-black transition-all duration-300 relative",
-                                    s < step ? "cursor-pointer bg-black" : "bg-white",
-                                    s === step ? "bg-[#FF90E8]" : ""
+                        {/* Content Area */}
+                        <div className="min-h-[320px]">
+                            <AnimatePresence mode="wait">
+                                {/* Step 1: Industry */}
+                                {step === 1 && (
+                                    <motion.div
+                                        key="step1"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="grid grid-cols-2 gap-3"
+                                    >
+                                        {INDUSTRIES.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => handleSelection(setIndustry, item.id)}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-3 border-2 border-black transition-all text-left",
+                                                    industry === item.id
+                                                        ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                        : "bg-white hover:bg-[#FF90E8] shadow-[3px_3px_0px_0px_#000]"
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "p-2 border-2 border-current",
+                                                    industry === item.id ? "bg-white text-black" : ""
+                                                )}>
+                                                    <item.icon size={18} strokeWidth={2.5} />
+                                                </div>
+                                                <span className="font-bold text-sm">{item.label}</span>
+                                                {industry === item.id && <Check size={18} className="ml-auto" />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
                                 )}
-                            >
-                                {s === step && (
-                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-black" />
+
+                                {/* Step 2: Location */}
+                                {step === 2 && (
+                                    <motion.div
+                                        key="step2"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="grid gap-3"
+                                    >
+                                        {LOCATIONS.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => handleSelection(setLocation, item.id)}
+                                                className={cn(
+                                                    "flex items-center gap-4 p-4 border-2 border-black transition-all text-left",
+                                                    location === item.id
+                                                        ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                        : "bg-white hover:bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000]"
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "p-3 border-2 border-current",
+                                                    location === item.id ? "bg-white text-black" : ""
+                                                )}>
+                                                    {item.id === 'GLOBAL' ? <Globe size={24} /> : <MapPin size={24} />}
+                                                </div>
+                                                <span className="font-bold text-lg">{item.label}</span>
+                                                {location === item.id && <Check size={24} className="ml-auto" />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
                                 )}
-                            </div>
-                        ))}
-                    </div>
 
-                    {/* Content Area */}
-                    <div className={cn(
-                        "bg-white border-2 border-black p-6 shadow-[4px_4px_0px_0px_#000] min-h-[300px]",
-                        animateIn ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0 transition-all duration-300"
-                    )}>
-                        {/* Step 1: Industry */}
-                        {step === 1 && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {INDUSTRIES.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setIndustry(item.id)}
-                                        className={cn(
-                                            "flex items-center gap-3 p-4 border-2 border-black transition-all text-left group",
-                                            industry === item.id
-                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
-                                                : "bg-white hover:bg-[#FF90E8] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
-                                        )}
+                                {/* Step 3: Platforms */}
+                                {step === 3 && (
+                                    <motion.div
+                                        key="step3"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="grid grid-cols-2 lg:grid-cols-3 gap-3"
                                     >
-                                        <div className={cn(
-                                            "p-2 border-2 border-black flex items-center justify-center",
-                                            industry === item.id ? "bg-white text-black" : "bg-gray-100"
-                                        )}>
-                                            <item.icon size={20} strokeWidth={2.5} />
-                                        </div>
-                                        <span className="font-bold flex-1">{item.label}</span>
-                                        {industry === item.id && <Check size={20} strokeWidth={3} />}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                                        {PLATFORMS.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => togglePlatform(item.id)}
+                                                className={cn(
+                                                    "flex flex-col items-center gap-3 p-5 border-2 border-black transition-all",
+                                                    platforms.includes(item.id)
+                                                        ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                        : "bg-white hover:bg-[#B1F202] shadow-[4px_4px_0px_0px_#000]"
+                                                )}
+                                            >
+                                                <item.icon size={36} strokeWidth={1.5} />
+                                                <span className="font-bold">{item.label}</span>
+                                                {platforms.includes(item.id) && <Check size={20} />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
 
-                        {/* Step 2: Location */}
-                        {step === 2 && (
-                            <div className="grid gap-3">
-                                {LOCATIONS.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setLocation(item.id)}
-                                        className={cn(
-                                            "flex items-center gap-3 p-4 border-2 border-black transition-all text-left",
-                                            location === item.id
-                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
-                                                : "bg-white hover:bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
-                                        )}
+                                {/* Step 4: Frequency */}
+                                {step === 4 && (
+                                    <motion.div
+                                        key="step4"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="grid gap-3"
                                     >
-                                        <div className={cn(
-                                            "p-2 border-2 border-black flex items-center justify-center",
-                                            location === item.id ? "bg-white text-black" : "bg-gray-100"
-                                        )}>
-                                            {item.id === 'GLOBAL' ? <Globe size={20} strokeWidth={2.5} /> : <MapPin size={20} strokeWidth={2.5} />}
-                                        </div>
-                                        <span className="font-bold text-lg flex-1">{item.label}</span>
-                                        {location === item.id && <Check size={24} strokeWidth={3} />}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                                        {FREQUENCIES.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => handleSelection(setFrequency, item.id)}
+                                                className={cn(
+                                                    "flex items-center gap-4 p-4 border-2 border-black transition-all text-left",
+                                                    frequency === item.id
+                                                        ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                        : "bg-white hover:bg-[#FFC900] shadow-[4px_4px_0px_0px_#000]"
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "p-3 border-2 border-current",
+                                                    frequency === item.id ? "bg-white text-black" : ""
+                                                )}>
+                                                    <item.icon size={24} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="font-bold text-lg">{item.label}</div>
+                                                    <div className={cn("text-sm", frequency === item.id ? "text-gray-400" : "text-gray-500")}>
+                                                        {item.description}
+                                                    </div>
+                                                </div>
+                                                {frequency === item.id && <Check size={24} />}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
-                        {/* Step 3: Platforms */}
-                        {step === 3 && (
-                            <div className="grid grid-cols-2 gap-3">
-                                {PLATFORMS.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => togglePlatform(item.id)}
-                                        className={cn(
-                                            "flex flex-col items-center gap-2 p-4 border-2 border-black transition-all text-center h-full justify-center",
-                                            platforms.includes(item.id)
-                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
-                                                : "bg-white hover:bg-[#B1F202] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
-                                        )}
-                                    >
-                                        <item.icon size={32} strokeWidth={2} />
-                                        <span className="font-bold">{item.label}</span>
-                                        {platforms.includes(item.id) && (
-                                            <div className="absolute top-2 right-2">
-                                                <Check size={16} strokeWidth={3} />
-                                            </div>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Step 4: Frequency */}
-                        {step === 4 && (
-                            <div className="grid gap-3">
-                                {FREQUENCIES.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setFrequency(item.id)}
-                                        className={cn(
-                                            "flex items-center gap-4 p-4 border-2 border-black transition-all text-left",
-                                            frequency === item.id
-                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
-                                                : "bg-white hover:bg-[#FFC900] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "p-3 border-2 border-black flex items-center justify-center",
-                                            frequency === item.id ? "bg-white text-black" : "bg-gray-100"
-                                        )}>
-                                            <item.icon size={24} strokeWidth={2.5} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="font-bold text-lg">{item.label}</div>
-                                            <div className={cn("text-sm font-medium", frequency === item.id ? "text-gray-300" : "text-gray-500")}>
-                                                {item.description}
-                                            </div>
-                                        </div>
-                                        {frequency === item.id && <Check size={24} strokeWidth={3} />}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Navigation */}
-                    <div className="flex gap-4 mt-8">
-                        {step > 1 && (
+                        {/* Navigation */}
+                        <div className="flex gap-4 mt-8 pt-6 border-t-2 border-black">
+                            {step > 1 && (
+                                <button
+                                    onClick={() => goToStep(step - 1)}
+                                    className="px-6 py-4 font-bold border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
+                                >
+                                    <ArrowLeft size={20} strokeWidth={3} /> BACK
+                                </button>
+                            )}
                             <button
-                                onClick={() => goToStep(step - 1)}
-                                className="px-6 py-4 font-bold border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
+                                onClick={step === 4 ? handleComplete : () => goToStep(step + 1)}
+                                disabled={!canProceed() || isLoading}
+                                className={cn(
+                                    "flex-1 px-6 py-4 font-black border-2 border-black transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-lg",
+                                    canProceed()
+                                        ? "bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000] hover:bg-[#FF90E8] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
+                                        : "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-400"
+                                )}
                             >
-                                <ArrowLeft size={20} strokeWidth={3} /> BACK
+                                {isLoading ? (
+                                    <><Loader2 className="animate-spin" /> Setting up...</>
+                                ) : step === 4 ? (
+                                    <><Rocket strokeWidth={2.5} /> LAUNCH DASHBOARD</>
+                                ) : (
+                                    <>CONTINUE <ArrowRight strokeWidth={3} /></>
+                                )}
                             </button>
-                        )}
-                        <button
-                            onClick={step === 4 ? handleComplete : () => goToStep(step + 1)}
-                            disabled={!canProceed() || isLoading}
-                            className={cn(
-                                "flex-1 px-6 py-4 font-black border-2 border-black transition-all flex items-center justify-center gap-2 uppercase tracking-wide",
-                                canProceed()
-                                    ? "bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000] hover:bg-[#FF90E8] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
-                                    : "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-400"
-                            )}
-                        >
-                            {isLoading ? (
-                                <><Loader2 className="animate-spin" /> SETUP...</>
-                            ) : step === 4 ? (
-                                <>LAUNCH DASHBOARD <Sparkles strokeWidth={3} /></>
-                            ) : (
-                                <>CONTINUE <ArrowRight strokeWidth={3} /></>
-                            )}
-                        </button>
-                    </div>
+                        </div>
 
-                    {/* Skip */}
-                    <div className="text-center mt-6">
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="text-gray-500 font-bold hover:text-black hover:underline decoration-2"
-                        >
-                            Skip for now
-                        </button>
+                        {/* Skip */}
+                        <div className="text-center mt-6">
+                            <button
+                                onClick={() => router.push('/dashboard')}
+                                className="text-gray-400 font-bold hover:text-black hover:underline decoration-2 transition-colors"
+                            >
+                                Skip for now
+                            </button>
+                        </div>
                     </div>
-
-                    {/* Decorative Elements around main card */}
-                    <div className="absolute -top-4 -left-4 w-full h-full border-4 border-black -z-10 bg-white" />
                 </div>
             </div>
         </div>
