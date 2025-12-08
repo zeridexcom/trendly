@@ -125,7 +125,7 @@ export default function Sidebar() {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -10 }}
-                                className="font-semibold text-lg text-[#14110F] dark:text-[#F3F3F4]"
+                                className="text-2xl font-black italic tracking-tighter text-black uppercase"
                             >
                                 Trendly
                             </motion.span>

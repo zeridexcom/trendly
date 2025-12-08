@@ -14,8 +14,10 @@
 @layer base {
   :root {
     /* Light mode - GUMROAD STYLE */
-    --background: 0 0% 100%; /* White */
-    --foreground: 0 0% 0%;   /* Pure Black */
+    --background: 0 0% 100%;
+    /* White */
+    --foreground: 0 0% 0%;
+    /* Pure Black */
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 0%;
@@ -23,26 +25,31 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    --primary: 322 100% 78%; /* Gumroad Pink (#FF90E8) */
+    --primary: 322 100% 78%;
+    /* Gumroad Pink (#FF90E8) */
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 47 100% 50%; /* Vibrant Yellow (#FFC900) */
+    --secondary: 47 100% 50%;
+    /* Vibrant Yellow (#FFC900) */
     --secondary-foreground: 0 0% 0%;
 
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 184 100% 50%; /* Cyan (#00F0FF) */
+    --accent: 184 100% 50%;
+    /* Cyan (#00F0FF) */
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 0%; /* Black Borders */
+    --border: 0 0% 0%;
+    /* Black Borders */
     --input: 0 0% 100%;
     --ring: 0 0% 0%;
 
-    --radius: 0rem; /* Sharp corners */
+    --radius: 0rem;
+    /* Sharp corners */
 
     /* Custom palette colors */
     --brutal-black: #000000;
@@ -53,36 +60,7 @@
     --brutal-lime: #B1F202;
   }
 
-  .dark {
-    /* Dark mode - INVERTED BRUTALISM */
-    --background: 0 0% 5%;   /* Almost Black */
-    --foreground: 0 0% 100%; /* White */
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 322 100% 78%; /* Pink pops on dark */
-    --primary-foreground: 0 0% 0%;
-
-    --secondary: 47 100% 50%;
-    --secondary-foreground: 0 0% 0%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-
-    --accent: 184 100% 50%;
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 100%; /* White Borders in dark mode */
-    --input: 0 0% 15%;
-    --ring: 0 0% 100%;
-  }
+  /* Dark mode removed to enforce Neo-Brutalist Brand Identity */
 }
 
 @layer base {
@@ -103,6 +81,7 @@
   .shadow-brutal {
     box-shadow: 4px 4px 0px 0px #000000;
   }
+
   .dark .shadow-brutal {
     box-shadow: 4px 4px 0px 0px #FFFFFF;
   }
@@ -110,6 +89,7 @@
   .shadow-brutal-lg {
     box-shadow: 8px 8px 0px 0px #000000;
   }
+
   .dark .shadow-brutal-lg {
     box-shadow: 8px 8px 0px 0px #FFFFFF;
   }
@@ -117,6 +97,7 @@
   .shadow-brutal-sm {
     box-shadow: 2px 2px 0px 0px #000000;
   }
+
   .dark .shadow-brutal-sm {
     box-shadow: 2px 2px 0px 0px #FFFFFF;
   }
@@ -126,6 +107,7 @@
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0px 0px #000000;
   }
+
   .dark .active-press:active {
     box-shadow: 2px 2px 0px 0px #FFFFFF;
   }
@@ -134,6 +116,7 @@
   .border-brutal {
     border: 2px solid #000000;
   }
+
   .dark .border-brutal {
     border: 2px solid #FFFFFF;
   }
@@ -148,6 +131,7 @@
     -webkit-text-stroke: 1px #000000;
     color: transparent;
   }
+
   .dark .text-outline {
     -webkit-text-stroke: 1px #FFFFFF;
   }
@@ -162,6 +146,7 @@
     background: #FFFFFF;
     border-left: 2px solid #000000;
   }
+
   .dark ::-webkit-scrollbar-track {
     background: #000000;
     border-left: 2px solid #FFFFFF;
@@ -171,6 +156,7 @@
     background: #000000;
     border: 2px solid #FFFFFF;
   }
+
   .dark ::-webkit-scrollbar-thumb {
     background: #FFFFFF;
     border: 2px solid #000000;

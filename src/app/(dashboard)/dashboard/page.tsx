@@ -22,7 +22,8 @@ import {
     ChevronRight,
     Globe,
     Bookmark,
-    Loader2
+    Loader2,
+    Hand
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -140,8 +141,9 @@ export default function DashboardPage() {
         <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
             {/* Header */}
             <motion.div variants={item}>
-                <h1 className="text-4xl font-black italic tracking-tight text-black dark:text-white mb-2 underline decoration-[#FF90E8] decoration-4 underline-offset-4">
-                    {greeting}! 👋
+                <h1 className="text-5xl font-black italic tracking-tighter text-black mb-2 flex items-center gap-4">
+                    <span className="underline decoration-[#FF90E8] decoration-8 underline-offset-4">{greeting.toUpperCase()}</span>
+                    <Hand className="w-12 h-12 text-black fill-[#FFC900] -rotate-12" strokeWidth={3} />
                 </h1>
                 <p className="text-black font-medium border-l-4 border-black pl-4 py-1 mt-4">
                     Here's what's trending right now - real-time data from YouTube & Google
