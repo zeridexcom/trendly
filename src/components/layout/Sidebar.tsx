@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -26,10 +26,30 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useSidebar } from './SidebarContext'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Sidebar() {
     const pathname = usePathname()
     const { isCollapsed, toggle } = useSidebar()
+    const [userName, setUserName] = useState('User')
+    const [userInitial, setUserInitial] = useState('U')
+
+    useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const supabase = createClient()
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const name = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
+                    setUserName(name)
+                    setUserInitial(name.charAt(0).toUpperCase())
+                }
+            } catch (error) {
+                console.error('Error loading user:', error)
+            }
+        }
+        loadUser()
+    }, [])
 
     const isActive = (path: string) => pathname === path || pathname?.startsWith(`${path}/`)
 
@@ -169,15 +189,18 @@ export default function Sidebar() {
                     <div className="mt-3 p-3 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-[#D9C5B2] flex items-center justify-center text-[#14110F] text-sm font-semibold">
-                                U
+                                {userInitial}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] truncate">Pro User</p>
-                                <p className="text-xs text-[#7E7F83]">Premium</p>
+                                <p className="text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] truncate">{userName}</p>
+                                <p className="text-xs text-[#7E7F83]">Free Plan</p>
                             </div>
-                            <button className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-[#14110F] transition-colors">
+                            <Link
+                                href="/dashboard/settings"
+                                className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-[#14110F] transition-colors"
+                            >
                                 <Settings className="w-4 h-4 text-[#7E7F83]" />
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 )}
@@ -185,3 +208,4 @@ export default function Sidebar() {
         </motion.aside>
     )
 }
+
