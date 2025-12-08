@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (user && isProtectedPath && !request.nextUrl.pathname.startsWith('/onboarding')) {
-        const onboardingComplete = user.user_metadata?.onboarding_complete
+        const onboardingComplete = user.user_metadata?.onboardingComplete
         if (!onboardingComplete) {
             const url = request.nextUrl.clone()
             url.pathname = '/onboarding'
