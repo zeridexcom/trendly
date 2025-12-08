@@ -3,6 +3,80 @@ import { getDailyTrends } from '@/lib/google-trends'
 import { createClient } from '@/lib/supabase/server'
 import { filterTrendsByRelevance, generateNicheTrends } from '@/lib/ai'
 
+// Curated evergreen + current trends for each industry (FALLBACK - never fails)
+const CURATED_NICHE_TRENDS: Record<string, Array<{ title: string; reason: string; contentIdea: string }>> = {
+    TECH: [
+        { title: 'Gemini 2.0 Flash AI', reason: 'Google latest AI model release', contentIdea: 'Compare Gemini 2.0 vs ChatGPT for coding tasks' },
+        { title: 'ChatGPT vs Claude', reason: 'AI comparison always trending', contentIdea: 'Which AI is best for different use cases?' },
+        { title: 'iPhone 16 Pro Tips', reason: 'Latest iPhone features', contentIdea: 'Hidden features most users dont know' },
+        { title: 'AI Agents Revolution', reason: 'Autonomous AI agents are the future', contentIdea: 'How AI agents will change work in 2025' },
+        { title: 'Tech Layoffs 2024', reason: 'Ongoing industry restructuring', contentIdea: 'Skills that make you layoff-proof' },
+    ],
+    HEALTH: [
+        { title: 'Ozempic Weight Loss', reason: 'Trending weight loss medication', contentIdea: 'What doctors wish you knew about GLP-1 drugs' },
+        { title: 'Morning Routine Hacks', reason: 'Always popular wellness topic', contentIdea: '5 AM routine that changed my energy levels' },
+        { title: 'Protein Intake Guide', reason: 'Fitness nutrition basics', contentIdea: 'How much protein you actually need' },
+        { title: 'Mental Health Awareness', reason: 'Growing focus on wellness', contentIdea: 'Signs of burnout and how to recover' },
+        { title: 'Home Workout Trends', reason: 'Post-pandemic fitness shift', contentIdea: 'No-equipment full body workout' },
+    ],
+    ENTERTAINMENT: [
+        { title: 'Pushpa 2 Box Office', reason: 'Biggest Indian movie release', contentIdea: 'Why Pushpa 2 is breaking records' },
+        { title: 'Squid Game Season 2', reason: 'Netflix biggest show return', contentIdea: 'Everything to know before Season 2' },
+        { title: 'Spotify Wrapped 2024', reason: 'Annual music trends reveal', contentIdea: 'What your Wrapped says about you' },
+        { title: 'Award Season Predictions', reason: 'Oscar/Golden Globe buzz', contentIdea: 'Movies likely to win this year' },
+        { title: 'K-Pop 2024 Moments', reason: 'Global music phenomenon', contentIdea: 'Biggest K-Pop moments of the year' },
+    ],
+    GAMING: [
+        { title: 'GTA 6 Release Date', reason: 'Most anticipated game ever', contentIdea: 'Everything we know about GTA 6' },
+        { title: 'Game Awards 2024', reason: 'Gaming biggest night', contentIdea: 'Winners and biggest announcements' },
+        { title: 'BGMI Season Updates', reason: 'Popular mobile game in India', contentIdea: 'Best loadout for new season' },
+        { title: 'PS5 Pro Performance', reason: 'New console release', contentIdea: 'Is PS5 Pro worth the upgrade?' },
+        { title: 'Gaming Setup 2025', reason: 'Always trending topic', contentIdea: 'Budget gaming setup under 50K' },
+    ],
+    BUSINESS: [
+        { title: 'Startup Funding Winter', reason: 'Investment market trends', contentIdea: 'How startups are surviving the funding crunch' },
+        { title: 'Remote Work Debate', reason: 'Return to office vs WFH', contentIdea: 'Productivity secrets of remote workers' },
+        { title: 'AI in Business 2025', reason: 'Enterprise AI adoption', contentIdea: 'How to use AI without replacing jobs' },
+        { title: 'Stock Market Outlook', reason: 'Investment planning', contentIdea: 'Sectors to watch in 2025' },
+        { title: 'Side Hustle Ideas', reason: 'Income diversification', contentIdea: 'Profitable side hustles that actually work' },
+    ],
+    FASHION: [
+        { title: 'Winter Fashion 2024', reason: 'Seasonal style trends', contentIdea: 'Cozy outfits that still look chic' },
+        { title: 'Sustainable Fashion', reason: 'Eco-conscious trend', contentIdea: 'Building an eco-friendly wardrobe' },
+        { title: 'Thrift Shopping Tips', reason: 'Budget fashion growing', contentIdea: 'Hidden gems at thrift stores' },
+        { title: 'Minimalist Wardrobe', reason: 'Capsule wardrobe trend', contentIdea: '10 pieces that create 30 outfits' },
+        { title: 'Wedding Guest Outfits', reason: 'Wedding season content', contentIdea: 'What to wear for different types of weddings' },
+    ],
+    FOOD: [
+        { title: 'Viral Food Recipes', reason: 'Social media food trends', contentIdea: 'Testing viral TikTok recipes' },
+        { title: 'Healthy Meal Prep', reason: 'Wellness + cooking combo', contentIdea: 'Sunday meal prep for busy weeks' },
+        { title: 'Street Food Tours', reason: 'Foodie exploration content', contentIdea: 'Best street food under Rs 50' },
+        { title: 'Christmas Recipes', reason: 'Holiday season cooking', contentIdea: 'Easy Christmas desserts to impress' },
+        { title: 'Air Fryer Recipes', reason: 'Kitchen gadget trending', contentIdea: 'Things you didnt know you could air fry' },
+    ],
+    EDUCATION: [
+        { title: 'JEE/NEET Preparation', reason: 'Exam season in India', contentIdea: 'Last minute revision strategies' },
+        { title: 'Study With Me', reason: 'Popular study content format', contentIdea: 'Pomodoro study session for focus' },
+        { title: 'Career After 12th', reason: 'Guidance content demand', contentIdea: 'Non-traditional careers nobody talks about' },
+        { title: 'Free Online Courses', reason: 'Skill development trend', contentIdea: 'Best free courses to learn in 2025' },
+        { title: 'Board Exam Tips', reason: 'Academic guidance needed', contentIdea: 'How toppers study differently' },
+    ],
+    TRAVEL: [
+        { title: 'Winter Travel Destinations', reason: 'Seasonal travel planning', contentIdea: 'Best places to visit in December' },
+        { title: 'Budget Travel Tips', reason: 'Affordable travel demand', contentIdea: 'How I traveled for Rs 500/day' },
+        { title: 'Solo Travel Safety', reason: 'Growing solo travel trend', contentIdea: 'Safety tips for solo female travelers' },
+        { title: 'Flight Booking Hacks', reason: 'Travel savings tips', contentIdea: 'When to book for cheapest flights' },
+        { title: 'Hidden Gems India', reason: 'Off-beat destination content', contentIdea: 'Places that should be on your list' },
+    ],
+    NEWS: [
+        { title: 'Year End Review 2024', reason: 'Annual news roundup', contentIdea: 'Biggest news stories of 2024' },
+        { title: 'Election Analysis', reason: 'Political coverage', contentIdea: 'What the results mean for you' },
+        { title: 'Economic Outlook 2025', reason: 'Financial news interest', contentIdea: 'How the economy affects your wallet' },
+        { title: 'Climate Change Updates', reason: 'Environmental news', contentIdea: 'What you can do about climate change' },
+        { title: 'Technology Policy', reason: 'Tech regulation news', contentIdea: 'New laws that affect your online life' },
+    ],
+}
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url)
@@ -32,6 +106,7 @@ export async function GET(request: NextRequest) {
         let trends: any[] = allTrends
         let aiFiltered = false
         let aiGenerated = false
+        let curatedFallback = false
 
         if (industry && industry !== 'ALL' && industry !== 'OTHER') {
             try {
@@ -86,34 +161,47 @@ export async function GET(request: NextRequest) {
                         aiFiltered = foundTrends.length > 0
                         aiGenerated = aiTrends.length > 0
                     } else {
-                        // AI generation also failed - return what we found
-                        trends = aiResults.map(r => ({
-                            title: r.title,
-                            relevanceScore: r.relevanceScore,
-                            reason: r.reason,
-                            contentIdea: r.contentIdea,
-                            formattedTraffic: 'Trending',
+                        // AI generation failed - use curated fallback
+                        const curated = CURATED_NICHE_TRENDS[industry] || CURATED_NICHE_TRENDS['TECH']
+                        trends = curated.map((t, i) => ({
+                            title: t.title,
+                            relevanceScore: 95,
+                            reason: t.reason,
+                            contentIdea: t.contentIdea,
+                            formattedTraffic: 'Hot Topic',
+                            source: 'Curated',
                         }))
+                        curatedFallback = true
                     }
                 }
             } catch (error) {
                 console.error('AI filtering failed:', error)
-                // Fallback to AI generation only
-                try {
-                    const generatedTrends = await generateNicheTrends(industry, 5)
-                    trends = generatedTrends.map(t => ({
-                        title: t.title,
-                        relevanceScore: t.relevanceScore,
-                        reason: t.reason,
-                        contentIdea: t.contentIdea,
-                        formattedTraffic: 'AI Discovered',
-                        source: (t as any).source || 'AI Discovered',
-                    }))
-                    aiGenerated = true
-                } catch {
-                    trends = []
-                }
+                // GUARANTEED FALLBACK - Use curated trends
+                const curated = CURATED_NICHE_TRENDS[industry] || CURATED_NICHE_TRENDS['TECH']
+                trends = curated.map((t, i) => ({
+                    title: t.title,
+                    relevanceScore: 95,
+                    reason: t.reason,
+                    contentIdea: t.contentIdea,
+                    formattedTraffic: 'Hot Topic',
+                    source: 'Curated',
+                }))
+                curatedFallback = true
             }
+        }
+
+        // FINAL SAFETY: If still empty after everything, use curated
+        if (trends.length === 0 && industry && CURATED_NICHE_TRENDS[industry]) {
+            const curated = CURATED_NICHE_TRENDS[industry]
+            trends = curated.map((t, i) => ({
+                title: t.title,
+                relevanceScore: 95,
+                reason: t.reason,
+                contentIdea: t.contentIdea,
+                formattedTraffic: 'Hot Topic',
+                source: 'Curated',
+            }))
+            curatedFallback = true
         }
 
         return NextResponse.json({
@@ -124,8 +212,9 @@ export async function GET(request: NextRequest) {
                 industry: industry || 'ALL',
                 aiFiltered,
                 aiGenerated,
-                message: trends.length === 0
-                    ? `Unable to find trends for ${industry || 'your niche'}. Please try again later.`
+                curatedFallback,
+                message: curatedFallback
+                    ? `Showing curated ${(industry || 'niche').toLowerCase()} trends`
                     : aiGenerated
                         ? `Showing AI-discovered ${(industry || 'niche').toLowerCase()} trends`
                         : null
