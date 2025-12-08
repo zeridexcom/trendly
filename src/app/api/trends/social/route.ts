@@ -10,14 +10,25 @@ const SOCIAL_KEYWORDS = [
     'funny', 'fail', 'win', 'reaction', 'prank', 'cute', 'dog', 'cat',
 ]
 
-// Popular Instagram hashtag categories (curated + AI-enhanced)
+// ============================================
+// 48-HOUR CACHE FOR RAPIDAPI (saves API calls)
+// ============================================
+interface CachedData {
+    hashtags: string[]
+    fetchedAt: number
+}
+
+let rapidApiCache: CachedData | null = null
+const CACHE_DURATION = 48 * 60 * 60 * 1000 // 48 hours in ms
+
+// Curated hashtags as fallback
 const INSTAGRAM_TRENDING_HASHTAGS = {
-    viral: ['fyp', 'viral', 'trending', 'explore', 'foryou', 'foryoupage', 'viralpost', 'viralvideos'],
-    reels: ['reels', 'reelsinstagram', 'instareels', 'reelsvideo', 'reelitfeelit', 'reelsviral', 'trendingreels'],
-    lifestyle: ['lifestyle', 'aesthetic', 'mood', 'vibes', 'dailylife', 'ootd', 'style', 'fashion'],
-    entertainment: ['music', 'dance', 'funny', 'comedy', 'memes', 'entertainment', 'bollywood', 'hollywood'],
-    motivation: ['motivation', 'inspiration', 'quotes', 'success', 'mindset', 'goals', 'hustle'],
-    photography: ['photography', 'photooftheday', 'instagood', 'picoftheday', 'photo', 'instadaily'],
+    viral: ['fyp', 'viral', 'trending', 'explore', 'foryou', 'foryoupage', 'viralpost'],
+    reels: ['reels', 'reelsinstagram', 'instareels', 'reelsvideo', 'reelitfeelit', 'trendingreels'],
+    lifestyle: ['lifestyle', 'aesthetic', 'mood', 'vibes', 'ootd', 'style', 'fashion'],
+    entertainment: ['music', 'dance', 'funny', 'comedy', 'memes', 'bollywood', 'hollywood'],
+    motivation: ['motivation', 'inspiration', 'quotes', 'success', 'mindset', 'goals'],
+    photography: ['photography', 'photooftheday', 'instagood', 'picoftheday', 'instadaily'],
 }
 
 function scoreSocialRelevance(title: string): number {
@@ -27,7 +38,6 @@ function scoreSocialRelevance(title: string): number {
         if (titleLower.includes(keyword)) score += 10
     })
     if (title.length < 30) score += 5
-    if (title.match(/^[A-Z][a-z]+\s[A-Z][a-z]+/)) score += 3
     return score
 }
 
@@ -38,63 +48,94 @@ function categorizePlatform(title: string): 'instagram' | 'tiktok' | 'both' {
     return 'both'
 }
 
-// Get trending Instagram hashtags (curated + rotated daily)
-function getInstagramTrendingHashtags(): { hashtag: string; category: string }[] {
+// Curated hashtags (rotates daily)
+function getCuratedHashtags(): { hashtag: string; category: string }[] {
     const today = new Date()
-    const dayOfWeek = today.getDay()
-    const hour = today.getHours()
-
-    // Rotate categories based on day and hour for variety
+    const day = today.getDay()
     const categories = Object.keys(INSTAGRAM_TRENDING_HASHTAGS)
-    const primaryCategory = categories[dayOfWeek % categories.length]
-    const secondaryCategory = categories[(dayOfWeek + 1) % categories.length]
-    const tertiaryCategory = categories[(hour % categories.length)]
 
-    const hashtags: { hashtag: string; category: string }[] = []
+    const result: { hashtag: string; category: string }[] = []
 
-    // Add from primary category
-    const primary = INSTAGRAM_TRENDING_HASHTAGS[primaryCategory as keyof typeof INSTAGRAM_TRENDING_HASHTAGS]
-    primary.slice(0, 4).forEach(h => hashtags.push({ hashtag: h, category: primaryCategory }))
+    // Always add top viral
+    result.push({ hashtag: 'fyp', category: 'viral' })
+    result.push({ hashtag: 'viral', category: 'viral' })
+    result.push({ hashtag: 'trending', category: 'viral' })
 
-    // Add from secondary  
-    const secondary = INSTAGRAM_TRENDING_HASHTAGS[secondaryCategory as keyof typeof INSTAGRAM_TRENDING_HASHTAGS]
-    secondary.slice(0, 3).forEach(h => hashtags.push({ hashtag: h, category: secondaryCategory }))
-
-    // Add from tertiary
-    const tertiary = INSTAGRAM_TRENDING_HASHTAGS[tertiaryCategory as keyof typeof INSTAGRAM_TRENDING_HASHTAGS]
-    tertiary.slice(0, 3).forEach(h => hashtags.push({ hashtag: h, category: tertiaryCategory }))
-
-    // Always include top viral ones
-    hashtags.unshift({ hashtag: 'trending', category: 'viral' })
-    hashtags.unshift({ hashtag: 'viral', category: 'viral' })
-    hashtags.unshift({ hashtag: 'fyp', category: 'viral' })
+    // Rotate through categories based on day
+    for (let i = 0; i < 3; i++) {
+        const cat = categories[(day + i) % categories.length]
+        const tags = INSTAGRAM_TRENDING_HASHTAGS[cat as keyof typeof INSTAGRAM_TRENDING_HASHTAGS]
+        tags.slice(0, 3).forEach(t => result.push({ hashtag: t, category: cat }))
+    }
 
     // Deduplicate
     const seen = new Set<string>()
-    return hashtags.filter(h => {
+    return result.filter(h => {
         if (seen.has(h.hashtag)) return false
         seen.add(h.hashtag)
         return true
-    }).slice(0, 12)
+    })
 }
 
-// Try RapidAPI if key exists
-async function fetchRapidAPIHashtags(): Promise<string[]> {
+// Fetch from RapidAPI with 48-hour cache
+async function fetchRapidAPIWithCache(): Promise<string[]> {
     const rapidApiKey = process.env.RAPIDAPI_KEY
-    if (!rapidApiKey) return []
+    if (!rapidApiKey) {
+        console.log('No RAPIDAPI_KEY, using curated hashtags')
+        return []
+    }
 
+    // Check cache first
+    const now = Date.now()
+    if (rapidApiCache && (now - rapidApiCache.fetchedAt) < CACHE_DURATION) {
+        console.log('Using cached RapidAPI data (expires in', Math.round((CACHE_DURATION - (now - rapidApiCache.fetchedAt)) / 3600000), 'hours)')
+        return rapidApiCache.hashtags
+    }
+
+    // Cache expired or doesn't exist - make API call
+    console.log('Fetching fresh data from RapidAPI...')
     try {
-        const response = await fetch('https://instagram-hashtags1.p.rapidapi.com/trending', {
+        const response = await fetch('https://instagram-scraper-stable-api.p.rapidapi.com/v1/search/hashtags?query=trending', {
             headers: {
                 'X-RapidAPI-Key': rapidApiKey,
-                'X-RapidAPI-Host': 'instagram-hashtags1.p.rapidapi.com',
+                'X-RapidAPI-Host': 'instagram-scraper-stable-api.p.rapidapi.com',
             },
         })
-        if (!response.ok) return []
+
+        if (!response.ok) {
+            console.log('RapidAPI error:', response.status)
+            return rapidApiCache?.hashtags || []
+        }
+
         const data = await response.json()
-        if (Array.isArray(data)) return data.slice(0, 10).map((h: any) => h.name || h.hashtag || h)
-        return []
-    } catch { return [] }
+        let hashtags: string[] = []
+
+        // Parse response - different APIs have different formats
+        if (data.data && Array.isArray(data.data)) {
+            hashtags = data.data.slice(0, 15).map((h: any) => h.name || h.hashtag || h.title || h)
+        } else if (Array.isArray(data)) {
+            hashtags = data.slice(0, 15).map((h: any) => h.name || h.hashtag || h.title || h)
+        } else if (data.hashtags) {
+            hashtags = data.hashtags.slice(0, 15).map((h: any) => typeof h === 'string' ? h : h.name || h.hashtag)
+        }
+
+        // Filter valid hashtags
+        hashtags = hashtags.filter((h: any) => typeof h === 'string' && h.length > 1)
+
+        if (hashtags.length > 0) {
+            // Update cache
+            rapidApiCache = {
+                hashtags,
+                fetchedAt: now,
+            }
+            console.log('Cached', hashtags.length, 'hashtags for 48 hours')
+        }
+
+        return hashtags
+    } catch (error) {
+        console.error('RapidAPI fetch error:', error)
+        return rapidApiCache?.hashtags || []
+    }
 }
 
 export async function GET(request: NextRequest) {
@@ -105,13 +146,13 @@ export async function GET(request: NextRequest) {
         // Fetch all sources in parallel
         const [googleTrends, rapidApiHashtags] = await Promise.all([
             getDailyTrends(geo),
-            fetchRapidAPIHashtags(),
+            fetchRapidAPIWithCache(),
         ])
 
-        // Get curated Instagram hashtags
-        const curatedHashtags = getInstagramTrendingHashtags()
+        // Get curated hashtags as fallback/supplement
+        const curatedHashtags = getCuratedHashtags()
 
-        // Process Google Trends for social relevance
+        // Process Google Trends
         const scoredTrends = googleTrends.map(trend => ({
             ...trend,
             socialScore: scoreSocialRelevance(trend.title),
@@ -124,13 +165,13 @@ export async function GET(request: NextRequest) {
             .sort((a, b) => b.socialScore - a.socialScore)
             .slice(0, 15)
 
-        // Build Instagram trends: RapidAPI > Curated > Google filtered
+        // Build Instagram trends: RapidAPI (cached) > Curated > Google
         const instagramFromRapidApi = rapidApiHashtags.map((tag, i) => ({
-            title: `#${tag}`,
+            title: `#${tag.replace('#', '')}`,
             formattedTraffic: 'Trending',
-            socialScore: 25 - i,
+            socialScore: 30 - i,
             platform: 'instagram' as const,
-            source: 'rapidapi' as const,
+            source: 'instagram' as const, // Real Instagram data!
             category: 'trending',
         }))
 
@@ -147,12 +188,12 @@ export async function GET(request: NextRequest) {
             .filter(t => t.platform === 'instagram' || t.platform === 'both')
             .map(t => ({ ...t, category: 'viral' }))
 
-        // Combine: RapidAPI first, then curated, then Google
+        // Priority: RapidAPI first (real Instagram data), then curated, then Google
         const instagramTrends = [
             ...instagramFromRapidApi,
             ...instagramFromCurated,
             ...instagramFromGoogle,
-        ].slice(0, 12)
+        ].slice(0, 15)
 
         const tiktokTrends = socialTrends
             .filter(t => t.platform === 'tiktok' || t.platform === 'both')
@@ -166,6 +207,7 @@ export async function GET(request: NextRequest) {
                 all: socialTrends,
                 sources: {
                     rapidApi: rapidApiHashtags.length > 0,
+                    rapidApiCached: rapidApiCache ? Math.round((Date.now() - rapidApiCache.fetchedAt) / 3600000) + 'h ago' : null,
                     curated: true,
                     googleTrends: true,
                 },
