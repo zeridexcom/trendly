@@ -88,8 +88,13 @@ const AVATAR_DIALOGUE = [
     },
     {
         greeting: "Almost done! ⚡",
-        message: "Last question - how often do you post? This helps me know when to send you urgent trend alerts.",
+        message: "How often do you post? This helps me know when to send you urgent trend alerts.",
         tip: "Be honest - we'll adapt to your pace!",
+    },
+    {
+        greeting: "Make me yours! 🎨",
+        message: "Give me a nickname and pick my color! I'll be your personal trend buddy.",
+        tip: "This is how I'll greet you on your dashboard!",
     },
     {
         greeting: "You're all set! 🚀",
@@ -98,12 +103,30 @@ const AVATAR_DIALOGUE = [
     },
 ]
 
+// Avatar color options
+const AVATAR_COLORS: Record<string, string> = {
+    'pink': '#FF90E8',
+    'blue': '#00D4FF',
+    'green': '#B1F202',
+    'purple': '#A855F7',
+    'orange': '#FF8C42',
+}
+
 // Trendy Avatar Component with mouse-following eyes, high-five, and idle animations
-function TrendyAvatar({ expression = 'happy', isAnimating = false, onHighFive }: {
+function TrendyAvatar({
+    expression = 'happy',
+    isAnimating = false,
+    onHighFive,
+    avatarName = 'TRENDY',
+    avatarColor = 'pink'
+}: {
     expression?: 'happy' | 'excited' | 'thinking' | 'celebrating',
     isAnimating?: boolean,
-    onHighFive?: () => void
+    onHighFive?: () => void,
+    avatarName?: string,
+    avatarColor?: string
 }) {
+    const bodyColor = AVATAR_COLORS[avatarColor] || AVATAR_COLORS['pink']
     const avatarRef = React.useRef<HTMLDivElement>(null)
     const [eyeOffset, setEyeOffset] = React.useState({ x: 0, y: 0 })
     const [isPanicking, setIsPanicking] = React.useState(false)
@@ -221,7 +244,10 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false, onHighFive }:
             </AnimatePresence>
 
             {/* Body */}
-            <div className="w-32 h-32 bg-[#FF90E8] border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex items-center justify-center relative overflow-hidden hover:shadow-[8px_8px_0px_0px_#000] transition-shadow">
+            <div
+                className="w-32 h-32 border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex items-center justify-center relative overflow-hidden hover:shadow-[8px_8px_0px_0px_#000] transition-shadow"
+                style={{ backgroundColor: bodyColor }}
+            >
                 {/* Sparkle accessory - bounces when idle */}
                 <motion.div
                     animate={isIdle ? { rotate: [0, 10, -10, 0], y: [0, -2, 0] } : {}}
@@ -292,7 +318,7 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false, onHighFive }:
 
             {/* Name tag with hint */}
             <div className="mt-3 bg-black text-white px-4 py-1 font-black text-sm uppercase tracking-wide text-center border-2 border-black">
-                {isHighFiving ? '🙌 HIGH FIVE!' : 'TRENDY'}
+                {isHighFiving ? '🙌 HIGH FIVE!' : avatarName.toUpperCase()}
             </div>
 
             {/* Click me hint when idle */}
@@ -529,6 +555,98 @@ function Confetti({ active }: { active: boolean }) {
     )
 }
 
+// Dashboard Preview Component - shows actual dashboard layout
+function DashboardPreview({ industry, platforms, avatarName, avatarColor }: {
+    industry: string,
+    platforms: string[],
+    avatarName: string,
+    avatarColor: string
+}) {
+    const industryLabel = INDUSTRIES.find(i => i.id === industry)?.label || 'Your Niche'
+    const bgColor = AVATAR_COLORS[avatarColor] || '#FF90E8'
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#FAF9F6] border-4 border-black shadow-[8px_8px_0px_0px_#000] rounded-lg overflow-hidden max-w-md mx-auto"
+        >
+            {/* Mini Sidebar */}
+            <div className="flex">
+                <div className="w-16 bg-white border-r-2 border-black p-2 flex flex-col gap-2">
+                    <div
+                        className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center text-xs font-black"
+                        style={{ backgroundColor: bgColor }}
+                    >
+                        {avatarName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="w-10 h-2 bg-black rounded" />
+                    <div className="w-10 h-2 bg-gray-300 rounded" />
+                    <div className="w-10 h-2 bg-gray-300 rounded" />
+                    <div className="w-10 h-2 bg-gray-300 rounded" />
+                </div>
+
+                {/* Main Content */}
+                <div className="flex-1 p-4">
+                    {/* Header */}
+                    <div className="mb-3">
+                        <p className="text-xs font-black uppercase text-gray-500">Your Dashboard</p>
+                        <p className="text-sm font-black">Hey {avatarName}! 👋</p>
+                    </div>
+
+                    {/* Industry Badge */}
+                    <div
+                        className="inline-block px-2 py-1 text-xs font-bold border-2 border-black mb-3"
+                        style={{ backgroundColor: bgColor }}
+                    >
+                        🎯 {industryLabel}
+                    </div>
+
+                    {/* Trend Cards Preview */}
+                    <div className="space-y-2">
+                        <div className="bg-white border-2 border-black p-2 shadow-[2px_2px_0px_0px_#000]">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-[#FFC900] border border-black rounded flex items-center justify-center text-xs">🔥</div>
+                                <div>
+                                    <p className="text-xs font-bold">Trending in {industryLabel}</p>
+                                    <p className="text-[10px] text-gray-500">+245% this week</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white border-2 border-black p-2 shadow-[2px_2px_0px_0px_#000]">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-[#B1F202] border border-black rounded flex items-center justify-center text-xs">📈</div>
+                                <div>
+                                    <p className="text-xs font-bold">Hot Topics Today</p>
+                                    <p className="text-[10px] text-gray-500">12 new trends</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Platform Icons */}
+                    {platforms.length > 0 && (
+                        <div className="mt-3 flex gap-1">
+                            <p className="text-[10px] text-gray-500 mr-1">Tracking:</p>
+                            {platforms.slice(0, 3).map(p => (
+                                <div
+                                    key={p}
+                                    className="w-5 h-5 bg-black text-white rounded flex items-center justify-center text-[8px] font-bold"
+                                >
+                                    {p.charAt(0)}
+                                </div>
+                            ))}
+                            {platforms.length > 3 && (
+                                <span className="text-[10px] text-gray-500">+{platforms.length - 3}</span>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </motion.div>
+    )
+}
+
 export default function OnboardingPage() {
     const router = useRouter()
     const [step, setStep] = useState(1)
@@ -550,6 +668,10 @@ export default function OnboardingPage() {
 
     // Talking state for typewriter effect
     const [isTalking, setIsTalking] = useState(false)
+
+    // Avatar personalization
+    const [avatarName, setAvatarName] = useState('Trendy')
+    const [avatarColor, setAvatarColor] = useState('pink')
 
     // Show achievement badge
     const triggerAchievement = (id: string, title: string, description: string) => {
@@ -622,6 +744,7 @@ export default function OnboardingPage() {
         if (step === 2) return !!location
         if (step === 3) return platforms.length > 0
         if (step === 4) return !!frequency
+        if (step === 5) return avatarName.trim().length > 0 // Personalization step
         return false
     }
 
@@ -656,6 +779,8 @@ export default function OnboardingPage() {
                             expression={isTalking ? 'excited' : avatarExpression}
                             isAnimating={isAvatarAnimating}
                             onHighFive={() => triggerAchievement('high_five', '🙌 High Five!', 'You made a friend!')}
+                            avatarName={avatarName}
+                            avatarColor={avatarColor}
                         />
                         <AnimatePresence mode="wait">
                             <SpeechBubble
@@ -684,13 +809,13 @@ export default function OnboardingPage() {
 
                         {/* Progress */}
                         <div className="flex items-center justify-between mb-8">
-                            <span className="font-black uppercase text-sm tracking-wide">Step {step} of 4</span>
+                            <span className="font-black uppercase text-sm tracking-wide">Step {step} of 5</span>
                             <div className="flex gap-2">
-                                {[1, 2, 3, 4].map(s => (
+                                {[1, 2, 3, 4, 5].map(s => (
                                     <div
                                         key={s}
                                         className={cn(
-                                            "w-10 h-2 border-2 border-black transition-all",
+                                            "w-8 h-2 border-2 border-black transition-all",
                                             s < step ? "bg-black" : s === step ? "bg-[#FF90E8]" : "bg-white"
                                         )}
                                     />
@@ -704,6 +829,7 @@ export default function OnboardingPage() {
                             {step === 2 && "Where's Your Audience?"}
                             {step === 3 && "Pick Your Platforms"}
                             {step === 4 && "Posting Schedule"}
+                            {step === 5 && "Customize Your Buddy"}
                         </h1>
 
                         {/* Content Area */}
@@ -840,6 +966,75 @@ export default function OnboardingPage() {
                                         ))}
                                     </motion.div>
                                 )}
+
+                                {/* Step 5: Personalization */}
+                                {step === 5 && (
+                                    <motion.div
+                                        key="step5"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        {/* Name Input */}
+                                        <div>
+                                            <label className="font-bold text-sm uppercase tracking-wide block mb-2">
+                                                Give me a nickname
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={avatarName}
+                                                onChange={(e) => {
+                                                    setAvatarName(e.target.value)
+                                                    animateAvatar('excited')
+                                                }}
+                                                placeholder="e.g., Buddy, Helper, Max"
+                                                maxLength={12}
+                                                className="w-full p-4 border-3 border-black font-bold text-xl focus:outline-none focus:ring-2 focus:ring-[#FF90E8] shadow-[4px_4px_0px_0px_#000]"
+                                            />
+                                        </div>
+
+                                        {/* Color Picker */}
+                                        <div>
+                                            <label className="font-bold text-sm uppercase tracking-wide block mb-2">
+                                                Pick my color
+                                            </label>
+                                            <div className="flex gap-3 flex-wrap">
+                                                {Object.entries(AVATAR_COLORS).map(([name, hex]) => (
+                                                    <button
+                                                        key={name}
+                                                        onClick={() => {
+                                                            setAvatarColor(name)
+                                                            animateAvatar('excited')
+                                                            triggerAchievement('color_pick', '🎨 Styled!', 'Nice color choice!')
+                                                        }}
+                                                        className={cn(
+                                                            "w-12 h-12 border-3 border-black transition-all",
+                                                            avatarColor === name
+                                                                ? "ring-4 ring-black ring-offset-2 scale-110"
+                                                                : "hover:scale-105 shadow-[3px_3px_0px_0px_#000]"
+                                                        )}
+                                                        style={{ backgroundColor: hex }}
+                                                        title={name.charAt(0).toUpperCase() + name.slice(1)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Dashboard Preview */}
+                                        <div>
+                                            <label className="font-bold text-sm uppercase tracking-wide block mb-2">
+                                                Your Dashboard Preview
+                                            </label>
+                                            <DashboardPreview
+                                                industry={industry}
+                                                platforms={platforms}
+                                                avatarName={avatarName || 'Trendy'}
+                                                avatarColor={avatarColor}
+                                            />
+                                        </div>
+                                    </motion.div>
+                                )}
                             </AnimatePresence>
                         </div>
 
@@ -854,7 +1049,7 @@ export default function OnboardingPage() {
                                 </button>
                             )}
                             <button
-                                onClick={step === 4 ? handleComplete : () => goToStep(step + 1)}
+                                onClick={step === 5 ? handleComplete : () => goToStep(step + 1)}
                                 disabled={!canProceed() || isLoading}
                                 className={cn(
                                     "flex-1 px-6 py-4 font-black border-2 border-black transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-lg",
