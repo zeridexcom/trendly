@@ -11,6 +11,11 @@ const CURATED_NICHE_TRENDS: Record<string, Array<{ title: string; reason: string
         { title: 'iPhone 16 Pro Tips', reason: 'Latest iPhone features', contentIdea: 'Hidden features most users dont know' },
         { title: 'AI Agents Revolution', reason: 'Autonomous AI agents are the future', contentIdea: 'How AI agents will change work in 2025' },
         { title: 'Tech Layoffs 2024', reason: 'Ongoing industry restructuring', contentIdea: 'Skills that make you layoff-proof' },
+        { title: 'Windows 11 Updates', reason: 'OS updates and features', contentIdea: 'New Windows features you should try' },
+        { title: 'Cybersecurity Tips', reason: 'Growing hack threats', contentIdea: 'Protect your accounts in 2025' },
+        { title: 'Best Laptops 2024', reason: 'Buying guide demand', contentIdea: 'MacBook vs Windows for creators' },
+        { title: 'React vs Next.js', reason: 'Web dev framework debate', contentIdea: 'Which framework should you learn?' },
+        { title: 'Python for Beginners', reason: 'Programming learning surge', contentIdea: 'Learn Python in 30 days roadmap' },
     ],
     HEALTH: [
         { title: 'Ozempic Weight Loss', reason: 'Trending weight loss medication', contentIdea: 'What doctors wish you knew about GLP-1 drugs' },
@@ -130,7 +135,7 @@ export async function GET(request: NextRequest) {
                 } else {
                     // Step 2: Not enough matches - use AI to find/generate real niche trends
                     console.log(`Only ${aiResults.length} matches found, generating niche trends...`)
-                    const generatedTrends = await generateNicheTrends(industry, 5)
+                    const generatedTrends = await generateNicheTrends(industry, 10)
 
                     if (generatedTrends.length > 0) {
                         // Combine any found + generated to ensure minimum 5
@@ -157,7 +162,7 @@ export async function GET(request: NextRequest) {
                         }))
 
                         // Prioritize live trends, then AI discovered
-                        trends = [...foundTrends, ...aiTrends].slice(0, 8)
+                        trends = [...foundTrends, ...aiTrends] // Return ALL trends, no limit
                         aiFiltered = foundTrends.length > 0
                         aiGenerated = aiTrends.length > 0
                     } else {
@@ -204,6 +209,36 @@ export async function GET(request: NextRequest) {
             curatedFallback = true
         }
 
+        // ALWAYS ADD: Curated trends for user's industry (guaranteed relevant)
+        if (industry && industry !== 'ALL' && industry !== 'OTHER' && CURATED_NICHE_TRENDS[industry]) {
+            const curated = CURATED_NICHE_TRENDS[industry]
+            const curatedTrends = curated.map((t) => ({
+                title: t.title,
+                relevanceScore: 95,
+                reason: t.reason,
+                contentIdea: t.contentIdea,
+                formattedTraffic: 'Hot Topic',
+                source: 'Curated for You',
+            }))
+            // Add curated that aren't already in trends (avoid duplicates)
+            const existingTitles = new Set(trends.map((t: any) => t.title.toLowerCase()))
+            const newCurated = curatedTrends.filter(t => !existingTitles.has(t.title.toLowerCase()))
+            trends = [...trends, ...newCurated]
+        }
+
+        // ALWAYS ADD: General Google Trends (with lower relevance if user has industry)
+        const generalTrends = allTrends.map((t: any) => ({
+            title: t.title,
+            formattedTraffic: t.traffic || t.formattedTraffic || 'Trending',
+            relatedQueries: t.relatedQueries || [],
+            relevanceScore: industry && industry !== 'ALL' ? 70 : 90,
+            source: 'Google Trends',
+        }))
+        // Add general trends that aren't already included
+        const existingTitles2 = new Set(trends.map((t: any) => t.title.toLowerCase()))
+        const newGeneralTrends = generalTrends.filter((t: any) => !existingTitles2.has(t.title.toLowerCase()))
+        trends = [...trends, ...newGeneralTrends]
+
         return NextResponse.json({
             success: true,
             trends,
@@ -213,6 +248,7 @@ export async function GET(request: NextRequest) {
                 aiFiltered,
                 aiGenerated,
                 curatedFallback,
+                totalCount: trends.length,
                 message: curatedFallback
                     ? `Showing curated ${(industry || 'niche').toLowerCase()} trends`
                     : aiGenerated
