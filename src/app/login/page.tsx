@@ -239,6 +239,7 @@ export default function LoginPage() {
                                         outline: 'none',
                                         transition: 'border-color 0.2s',
                                         background: '#fff',
+                                        color: '#34312D',
                                     }}
                                 />
                             </div>
@@ -264,6 +265,7 @@ export default function LoginPage() {
                                     outline: 'none',
                                     transition: 'border-color 0.2s',
                                     background: '#fff',
+                                    color: '#34312D',
                                 }}
                             />
                         </div>
@@ -289,6 +291,7 @@ export default function LoginPage() {
                                         fontSize: '15px',
                                         outline: 'none',
                                         background: '#fff',
+                                        color: '#34312D',
                                     }}
                                 />
                                 <button
@@ -427,6 +430,9 @@ export default function LoginPage() {
                 }
                 input:focus {
                     border-color: #D9C5B2 !important;
+                }
+                input::placeholder {
+                    color: #7E7F83 !important;
                 }
             `}</style>
         </div>
