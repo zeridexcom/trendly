@@ -67,6 +67,7 @@ export default function DashboardPage() {
     const [greeting, setGreeting] = useState('')
     const [personalization, setPersonalization] = useState<Personalization | null>(null)
     const [savingTrend, setSavingTrend] = useState<string | null>(null)
+    const [youtubePersonalization, setYoutubePersonalization] = useState<{ industry: string | null; isPersonalized: boolean; matchingVideos: number } | null>(null)
 
     useEffect(() => {
         // Set greeting based on time
@@ -86,6 +87,9 @@ export default function DashboardPage() {
             const data = await response.json()
             if (data.success) {
                 setTrendingVideos(data.data.videos.slice(0, 6))
+                if (data.data.personalization) {
+                    setYoutubePersonalization(data.data.personalization)
+                }
             }
         } catch (err) {
             console.error('Failed to fetch videos:', err)
@@ -181,7 +185,7 @@ export default function DashboardPage() {
                             }
                         </span>
                         {personalization?.location && (
-                            <span className="text-[#7E7F83] font-normal text-sm">
+                            <span className="text-[#34312D] dark:text-[#B0ADB0] font-normal text-sm">
                                 in {personalization.location === 'IN' ? 'India' :
                                     personalization.location === 'US' ? 'United States' :
                                         personalization.location === 'GB' ? 'United Kingdom' :
@@ -265,9 +269,24 @@ export default function DashboardPage() {
             {/* Trending YouTube Videos */}
             <motion.div variants={item}>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
+                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
                         <Youtube className="w-5 h-5 text-red-500" />
-                        Trending on YouTube India
+                        <span>
+                            {youtubePersonalization?.isPersonalized && youtubePersonalization.industry
+                                ? `${youtubePersonalization.industry.charAt(0) + youtubePersonalization.industry.slice(1).toLowerCase()} Videos`
+                                : 'Trending on YouTube India'
+                            }
+                        </span>
+                        {youtubePersonalization?.isPersonalized && (
+                            <span className="text-[#34312D] dark:text-[#B0ADB0] font-normal text-sm">
+                                for you
+                            </span>
+                        )}
+                        {youtubePersonalization?.isPersonalized && youtubePersonalization.matchingVideos > 0 && (
+                            <span className="px-2 py-0.5 text-xs font-bold bg-[#B1F202] text-black border border-black rounded-sm">
+                                🎯 {youtubePersonalization.matchingVideos} MATCHED
+                            </span>
+                        )}
                         <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full">
                             LIVE
                         </span>
@@ -282,7 +301,7 @@ export default function DashboardPage() {
                         </button>
                         <Link
                             href="/dashboard/trends"
-                            className="text-sm text-[#D9C5B2] hover:underline flex items-center gap-1"
+                            className="text-sm text-[#34312D] dark:text-[#B0ADB0] hover:underline flex items-center gap-1 font-medium"
                         >
                             View All <ChevronRight className="w-4 h-4" />
                         </Link>
