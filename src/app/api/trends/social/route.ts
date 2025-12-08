@@ -141,7 +141,22 @@ async function fetchRapidAPIWithCache(): Promise<string[]> {
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url)
-        const geo = searchParams.get('geo') || 'IN'
+        let geo = searchParams.get('geo') || 'IN'
+        let userIndustry: string | null = searchParams.get('industry') || null
+
+        // Try to get user preferences if authenticated
+        try {
+            const { createClient } = await import('@/lib/supabase/server')
+            const supabase = await createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (user?.user_metadata) {
+                geo = user.user_metadata.location || geo
+                userIndustry = user.user_metadata.industry || userIndustry
+            }
+        } catch {
+            // Not authenticated, use query params
+        }
 
         // Fetch all sources in parallel
         const [googleTrends, rapidApiHashtags] = await Promise.all([
@@ -152,14 +167,23 @@ export async function GET(request: NextRequest) {
         // Get curated hashtags as fallback/supplement
         const curatedHashtags = getCuratedHashtags()
 
-        // Process Google Trends
-        const scoredTrends = googleTrends.map(trend => ({
-            ...trend,
-            socialScore: scoreSocialRelevance(trend.title),
-            platform: categorizePlatform(trend.title),
-            source: 'google' as const,
-        }))
+        // Process Google Trends - boost scores for user's industry
+        const scoredTrends = googleTrends.map(trend => {
+            let score = scoreSocialRelevance(trend.title)
+            // Boost score if matches user's industry
+            if (userIndustry && trend.industry === userIndustry) {
+                score += 20 // Priority boost for matching industry
+            }
+            return {
+                ...trend,
+                socialScore: score,
+                platform: categorizePlatform(trend.title),
+                source: 'google' as const,
+                matchesIndustry: trend.industry === userIndustry,
+            }
+        })
 
+        // Sort by score (industry matches first)
         const socialTrends = scoredTrends
             .filter((t, i) => t.socialScore > 0 || i < 5)
             .sort((a, b) => b.socialScore - a.socialScore)
@@ -199,12 +223,18 @@ export async function GET(request: NextRequest) {
             .filter(t => t.platform === 'tiktok' || t.platform === 'both')
             .slice(0, 10)
 
+        // Get industry-specific trends for user
+        const industryTrends = userIndustry
+            ? socialTrends.filter(t => t.matchesIndustry).slice(0, 8)
+            : []
+
         return NextResponse.json({
             success: true,
             data: {
                 instagram: instagramTrends,
                 tiktok: tiktokTrends,
                 all: socialTrends,
+                forYou: industryTrends, // Personalized based on industry
                 sources: {
                     rapidApi: rapidApiHashtags.length > 0,
                     rapidApiCached: rapidApiCache ? Math.round((Date.now() - rapidApiCache.fetchedAt) / 3600000) + 'h ago' : null,
@@ -212,6 +242,10 @@ export async function GET(request: NextRequest) {
                     googleTrends: true,
                 },
                 fetchedAt: new Date().toISOString(),
+            },
+            personalization: {
+                industry: userIndustry || 'ALL',
+                location: geo,
             }
         })
     } catch (error: any) {

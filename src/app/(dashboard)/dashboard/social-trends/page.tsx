@@ -16,6 +16,12 @@ interface SocialTrend {
     platform: 'instagram' | 'tiktok' | 'both'
     source?: string
     category?: string
+    matchesIndustry?: boolean
+}
+
+interface Personalization {
+    industry: string
+    location: string
 }
 
 const container = {
@@ -41,6 +47,8 @@ const categoryColors: Record<string, string> = {
 export default function SocialTrendsPage() {
     const [instagramTrends, setInstagramTrends] = useState<SocialTrend[]>([])
     const [tiktokTrends, setTiktokTrends] = useState<SocialTrend[]>([])
+    const [forYouTrends, setForYouTrends] = useState<SocialTrend[]>([])
+    const [personalization, setPersonalization] = useState<Personalization | null>(null)
     const [loading, setLoading] = useState(true)
     const [savingTrend, setSavingTrend] = useState<string | null>(null)
     const [copiedTag, setCopiedTag] = useState<string | null>(null)
@@ -58,6 +66,10 @@ export default function SocialTrendsPage() {
             if (data.success) {
                 setInstagramTrends(data.data.instagram || [])
                 setTiktokTrends(data.data.tiktok || [])
+                setForYouTrends(data.data.forYou || [])
+                if (data.personalization) {
+                    setPersonalization(data.personalization)
+                }
             }
         } catch (error) {
             console.error('Failed to fetch:', error)
@@ -126,6 +138,52 @@ export default function SocialTrendsPage() {
                 </div>
             ) : (
                 <motion.div variants={container} initial="hidden" animate="show" className="space-y-12">
+
+                    {/* For You Section - Personalized */}
+                    {forYouTrends.length > 0 && personalization && personalization.industry !== 'ALL' && (
+                        <motion.div variants={item}>
+                            <div className="flex items-center gap-4 mb-6 p-4 border-b-4 border-black bg-gradient-to-r from-[#FF90E8] to-[#FFC900]">
+                                <div className="w-12 h-12 border-2 border-black bg-white flex items-center justify-center shadow-[4px_4px_0px_0px_#000]">
+                                    <Sparkles className="w-6 h-6 text-black" />
+                                </div>
+                                <div className="flex-1">
+                                    <h2 className="text-2xl font-black uppercase italic">
+                                        🎯 For You
+                                    </h2>
+                                    <p className="text-sm font-bold text-black">
+                                        Trending in {personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()} • Based on your preferences
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {forYouTrends.map((trend, i) => (
+                                    <motion.div
+                                        key={trend.title}
+                                        variants={item}
+                                        className="relative p-5 bg-white border-3 border-black shadow-[6px_6px_0px_0px_#FF90E8] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#FFC900] transition-all group"
+                                    >
+                                        <span className="absolute -top-2 -right-2 px-2 py-1 bg-[#B1F202] border-2 border-black text-xs font-black uppercase rotate-3">
+                                            Perfect Match
+                                        </span>
+                                        <h3 className="font-black text-lg text-black mb-2">{trend.title}</h3>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-bold text-gray-600">
+                                                {trend.formattedTraffic || 'Trending'}
+                                            </span>
+                                            <button
+                                                onClick={() => saveTrend(trend)}
+                                                className="p-2 bg-[#FFC900] border-2 border-black hover:bg-black hover:text-white transition-colors"
+                                            >
+                                                <Bookmark className={cn("w-4 h-4", savingTrend === trend.title && "animate-pulse")} />
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* Instagram Section */}
                     <motion.div variants={item}>
                         <div className="flex items-center gap-4 mb-6 p-4 border-b-4 border-black bg-white">
