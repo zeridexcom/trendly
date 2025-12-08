@@ -15,7 +15,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const { isCollapsed } = useSidebar()
 
     return (
-        <div className="flex bg-white dark:bg-[#14110F] min-h-screen font-sans antialiased">
+        <div className="flex bg-white min-h-screen font-sans antialiased">
             {/* Desktop Sidebar */}
             <Sidebar />
 
@@ -38,7 +38,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 <Header onMobileMenuOpen={() => setMobileNavOpen(true)} />
 
                 {/* Main Content Area */}
-                <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-[#F3F3F4] dark:bg-[#14110F]">
+                <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-[#F3F3F3]">
                     <div className="max-w-[1400px] mx-auto">
                         {/* Breadcrumbs */}
                         <Breadcrumbs />
