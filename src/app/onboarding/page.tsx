@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Sparkles, ArrowRight, ArrowLeft, Loader2, Check,
+    Sparkles, ArrowRight, ArrowLeft, Loader2, Check, Trophy, PartyPopper,
     Cpu, Film, Briefcase, Heart, Gamepad2, Shirt, BookOpen, UtensilsCrossed, Plane, Newspaper,
     Globe, MapPin,
     Youtube, Instagram, Twitter, Linkedin, PenTool, Video,
@@ -245,6 +245,88 @@ function SpeechBubble({ greeting, message, tip }: { greeting: string, message: s
     )
 }
 
+// Achievement Badge Popup Component
+function AchievementBadge({ title, description, show, onHide }: { title: string, description: string, show: boolean, onHide: () => void }) {
+    React.useEffect(() => {
+        if (show) {
+            const timer = setTimeout(onHide, 2500)
+            return () => clearTimeout(timer)
+        }
+    }, [show, onHide])
+
+    return (
+        <AnimatePresence>
+            {show && (
+                <motion.div
+                    initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.8 }}
+                    className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
+                >
+                    <div className="bg-[#FFC900] border-4 border-black px-6 py-4 shadow-[6px_6px_0px_0px_#000] flex items-center gap-4">
+                        <div className="w-12 h-12 bg-black flex items-center justify-center rounded-full">
+                            <Trophy className="w-6 h-6 text-[#FFC900]" />
+                        </div>
+                        <div>
+                            <p className="font-black text-lg uppercase">{title}</p>
+                            <p className="font-bold text-sm text-black/70">{description}</p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    )
+}
+
+// Confetti Component
+function Confetti({ active }: { active: boolean }) {
+    const colors = ['#FF90E8', '#FFC900', '#00F0FF', '#B1F202', '#FF4D4D']
+    const confettiCount = 50
+
+    if (!active) return null
+
+    return (
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+            {Array.from({ length: confettiCount }).map((_, i) => {
+                const color = colors[i % colors.length]
+                const left = Math.random() * 100
+                const delay = Math.random() * 0.5
+                const size = Math.random() * 10 + 5
+                const rotation = Math.random() * 360
+
+                return (
+                    <motion.div
+                        key={i}
+                        initial={{
+                            y: -20,
+                            x: `${left}vw`,
+                            rotate: rotation,
+                            opacity: 1
+                        }}
+                        animate={{
+                            y: '100vh',
+                            rotate: rotation + 360,
+                            opacity: 0
+                        }}
+                        transition={{
+                            duration: 2 + Math.random() * 2,
+                            delay,
+                            ease: 'linear'
+                        }}
+                        style={{
+                            position: 'absolute',
+                            width: size,
+                            height: size * 0.6,
+                            backgroundColor: color,
+                            borderRadius: '2px',
+                        }}
+                    />
+                )
+            })}
+        </div>
+    )
+}
+
 export default function OnboardingPage() {
     const router = useRouter()
     const [step, setStep] = useState(1)
@@ -255,6 +337,22 @@ export default function OnboardingPage() {
     const [frequency, setFrequency] = useState('')
     const [avatarExpression, setAvatarExpression] = useState<'happy' | 'excited' | 'thinking' | 'celebrating'>('happy')
     const [isAvatarAnimating, setIsAvatarAnimating] = useState(false)
+
+    // Achievement badges state
+    const [showAchievement, setShowAchievement] = useState(false)
+    const [achievementData, setAchievementData] = useState({ title: '', description: '' })
+    const [earnedBadges, setEarnedBadges] = useState<string[]>([])
+
+    // Confetti state
+    const [showConfetti, setShowConfetti] = useState(false)
+
+    // Show achievement badge
+    const triggerAchievement = (id: string, title: string, description: string) => {
+        if (earnedBadges.includes(id)) return // Don't show same badge twice
+        setEarnedBadges(prev => [...prev, id])
+        setAchievementData({ title, description })
+        setShowAchievement(true)
+    }
 
     // Animate avatar on selection
     const animateAvatar = (expression: 'happy' | 'excited' | 'thinking' | 'celebrating' = 'excited') => {
@@ -284,6 +382,8 @@ export default function OnboardingPage() {
     const handleComplete = async () => {
         setIsLoading(true)
         animateAvatar('celebrating')
+        setShowConfetti(true) // 🎉 Confetti explosion!
+
         try {
             // Save preferences to API
             await fetch('/api/user/preferences', {
@@ -291,8 +391,11 @@ export default function OnboardingPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ industry, location, platforms, frequency }),
             })
-            router.push('/dashboard')
-            router.refresh()
+            // Delay redirect so user can see confetti
+            setTimeout(() => {
+                router.push('/dashboard')
+                router.refresh()
+            }, 1500)
         } catch (error) {
             console.error('Error:', error)
             router.push('/dashboard')
@@ -317,9 +420,13 @@ export default function OnboardingPage() {
         return false
     }
 
-    const handleSelection = (setter: (val: string) => void, value: string) => {
+    const handleSelection = (setter: (val: string) => void, value: string, badgeId?: string, badgeTitle?: string, badgeDesc?: string) => {
         setter(value)
         animateAvatar('excited')
+        // Trigger achievement on first selection
+        if (badgeId && badgeTitle && badgeDesc) {
+            triggerAchievement(badgeId, badgeTitle, badgeDesc)
+        }
     }
 
     return (
@@ -394,7 +501,7 @@ export default function OnboardingPage() {
                                         {INDUSTRIES.map((item) => (
                                             <button
                                                 key={item.id}
-                                                onClick={() => handleSelection(setIndustry, item.id)}
+                                                onClick={() => handleSelection(setIndustry, item.id, 'first_choice', '🏆 First Choice!', 'You picked your niche')}
                                                 className={cn(
                                                     "flex items-center gap-3 p-3 border-2 border-black transition-all text-left",
                                                     industry === item.id
@@ -558,6 +665,15 @@ export default function OnboardingPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Gamification Components */}
+            <Confetti active={showConfetti} />
+            <AchievementBadge
+                title={achievementData.title}
+                description={achievementData.description}
+                show={showAchievement}
+                onHide={() => setShowAchievement(false)}
+            />
         </div>
     )
 }
