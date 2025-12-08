@@ -23,6 +23,7 @@ import {
     PanelLeftOpen,
     Sparkles,
     Bookmark,
+    Globe,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -57,6 +58,7 @@ export default function Sidebar() {
     const mainLinks = [
         { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { href: '/dashboard/trends', label: 'Trends', icon: TrendingUp },
+        { href: '/dashboard/regions', label: 'Regions', icon: Globe },
         { href: '/dashboard/saved', label: 'Saved', icon: Bookmark },
         { href: '/dashboard/ideas', label: 'Ideas', icon: Lightbulb },
         { href: '/dashboard/scripts', label: 'Scripts', icon: Video },
