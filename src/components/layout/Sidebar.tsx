@@ -92,16 +92,16 @@ export default function Sidebar() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                        "flex items-center gap-3 px-3 py-2 text-sm font-bold transition-all duration-150 border-2",
                         isCollapsed && "justify-center px-2",
                         active
-                            ? "bg-[#D9C5B2] text-[#14110F]"
-                            : "text-[#7E7F83] hover:text-[#14110F] hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] dark:hover:text-[#F3F3F4]"
+                            ? "bg-[#FF90E8] text-black border-black shadow-[4px_4px_0px_0px_#000] -translate-y-1"
+                            : "border-transparent text-gray-600 hover:text-black hover:border-black hover:bg-white hover:shadow-[2px_2px_0px_0px_#000] hover:-translate-y-1"
                     )}
                 >
-                    <link.icon className={cn("w-5 h-5", active && "text-[#14110F]")} />
+                    <link.icon className={cn("w-5 h-5", active && "text-black")} />
                     {!isCollapsed && <span>{link.label}</span>}
-                    {!isCollapsed && active && <ChevronRight className="w-4 h-4 ml-auto opacity-60" />}
+                    {!isCollapsed && active && <ChevronRight className="w-4 h-4 ml-auto opacity-100 font-bold" />}
                 </Link>
             )
         })
@@ -111,13 +111,13 @@ export default function Sidebar() {
         <motion.aside
             animate={{ width: isCollapsed ? 72 : 240 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="fixed top-0 left-0 h-screen flex-col border-r border-[#E8E8E9] dark:border-[#34312D] bg-white dark:bg-[#14110F] overflow-y-auto hidden lg:flex z-50"
+            className="fixed top-0 left-0 h-screen flex-col border-r-4 border-black bg-[#F3F3F3] overflow-y-auto hidden lg:flex z-50"
         >
             {/* Logo */}
-            <div className={cn("p-5 flex items-center border-b border-[#E8E8E9] dark:border-[#34312D]", isCollapsed && "justify-center p-4")}>
+            <div className={cn("p-5 flex items-center border-b-4 border-black bg-white", isCollapsed && "justify-center p-4")}>
                 <Link href="/dashboard" className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#D9C5B2] flex items-center justify-center">
-                        <span className="text-[#14110F] font-bold text-lg">T</span>
+                    <div className="w-10 h-10 bg-black flex items-center justify-center shadow-[4px_4px_0px_0px_#FF90E8] border-2 border-black hover:translate-x-1 transition-transform">
+                        <span className="text-white font-black text-xl italic">T</span>
                     </div>
                     <AnimatePresence>
                         {!isCollapsed && (
@@ -138,14 +138,14 @@ export default function Sidebar() {
             <button
                 onClick={toggle}
                 className={cn(
-                    "mx-3 my-3 p-2 rounded-lg border border-[#E8E8E9] dark:border-[#34312D] hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors",
+                    "mx-3 my-3 p-2 border-2 border-black bg-white hover:bg-[#FFC900] hover:shadow-[2px_2px_0px_0px_#000] transition-all",
                     isCollapsed && "mx-auto"
                 )}
             >
                 {isCollapsed ? (
-                    <PanelLeftOpen className="w-4 h-4 text-[#7E7F83]" />
+                    <PanelLeftOpen className="w-4 h-4 text-black" />
                 ) : (
-                    <PanelLeftClose className="w-4 h-4 text-[#7E7F83]" />
+                    <PanelLeftClose className="w-4 h-4 text-black" />
                 )}
             </button>
 
@@ -194,20 +194,20 @@ export default function Sidebar() {
 
                 {/* User Profile */}
                 {!isCollapsed && (
-                    <div className="mt-3 p-3 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
+                    <div className="mt-3 p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#D9C5B2] flex items-center justify-center text-[#14110F] text-sm font-semibold">
+                            <div className="w-8 h-8 bg-[#FFC900] border-2 border-black flex items-center justify-center text-black text-sm font-bold">
                                 {userInitial}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] truncate">{userName}</p>
-                                <p className="text-xs text-[#7E7F83]">Free Plan</p>
+                                <p className="text-sm font-bold text-black truncate">{userName}</p>
+                                <p className="text-xs text-gray-600 font-mono">Free Plan</p>
                             </div>
                             <Link
                                 href="/dashboard/settings"
-                                className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-[#14110F] transition-colors"
+                                className="p-1.5 hover:bg-black hover:text-white transition-colors border-2 border-transparent hover:border-black"
                             >
-                                <Settings className="w-4 h-4 text-[#7E7F83]" />
+                                <Settings className="w-4 h-4" />
                             </Link>
                         </div>
                     </div>

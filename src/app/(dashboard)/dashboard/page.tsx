@@ -140,26 +140,26 @@ export default function DashboardPage() {
         <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
             {/* Header */}
             <motion.div variants={item}>
-                <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                <h1 className="text-4xl font-black italic tracking-tight text-black dark:text-white mb-2 underline decoration-[#FF90E8] decoration-4 underline-offset-4">
                     {greeting}! 👋
                 </h1>
-                <p className="text-[#7E7F83] mt-1">
+                <p className="text-black font-medium border-l-4 border-black pl-4 py-1 mt-4">
                     Here's what's trending right now - real-time data from YouTube & Google
                 </p>
             </motion.div>
 
             {/* Quick Actions */}
-            <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {quickActions.map((action) => (
                     <Link
                         key={action.label}
                         href={action.href}
-                        className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group"
+                        className="p-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:shadow-[2px_2px_0px_0px_#000] hover:bg-[#FFC900] transition-all group"
                     >
-                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", action.color)}>
-                            <action.icon className="w-5 h-5" />
+                        <div className={cn("w-10 h-10 border-2 border-black flex items-center justify-center mb-3 bg-white", action.color)}>
+                            <action.icon className="w-5 h-5 text-black" />
                         </div>
-                        <p className="font-medium text-[#14110F] dark:text-[#F3F3F4] group-hover:text-[#D9C5B2] transition-colors flex items-center gap-1">
+                        <p className="font-bold text-black group-hover:underline decoration-black decoration-2 flex items-center gap-1">
                             {action.label}
                             <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </p>
@@ -211,26 +211,26 @@ export default function DashboardPage() {
                             <Link
                                 key={i}
                                 href={`/dashboard/ideas?topic=${encodeURIComponent(topic.title)}`}
-                                className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group relative"
+                                className="p-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#FF90E8] transition-all group relative block"
                             >
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <button
                                         onClick={(e) => saveTrend(e, topic)}
                                         disabled={savingTrend === topic.title}
-                                        className="p-1.5 rounded-lg bg-white/90 dark:bg-[#1A1714]/90 hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors border border-[#E8E8E9] dark:border-[#34312D]"
+                                        className="p-1.5 bg-white hover:bg-black hover:text-white transition-colors border-2 border-black"
                                     >
                                         {savingTrend === topic.title ? (
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D9C5B2]" />
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-black group-hover:text-white" />
                                         ) : (
-                                            <Bookmark className="w-3.5 h-3.5 text-[#7E7F83]" />
+                                            <Bookmark className="w-3.5 h-3.5" />
                                         )}
                                     </button>
                                 </div>
                                 <div className="flex items-center gap-2 mb-1">
-                                    {i < 3 && <Zap className="w-3.5 h-3.5 text-amber-500" />}
-                                    <span className="text-xs text-[#7E7F83]">{topic.formattedTraffic}</span>
+                                    {i < 3 && <Zap className="w-3.5 h-3.5 text-black fill-[#FFC900]" />}
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{topic.formattedTraffic}</span>
                                 </div>
-                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 group-hover:text-[#D9C5B2] transition-colors pr-6">
+                                <p className="font-bold text-sm text-black line-clamp-2 pr-6 border-b-2 border-transparent group-hover:border-black inline-block">
                                     {topic.title}
                                 </p>
                             </Link>
