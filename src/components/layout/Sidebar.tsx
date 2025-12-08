@@ -69,10 +69,11 @@ export default function Sidebar() {
 
     const toolLinks = [
         { href: '/dashboard/predictions', label: 'Predictions', icon: Sparkles },
+        { href: '/dashboard/platform-insights', label: 'Platforms', icon: Activity },
         { href: '/dashboard/comments', label: 'Comments', icon: MessageCircle },
         { href: '/dashboard/pillars', label: 'Pillars', icon: Layers },
         { href: '/dashboard/best-time', label: 'Best Time', icon: Clock },
-        { href: '/dashboard/competitors', label: 'Competitors', icon: Target },
+        { href: '/dashboard/competitor-tracking', label: 'Competitors', icon: Target },
     ]
 
     const workflowLinks = [
