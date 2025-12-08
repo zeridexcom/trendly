@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDailyTrends, formatTraffic, TRENDING_CATEGORIES } from '@/lib/google-trends'
+import { getDailyTrends, formatTraffic, INDUSTRIES } from '@/lib/google-trends'
 import { generateContent } from '@/lib/ai'
 
 // GET /api/trends/google - Get Google trending searches
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
             success: true,
             data: {
                 trends: formattedTrends,
-                categories: TRENDING_CATEGORIES,
+                categories: INDUSTRIES,
                 region: geo,
                 fetchedAt: new Date().toISOString(),
             }
