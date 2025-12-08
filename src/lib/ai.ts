@@ -900,3 +900,96 @@ Respond with JSON:
 export function clearTrendRelevanceCache() {
     trendRelevanceCache.clear()
 }
+
+// Generate niche-specific trending topics when no matches found
+// This uses AI's current knowledge to find REAL trends in the industry
+export async function generateNicheTrends(
+    userIndustry: string,
+    count: number = 5
+): Promise<TrendRelevanceResult[]> {
+    const openai = getOpenAI()
+
+    if (!openai) {
+        return []
+    }
+
+    const industryDescriptions: Record<string, string> = {
+        'TECH': 'Technology, AI, software, startups, gadgets, apps, programming',
+        'ENTERTAINMENT': 'Movies, TV, celebrities, music, streaming, Bollywood, Hollywood',
+        'BUSINESS': 'Finance, stocks, startups, economy, entrepreneurship',
+        'GAMING': 'Video games, esports, gaming, Twitch, game releases',
+        'HEALTH': 'Fitness, wellness, nutrition, gym, yoga, mental health',
+        'FASHION': 'Style, clothing, beauty, makeup, designers',
+        'EDUCATION': 'Schools, exams, universities, learning, courses',
+        'FOOD': 'Cooking, recipes, restaurants, cuisine, viral foods',
+        'TRAVEL': 'Tourism, destinations, hotels, adventure, vacation',
+        'NEWS': 'Current events, politics, breaking news, government',
+    }
+
+    const industryContext = industryDescriptions[userIndustry] || userIndustry
+
+    const prompt = `You are a trend expert for the ${userIndustry} industry. Based on your knowledge of CURRENT real-world events (December 2024), generate ${count} trending topics that content creators in ${userIndustry} should be talking about RIGHT NOW.
+
+Industry context: ${industryContext}
+
+Requirements:
+1. Topics must be REAL and CURRENT (happening in the last 2-3 days or ongoing)
+2. No made-up or fictional topics
+3. Focus on topics that are genuinely trending on social media, news, or in the industry
+4. Each topic should be something a ${userIndustry} content creator could make a video/post about
+
+For ${userIndustry} specifically, think about:
+- Recent product launches, updates, or announcements
+- Viral discussions or debates in the community
+- Breaking news related to the industry
+- Popular hashtags being used
+- Hot topics on Twitter/X, Reddit, YouTube
+
+Respond with JSON:
+{
+  "trends": [
+    {
+      "title": "Specific trending topic name",
+      "relevanceScore": 95-100,
+      "reason": "Why this is trending right now in ${userIndustry}",
+      "contentIdea": "Specific content idea a creator could use",
+      "source": "Where this is trending (Twitter, YouTube, Reddit, News, etc.)"
+    }
+  ]
+}
+
+IMPORTANT: Only include topics you are confident are ACTUALLY trending right now. Do not make up fake trends.`
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'openai/gpt-4o-mini',
+            messages: [
+                { role: 'system', content: `You are a ${userIndustry} industry trend expert. You have real-time knowledge of what's trending. Always respond with valid JSON.` },
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.5,
+        })
+
+        const content = response.choices[0]?.message?.content
+        if (!content) return []
+
+        const jsonMatch = content.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0])
+            const trends = parsed.trends || []
+
+            return trends.map((t: any) => ({
+                title: t.title,
+                relevanceScore: t.relevanceScore || 95,
+                isRelevant: true,
+                reason: t.reason,
+                contentIdea: t.contentIdea,
+                source: t.source || 'AI Discovered',
+            }))
+        }
+        return []
+    } catch (error) {
+        console.error('Generate Niche Trends Error:', error)
+        return []
+    }
+}
