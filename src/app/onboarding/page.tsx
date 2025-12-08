@@ -26,6 +26,22 @@ const INDUSTRIES = [
     { id: 'NEWS', label: 'News & Current Events', icon: Newspaper },
 ]
 
+// Industry-specific background colors
+const INDUSTRY_COLORS: Record<string, string> = {
+    '': '#FFC900', // Default yellow
+    'TECH': '#00D4FF', // Cyan/Blue
+    'ENTERTAINMENT': '#FF6B6B', // Coral Red
+    'BUSINESS': '#4ECDC4', // Teal
+    'HEALTH': '#95E1D3', // Mint Green
+    'GAMING': '#A855F7', // Purple
+    'FASHION': '#FF90E8', // Pink
+    'EDUCATION': '#FFD93D', // Golden Yellow
+    'FOOD': '#FF8C42', // Orange
+    'TRAVEL': '#6BCB77', // Green
+    'NEWS': '#748FFC', // Blue Purple
+}
+
+
 // Step 2: Audience Location
 const LOCATIONS = [
     { id: 'IN', label: 'India', code: 'IN' },
@@ -360,6 +376,77 @@ function SpeechBubble({ greeting, message, tip, onTyping }: {
     )
 }
 
+// Sparkle Trail Component - follows cursor with magical sparkles
+function SparkleTrail({ color = '#FFC900' }: { color?: string }) {
+    const [sparkles, setSparkles] = React.useState<Array<{ id: number, x: number, y: number }>>([])
+    const idCounter = React.useRef(0)
+    const lastSparkleTime = React.useRef(0)
+
+    React.useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const now = Date.now()
+            // Throttle sparkle creation (every 50ms)
+            if (now - lastSparkleTime.current < 50) return
+            lastSparkleTime.current = now
+
+            const newSparkle = {
+                id: idCounter.current++,
+                x: e.clientX,
+                y: e.clientY,
+            }
+
+            setSparkles(prev => [...prev.slice(-15), newSparkle]) // Keep last 15 sparkles
+        }
+
+        window.addEventListener('mousemove', handleMouseMove)
+        return () => window.removeEventListener('mousemove', handleMouseMove)
+    }, [])
+
+    // Clean up old sparkles
+    React.useEffect(() => {
+        const cleanup = setInterval(() => {
+            setSparkles(prev => prev.slice(-10))
+        }, 500)
+        return () => clearInterval(cleanup)
+    }, [])
+
+    const sparkleSymbols = ['✦', '✧', '⋆', '✴', '✵']
+
+    return (
+        <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
+            <AnimatePresence>
+                {sparkles.map((sparkle, index) => (
+                    <motion.div
+                        key={sparkle.id}
+                        initial={{
+                            opacity: 1,
+                            scale: 1,
+                            x: sparkle.x,
+                            y: sparkle.y,
+                        }}
+                        animate={{
+                            opacity: 0,
+                            scale: 0,
+                            y: sparkle.y - 30,
+                            rotate: 180,
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        style={{
+                            position: 'absolute',
+                            color: color,
+                            fontSize: 12 + (index % 3) * 4,
+                            textShadow: `0 0 10px ${color}`,
+                        }}
+                    >
+                        {sparkleSymbols[index % sparkleSymbols.length]}
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+        </div>
+    )
+}
+
 // Achievement Badge Popup Component
 function AchievementBadge({ title, description, show, onHide }: { title: string, description: string, show: boolean, onHide: () => void }) {
     React.useEffect(() => {
@@ -547,8 +634,18 @@ export default function OnboardingPage() {
         }
     }
 
+    // Get current background color based on industry
+    const bgColor = INDUSTRY_COLORS[industry] || INDUSTRY_COLORS['']
+
     return (
-        <div className="min-h-screen bg-[#FFC900] flex items-center justify-center p-4 font-sans text-black">
+        <motion.div
+            className="min-h-screen flex items-center justify-center p-4 font-sans text-black transition-colors duration-500"
+            animate={{ backgroundColor: bgColor }}
+            transition={{ duration: 0.5 }}
+        >
+            {/* Sparkle Trail */}
+            <SparkleTrail color={industry ? '#FFFFFF' : '#000000'} />
+
             <div className="w-full max-w-5xl">
                 {/* Main Container */}
                 <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-start">
@@ -797,6 +894,6 @@ export default function OnboardingPage() {
                 show={showAchievement}
                 onHide={() => setShowAchievement(false)}
             />
-        </div>
+        </motion.div>
     )
 }
