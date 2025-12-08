@@ -112,6 +112,30 @@ enum ContentNiche {
   OTHER
 }
 
+// New enums for personalized onboarding
+enum UserGoal {
+  GROW_AUDIENCE
+  CONTENT_IDEAS
+  STAY_RELEVANT
+  BEAT_COMPETITION
+}
+
+enum AudienceSize {
+  STARTING
+  GROWING
+  ESTABLISHED
+  INFLUENCER
+}
+
+enum ContentTypePreference {
+  SHORT_VIDEO
+  LONG_VIDEO
+  WRITTEN
+  VISUAL
+  AUDIO
+  MIXED
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -131,10 +155,15 @@ model User {
   googleId      String?  @unique
   emailVerified Boolean  @default(false)
   
-  // Onboarding preferences
+  // Onboarding preferences (legacy)
   userType           UserType?
   niche              ContentNiche?
   preferredPlatforms Platform[]
+  
+  // New onboarding preferences
+  goal               UserGoal?
+  audienceSize       AudienceSize?
+  contentTypePreference ContentTypePreference?
   onboardingComplete Boolean @default(false)
 
   // Relations
