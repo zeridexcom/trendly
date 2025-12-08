@@ -37,6 +37,12 @@ interface YouTubeVideo {
 interface TrendingTopic {
     title: string
     formattedTraffic: string
+    industry?: string
+}
+
+interface Personalization {
+    location: string
+    industry: string
 }
 
 const container = {
@@ -55,6 +61,7 @@ export default function DashboardPage() {
     const [loadingVideos, setLoadingVideos] = useState(true)
     const [loadingTopics, setLoadingTopics] = useState(true)
     const [greeting, setGreeting] = useState('')
+    const [personalization, setPersonalization] = useState<Personalization | null>(null)
 
     useEffect(() => {
         // Set greeting based on time
@@ -85,10 +92,14 @@ export default function DashboardPage() {
     const fetchTrendingTopics = async () => {
         setLoadingTopics(true)
         try {
-            const response = await fetch('/api/trends/google?geo=IN')
+            // Use personalized trends API
+            const response = await fetch('/api/trends/personalized')
             const data = await response.json()
-            if (data.success && data.data.trends) {
-                setTrendingTopics(data.data.trends.slice(0, 8))
+            if (data.success && data.trends) {
+                setTrendingTopics(data.trends.slice(0, 8))
+                if (data.personalization) {
+                    setPersonalization(data.personalization)
+                }
             }
         } catch (err) {
             console.error('Failed to fetch topics:', err)
@@ -135,12 +146,25 @@ export default function DashboardPage() {
                 ))}
             </motion.div>
 
-            {/* Trending Topics from Google */}
+            {/* Trending Topics - Personalized */}
             <motion.div variants={item}>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
+                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
                         <Flame className="w-5 h-5 text-orange-500" />
-                        Trending on Google India
+                        <span>
+                            {personalization?.industry && personalization.industry !== 'ALL'
+                                ? `${personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()} Trends`
+                                : 'Trending Now'
+                            }
+                        </span>
+                        {personalization?.location && (
+                            <span className="text-[#7E7F83] font-normal text-sm">
+                                in {personalization.location === 'IN' ? 'India' :
+                                    personalization.location === 'US' ? 'United States' :
+                                        personalization.location === 'GB' ? 'United Kingdom' :
+                                            personalization.location}
+                            </span>
+                        )}
                         <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
                             LIVE
                         </span>
