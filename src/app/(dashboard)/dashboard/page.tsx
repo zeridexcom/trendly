@@ -20,6 +20,9 @@ import {
     Clock,
     Flame,
     ChevronRight,
+    Globe,
+    Bookmark,
+    Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -62,6 +65,7 @@ export default function DashboardPage() {
     const [loadingTopics, setLoadingTopics] = useState(true)
     const [greeting, setGreeting] = useState('')
     const [personalization, setPersonalization] = useState<Personalization | null>(null)
+    const [savingTrend, setSavingTrend] = useState<string | null>(null)
 
     useEffect(() => {
         // Set greeting based on time
@@ -86,6 +90,23 @@ export default function DashboardPage() {
             console.error('Failed to fetch videos:', err)
         } finally {
             setLoadingVideos(false)
+        }
+    }
+
+    const saveTrend = async (e: React.MouseEvent, trend: any) => {
+        e.preventDefault() // Prevent navigation
+        e.stopPropagation()
+        setSavingTrend(trend.title)
+        try {
+            await fetch('/api/trends/saved', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trend }),
+            })
+        } catch (error) {
+            console.error('Failed to save:', error)
+        } finally {
+            setSavingTrend(null)
         }
     }
 
@@ -190,13 +211,26 @@ export default function DashboardPage() {
                             <Link
                                 key={i}
                                 href={`/dashboard/ideas?topic=${encodeURIComponent(topic.title)}`}
-                                className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group"
+                                className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group relative"
                             >
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                    <button
+                                        onClick={(e) => saveTrend(e, topic)}
+                                        disabled={savingTrend === topic.title}
+                                        className="p-1.5 rounded-lg bg-white/90 dark:bg-[#1A1714]/90 hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors border border-[#E8E8E9] dark:border-[#34312D]"
+                                    >
+                                        {savingTrend === topic.title ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D9C5B2]" />
+                                        ) : (
+                                            <Bookmark className="w-3.5 h-3.5 text-[#7E7F83]" />
+                                        )}
+                                    </button>
+                                </div>
                                 <div className="flex items-center gap-2 mb-1">
                                     {i < 3 && <Zap className="w-3.5 h-3.5 text-amber-500" />}
                                     <span className="text-xs text-[#7E7F83]">{topic.formattedTraffic}</span>
                                 </div>
-                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 group-hover:text-[#D9C5B2] transition-colors">
+                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 group-hover:text-[#D9C5B2] transition-colors pr-6">
                                     {topic.title}
                                 </p>
                             </Link>
