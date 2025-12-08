@@ -194,7 +194,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
                         <Flame className="w-5 h-5 text-orange-500" />
-                        <span className="font-bold text-black dark:text-white">
+                        <span className="font-black text-black" style={{ color: '#000000' }}>
                             {personalization?.industry && personalization.industry !== 'ALL'
                                 ? `${personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()} Trends`
                                 : 'Trending Now'
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2 flex-wrap">
                         <Youtube className="w-5 h-5 text-red-500" />
-                        <span className="font-bold text-black dark:text-white">
+                        <span className="font-black text-black" style={{ color: '#000000' }}>
                             {youtubePersonalization?.isPersonalized && youtubePersonalization.industry
                                 ? `${youtubePersonalization.industry.charAt(0) + youtubePersonalization.industry.slice(1).toLowerCase()} Videos`
                                 : 'Trending on YouTube India'
