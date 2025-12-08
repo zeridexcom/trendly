@@ -9,6 +9,7 @@ import {
     Youtube, Instagram, Twitter, Linkedin, PenTool, Video,
     Zap, Flame, Calendar, Target
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 // Step 1: Industry
 const INDUSTRIES = [
@@ -60,7 +61,6 @@ export default function OnboardingPage() {
     const [platforms, setPlatforms] = useState<string[]>([])
     const [frequency, setFrequency] = useState('')
     const [animateIn, setAnimateIn] = useState(true)
-    const [hoveredCard, setHoveredCard] = useState<string | null>(null)
 
     useEffect(() => {
         setAnimateIn(true)
@@ -109,355 +109,212 @@ export default function OnboardingPage() {
     }
 
     const stepData = [
-        { title: "What industry are you in?", subtitle: "We'll show you relevant trends in your field" },
-        { title: "Where is your audience?", subtitle: "We'll prioritize trends from your target region" },
-        { title: "Which platforms do you use?", subtitle: "Select all platforms you create content for" },
-        { title: "How often do you post?", subtitle: "We'll tailor trend urgency to your schedule" },
+        { title: "WHAT'S YOUR NICHE?", subtitle: "We'll show you relevant trends in your field" },
+        { title: "WHERE'S YOUR AUDIENCE?", subtitle: "We'll prioritize trends from your target region" },
+        { title: "PICK YOUR PLATFORMS", subtitle: "Select all platforms you create content for" },
+        { title: "POSTING SCHEDULE", subtitle: "We'll tailor trend urgency to your workflow" },
     ]
 
-    const cardStyle = (isSelected: boolean, isHovered: boolean) => ({
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        padding: '18px 22px',
-        borderRadius: '14px',
-        cursor: 'pointer',
-        textAlign: 'left' as const,
-        border: isSelected ? '2px solid #D9C5B2' : '2px solid rgba(217,197,178,0.15)',
-        background: isSelected ? 'rgba(217,197,178,0.12)' : isHovered ? 'rgba(217,197,178,0.06)' : 'transparent',
-        transform: isHovered || isSelected ? 'translateY(-2px)' : 'translateY(0)',
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-    })
-
-    const iconBoxStyle = (isSelected: boolean) => ({
-        width: 44,
-        height: 44,
-        borderRadius: '10px',
-        background: isSelected ? 'linear-gradient(135deg, #D9C5B2, #BFA68F)' : 'rgba(217,197,178,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.25s ease',
-    })
-
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(145deg, #0F0D0C 0%, #1A1816 50%, #0F0D0C 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-        }}>
-            <div style={{ width: '100%', maxWidth: 680 }}>
-                {/* Header */}
-                <div style={{
-                    textAlign: 'center',
-                    marginBottom: '36px',
-                    animation: animateIn ? 'fadeInDown 0.4s ease-out' : 'none',
-                }}>
-                    <div style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: '16px',
-                        background: 'linear-gradient(135deg, #D9C5B2 0%, #BFA68F 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px',
-                        boxShadow: '0 16px 48px rgba(217,197,178,0.25)',
-                    }}>
-                        <Sparkles size={30} color="#0F0D0C" strokeWidth={2} />
+        <div className="min-h-screen bg-[#F3F3F3] flex items-center justify-center p-4 font-sans text-black">
+            <div className="w-full max-w-2xl">
+                {/* Main Card */}
+                <div className="bg-[#FFC900] border-4 border-black p-8 relative shadow-[8px_8px_0px_0px_#000]">
+
+                    {/* Header Section */}
+                    <div className="text-center mb-8 relative z-10">
+                        <div className="w-16 h-16 bg-black border-2 border-white shadow-[4px_4px_0px_0px_#FFF] flex items-center justify-center mx-auto mb-6 transform rotate-3 hover:rotate-6 transition-transform">
+                            <Sparkles className="w-8 h-8 text-white" />
+                        </div>
+                        <h1 className="text-4xl font-black italic uppercase tracking-tighter mb-2">
+                            {stepData[step - 1].title}
+                        </h1>
+                        <p className="text-lg font-bold text-black/70 border-b-2 border-black inline-block pb-1">
+                            {stepData[step - 1].subtitle}
+                        </p>
                     </div>
-                    <h1 style={{
-                        fontSize: '28px',
-                        fontWeight: 700,
-                        color: '#F5F0EB',
-                        marginBottom: '10px',
-                        letterSpacing: '-0.5px',
-                    }}>
-                        {stepData[step - 1].title}
-                    </h1>
-                    <p style={{ color: 'rgba(217,197,178,0.6)', fontSize: '15px', fontWeight: 400 }}>
-                        {stepData[step - 1].subtitle}
-                    </p>
-                </div>
 
-                {/* Progress */}
-                <div style={{
-                    display: 'flex',
-                    gap: '10px',
-                    marginBottom: '32px',
-                    padding: '0 40px',
-                }}>
-                    {[1, 2, 3, 4].map(s => (
-                        <div
-                            key={s}
-                            style={{
-                                flex: 1,
-                                height: 4,
-                                borderRadius: 2,
-                                background: 'rgba(217,197,178,0.15)',
-                                overflow: 'hidden',
-                                cursor: s < step ? 'pointer' : 'default',
-                            }}
-                            onClick={() => s < step && goToStep(s)}
-                        >
-                            <div style={{
-                                height: '100%',
-                                borderRadius: 2,
-                                background: s <= step ? '#D9C5B2' : 'transparent',
-                                width: s <= step ? '100%' : '0%',
-                                transition: 'width 0.4s ease-out',
-                            }} />
-                        </div>
-                    ))}
-                </div>
+                    {/* Progress Bar */}
+                    <div className="flex gap-3 mb-8 px-4">
+                        {[1, 2, 3, 4].map(s => (
+                            <div
+                                key={s}
+                                onClick={() => s < step && goToStep(s)}
+                                className={cn(
+                                    "h-3 flex-1 border-2 border-black transition-all duration-300 relative",
+                                    s < step ? "cursor-pointer bg-black" : "bg-white",
+                                    s === step ? "bg-[#FF90E8]" : ""
+                                )}
+                            >
+                                {s === step && (
+                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-black" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
 
-                {/* Card Container */}
-                <div style={{
-                    background: 'rgba(26, 24, 22, 0.6)',
-                    backdropFilter: 'blur(24px)',
-                    borderRadius: '20px',
-                    padding: '32px',
-                    border: '1px solid rgba(217,197,178,0.08)',
-                    animation: animateIn ? 'fadeInUp 0.4s ease-out' : 'none',
-                }}>
-                    {/* Step 1: Industry */}
-                    {step === 1 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                            {INDUSTRIES.map((item, index) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => setIndustry(item.id)}
-                                    onMouseEnter={() => setHoveredCard(item.id)}
-                                    onMouseLeave={() => setHoveredCard(null)}
-                                    style={{
-                                        ...cardStyle(industry === item.id, hoveredCard === item.id),
-                                        animation: `fadeInUp 0.4s ease-out ${index * 0.04}s both`,
-                                    }}
-                                >
-                                    <div style={iconBoxStyle(industry === item.id)}>
-                                        <item.icon size={20} color={industry === item.id ? '#0F0D0C' : '#D9C5B2'} strokeWidth={1.5} />
-                                    </div>
-                                    <span style={{
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                        color: industry === item.id ? '#F5F0EB' : 'rgba(217,197,178,0.8)',
-                                    }}>
-                                        {item.label}
-                                    </span>
-                                    {industry === item.id && (
-                                        <Check size={18} color="#D9C5B2" style={{ marginLeft: 'auto' }} strokeWidth={2.5} />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Step 2: Location */}
-                    {step === 2 && (
-                        <div style={{ display: 'grid', gap: '12px' }}>
-                            {LOCATIONS.map((item, index) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => setLocation(item.id)}
-                                    onMouseEnter={() => setHoveredCard(item.id)}
-                                    onMouseLeave={() => setHoveredCard(null)}
-                                    style={{
-                                        ...cardStyle(location === item.id, hoveredCard === item.id),
-                                        animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
-                                    }}
-                                >
-                                    <div style={iconBoxStyle(location === item.id)}>
-                                        {item.id === 'GLOBAL' ? (
-                                            <Globe size={20} color={location === item.id ? '#0F0D0C' : '#D9C5B2'} strokeWidth={1.5} />
-                                        ) : (
-                                            <MapPin size={20} color={location === item.id ? '#0F0D0C' : '#D9C5B2'} strokeWidth={1.5} />
+                    {/* Content Area */}
+                    <div className={cn(
+                        "bg-white border-2 border-black p-6 shadow-[4px_4px_0px_0px_#000] min-h-[300px]",
+                        animateIn ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0 transition-all duration-300"
+                    )}>
+                        {/* Step 1: Industry */}
+                        {step === 1 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {INDUSTRIES.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setIndustry(item.id)}
+                                        className={cn(
+                                            "flex items-center gap-3 p-4 border-2 border-black transition-all text-left group",
+                                            industry === item.id
+                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                : "bg-white hover:bg-[#FF90E8] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
                                         )}
-                                    </div>
-                                    <span style={{
-                                        fontSize: '15px',
-                                        fontWeight: 500,
-                                        color: location === item.id ? '#F5F0EB' : 'rgba(217,197,178,0.8)',
-                                    }}>
-                                        {item.label}
-                                    </span>
-                                    {location === item.id && (
-                                        <Check size={18} color="#D9C5B2" style={{ marginLeft: 'auto' }} strokeWidth={2.5} />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Step 3: Platforms */}
-                    {step === 3 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                            {PLATFORMS.map((item, index) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => togglePlatform(item.id)}
-                                    onMouseEnter={() => setHoveredCard(item.id)}
-                                    onMouseLeave={() => setHoveredCard(null)}
-                                    style={{
-                                        ...cardStyle(platforms.includes(item.id), hoveredCard === item.id),
-                                        animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
-                                    }}
-                                >
-                                    <div style={iconBoxStyle(platforms.includes(item.id))}>
-                                        <item.icon size={20} color={platforms.includes(item.id) ? '#0F0D0C' : '#D9C5B2'} strokeWidth={1.5} />
-                                    </div>
-                                    <span style={{
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                        color: platforms.includes(item.id) ? '#F5F0EB' : 'rgba(217,197,178,0.8)',
-                                    }}>
-                                        {item.label}
-                                    </span>
-                                    {platforms.includes(item.id) && (
-                                        <Check size={18} color="#D9C5B2" style={{ marginLeft: 'auto' }} strokeWidth={2.5} />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Step 4: Frequency */}
-                    {step === 4 && (
-                        <div style={{ display: 'grid', gap: '12px' }}>
-                            {FREQUENCIES.map((item, index) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => setFrequency(item.id)}
-                                    onMouseEnter={() => setHoveredCard(item.id)}
-                                    onMouseLeave={() => setHoveredCard(null)}
-                                    style={{
-                                        ...cardStyle(frequency === item.id, hoveredCard === item.id),
-                                        animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
-                                    }}
-                                >
-                                    <div style={iconBoxStyle(frequency === item.id)}>
-                                        <item.icon size={20} color={frequency === item.id ? '#0F0D0C' : '#D9C5B2'} strokeWidth={1.5} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{
-                                            fontSize: '15px',
-                                            fontWeight: 500,
-                                            color: frequency === item.id ? '#F5F0EB' : 'rgba(217,197,178,0.8)',
-                                            marginBottom: '2px',
-                                        }}>
-                                            {item.label}
+                                    >
+                                        <div className={cn(
+                                            "p-2 border-2 border-black flex items-center justify-center",
+                                            industry === item.id ? "bg-white text-black" : "bg-gray-100"
+                                        )}>
+                                            <item.icon size={20} strokeWidth={2.5} />
                                         </div>
-                                        <div style={{ fontSize: '13px', color: 'rgba(217,197,178,0.5)' }}>
-                                            {item.description}
+                                        <span className="font-bold flex-1">{item.label}</span>
+                                        {industry === item.id && <Check size={20} strokeWidth={3} />}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Step 2: Location */}
+                        {step === 2 && (
+                            <div className="grid gap-3">
+                                {LOCATIONS.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setLocation(item.id)}
+                                        className={cn(
+                                            "flex items-center gap-3 p-4 border-2 border-black transition-all text-left",
+                                            location === item.id
+                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                : "bg-white hover:bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "p-2 border-2 border-black flex items-center justify-center",
+                                            location === item.id ? "bg-white text-black" : "bg-gray-100"
+                                        )}>
+                                            {item.id === 'GLOBAL' ? <Globe size={20} strokeWidth={2.5} /> : <MapPin size={20} strokeWidth={2.5} />}
                                         </div>
-                                    </div>
-                                    {frequency === item.id && (
-                                        <Check size={18} color="#D9C5B2" strokeWidth={2.5} />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                                        <span className="font-bold text-lg flex-1">{item.label}</span>
+                                        {location === item.id && <Check size={24} strokeWidth={3} />}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Step 3: Platforms */}
+                        {step === 3 && (
+                            <div className="grid grid-cols-2 gap-3">
+                                {PLATFORMS.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => togglePlatform(item.id)}
+                                        className={cn(
+                                            "flex flex-col items-center gap-2 p-4 border-2 border-black transition-all text-center h-full justify-center",
+                                            platforms.includes(item.id)
+                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                : "bg-white hover:bg-[#B1F202] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
+                                        )}
+                                    >
+                                        <item.icon size={32} strokeWidth={2} />
+                                        <span className="font-bold">{item.label}</span>
+                                        {platforms.includes(item.id) && (
+                                            <div className="absolute top-2 right-2">
+                                                <Check size={16} strokeWidth={3} />
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Step 4: Frequency */}
+                        {step === 4 && (
+                            <div className="grid gap-3">
+                                {FREQUENCIES.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setFrequency(item.id)}
+                                        className={cn(
+                                            "flex items-center gap-4 p-4 border-2 border-black transition-all text-left",
+                                            frequency === item.id
+                                                ? "bg-black text-white shadow-none translate-x-[2px] translate-y-[2px]"
+                                                : "bg-white hover:bg-[#FFC900] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "p-3 border-2 border-black flex items-center justify-center",
+                                            frequency === item.id ? "bg-white text-black" : "bg-gray-100"
+                                        )}>
+                                            <item.icon size={24} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-bold text-lg">{item.label}</div>
+                                            <div className={cn("text-sm font-medium", frequency === item.id ? "text-gray-300" : "text-gray-500")}>
+                                                {item.description}
+                                            </div>
+                                        </div>
+                                        {frequency === item.id && <Check size={24} strokeWidth={3} />}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Navigation */}
-                    <div style={{ display: 'flex', gap: '14px', marginTop: '32px' }}>
+                    <div className="flex gap-4 mt-8">
                         {step > 1 && (
                             <button
-                                type="button"
                                 onClick={() => goToStep(step - 1)}
-                                style={{
-                                    flex: 1,
-                                    padding: '16px',
-                                    borderRadius: '12px',
-                                    cursor: 'pointer',
-                                    border: '1.5px solid rgba(217,197,178,0.25)',
-                                    background: 'transparent',
-                                    color: '#D9C5B2',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '8px',
-                                    fontSize: '15px',
-                                    fontWeight: 500,
-                                    transition: 'all 0.2s ease',
-                                }}
+                                className="px-6 py-4 font-bold border-2 border-black bg-white shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
                             >
-                                <ArrowLeft size={18} /> Back
+                                <ArrowLeft size={20} strokeWidth={3} /> BACK
                             </button>
                         )}
                         <button
-                            type="button"
                             onClick={step === 4 ? handleComplete : () => goToStep(step + 1)}
                             disabled={!canProceed() || isLoading}
-                            style={{
-                                flex: step === 1 ? 1 : 2,
-                                padding: '16px',
-                                borderRadius: '12px',
-                                cursor: canProceed() ? 'pointer' : 'not-allowed',
-                                border: 'none',
-                                background: canProceed() ? 'linear-gradient(135deg, #D9C5B2, #BFA68F)' : 'rgba(217,197,178,0.15)',
-                                color: canProceed() ? '#0F0D0C' : 'rgba(217,197,178,0.4)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                fontSize: '15px',
-                                fontWeight: 600,
-                                boxShadow: canProceed() ? '0 12px 32px rgba(217,197,178,0.25)' : 'none',
-                                transition: 'all 0.2s ease',
-                            }}
+                            className={cn(
+                                "flex-1 px-6 py-4 font-black border-2 border-black transition-all flex items-center justify-center gap-2 uppercase tracking-wide",
+                                canProceed()
+                                    ? "bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000] hover:bg-[#FF90E8] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000]"
+                                    : "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-400"
+                            )}
                         >
                             {isLoading ? (
-                                <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Setting up...</>
+                                <><Loader2 className="animate-spin" /> SETUP...</>
                             ) : step === 4 ? (
-                                <>Get Started <Sparkles size={18} /></>
+                                <>LAUNCH DASHBOARD <Sparkles strokeWidth={3} /></>
                             ) : (
-                                <>Continue <ArrowRight size={18} /></>
+                                <>CONTINUE <ArrowRight strokeWidth={3} /></>
                             )}
                         </button>
                     </div>
+
+                    {/* Skip */}
+                    <div className="text-center mt-6">
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="text-gray-500 font-bold hover:text-black hover:underline decoration-2"
+                        >
+                            Skip for now
+                        </button>
+                    </div>
+
+                    {/* Decorative Elements around main card */}
+                    <div className="absolute -top-4 -left-4 w-full h-full border-4 border-black -z-10 bg-white" />
                 </div>
-
-                {/* Skip */}
-                <p style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/dashboard')}
-                        style={{
-                            color: 'rgba(217,197,178,0.4)',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 400,
-                        }}
-                    >
-                        Skip for now
-                    </button>
-                </p>
             </div>
-
-            <style jsx>{`
-                @keyframes fadeInDown {
-                    from { opacity: 0; transform: translateY(-16px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(16px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
         </div>
     )
 }
