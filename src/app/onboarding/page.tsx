@@ -86,10 +86,12 @@ const AVATAR_DIALOGUE = [
 function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expression?: 'happy' | 'excited' | 'thinking' | 'celebrating', isAnimating?: boolean }) {
     const avatarRef = React.useRef<HTMLDivElement>(null)
     const [eyeOffset, setEyeOffset] = React.useState({ x: 0, y: 0 })
+    const [isPanicking, setIsPanicking] = React.useState(false)
 
     React.useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!avatarRef.current) return
+            setIsPanicking(false)
 
             const rect = avatarRef.current.getBoundingClientRect()
             const avatarCenterX = rect.left + rect.width / 2
@@ -110,15 +112,34 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
             })
         }
 
+        const handleMouseLeave = () => {
+            setIsPanicking(true)
+            setEyeOffset({ x: 0, y: 0 })
+        }
+
+        const handleMouseEnter = () => {
+            setIsPanicking(false)
+        }
+
         window.addEventListener('mousemove', handleMouseMove)
-        return () => window.removeEventListener('mousemove', handleMouseMove)
+        document.addEventListener('mouseleave', handleMouseLeave)
+        document.addEventListener('mouseenter', handleMouseEnter)
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseleave', handleMouseLeave)
+            document.removeEventListener('mouseenter', handleMouseEnter)
+        }
     }, [])
 
-    const mouthExpressions = {
+    const currentExpression = isPanicking ? 'panic' : expression
+
+    const mouthExpressions: Record<string, string> = {
         happy: 'M 8 18 Q 16 24 24 18',
         excited: 'M 8 16 Q 16 26 24 16',
         thinking: 'M 10 18 L 22 20',
         celebrating: 'M 10 16 Q 16 22 22 16',
+        panic: 'M 10 20 Q 16 16 22 20', // Worried frown
     }
 
     return (
@@ -139,9 +160,16 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
                 <svg width="64" height="52" viewBox="0 0 32 26" className="mt-2">
                     {/* Left Eye */}
                     <g transform={`translate(${eyeOffset.x}, ${eyeOffset.y})`}>
-                        {expression === 'celebrating' ? (
+                        {currentExpression === 'panic' ? (
+                            <>
+                                {/* Worried eyebrow */}
+                                <line x1="4" y1="4" x2="12" y2="6" stroke="black" strokeWidth="2" strokeLinecap="round" />
+                                <circle cx="9" cy="10" r="5" fill="white" stroke="black" strokeWidth="1.5" />
+                                <circle cx="9" cy="10" r="3" fill="black" />
+                            </>
+                        ) : currentExpression === 'celebrating' ? (
                             <text x="6" y="12" fontSize="10" fontWeight="bold" fill="black">✦</text>
-                        ) : expression === 'excited' ? (
+                        ) : currentExpression === 'excited' ? (
                             <text x="6" y="12" fontSize="10" fontWeight="bold" fill="black">★</text>
                         ) : (
                             <>
@@ -153,9 +181,16 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
 
                     {/* Right Eye */}
                     <g transform={`translate(${eyeOffset.x}, ${eyeOffset.y})`}>
-                        {expression === 'celebrating' ? (
+                        {currentExpression === 'panic' ? (
+                            <>
+                                {/* Worried eyebrow */}
+                                <line x1="20" y1="6" x2="28" y2="4" stroke="black" strokeWidth="2" strokeLinecap="round" />
+                                <circle cx="23" cy="10" r="5" fill="white" stroke="black" strokeWidth="1.5" />
+                                <circle cx="23" cy="10" r="3" fill="black" />
+                            </>
+                        ) : currentExpression === 'celebrating' ? (
                             <text x="20" y="12" fontSize="10" fontWeight="bold" fill="black">✦</text>
-                        ) : expression === 'excited' ? (
+                        ) : currentExpression === 'excited' ? (
                             <text x="20" y="12" fontSize="10" fontWeight="bold" fill="black">★</text>
                         ) : (
                             <>
@@ -167,7 +202,7 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
 
                     {/* Mouth */}
                     <path
-                        d={mouthExpressions[expression]}
+                        d={mouthExpressions[currentExpression]}
                         fill="none"
                         stroke="black"
                         strokeWidth="2"
