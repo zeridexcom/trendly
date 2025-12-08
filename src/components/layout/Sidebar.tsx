@@ -59,6 +59,7 @@ export default function Sidebar() {
     const mainLinks = [
         { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { href: '/dashboard/trends', label: 'Trends', icon: TrendingUp },
+        { href: '/dashboard/social-trends', label: 'Social', icon: Users },
         { href: '/dashboard/regions', label: 'Regions', icon: Globe },
         { href: '/dashboard/alerts', label: 'Alerts', icon: Bell },
         { href: '/dashboard/saved', label: 'Saved', icon: Bookmark },
