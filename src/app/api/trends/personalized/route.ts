@@ -23,6 +23,19 @@ const CURATED_NICHE_TRENDS: Record<string, Array<{ title: string; reason: string
         { title: 'Protein Intake Guide', reason: 'Fitness nutrition basics', contentIdea: 'How much protein you actually need' },
         { title: 'Mental Health Awareness', reason: 'Growing focus on wellness', contentIdea: 'Signs of burnout and how to recover' },
         { title: 'Home Workout Trends', reason: 'Post-pandemic fitness shift', contentIdea: 'No-equipment full body workout' },
+        { title: 'Intermittent Fasting 2024', reason: 'Popular diet method', contentIdea: 'My 30-day intermittent fasting results' },
+        { title: 'Sleep Optimization Tips', reason: 'Sleep quality awareness rising', contentIdea: 'Sleep hacks that actually work' },
+        { title: 'Creatine Benefits', reason: 'Supplement research trending', contentIdea: 'Why creatine is not just for gym bros' },
+        { title: 'Walking for Weight Loss', reason: 'Low-impact exercise trend', contentIdea: '10K steps challenge - what happens?' },
+        { title: 'Gut Health Diet', reason: 'Microbiome awareness growing', contentIdea: 'Foods that improve gut health fast' },
+        { title: 'Yoga for Beginners', reason: 'Mind-body fitness popular', contentIdea: '15 minute yoga routine for busy people' },
+        { title: 'PCOS Diet Plan', reason: 'Womens health awareness', contentIdea: 'What to eat with PCOS - complete guide' },
+        { title: 'Cold Plunge Benefits', reason: 'Cold therapy trending', contentIdea: 'I tried cold showers for 30 days' },
+        { title: 'Healthy Meal Prep Ideas', reason: 'Nutrition planning demand', contentIdea: 'Sunday meal prep for the whole week' },
+        { title: 'Weight Training for Women', reason: 'Strength training awareness', contentIdea: 'Why women should lift weights' },
+        { title: 'Diabetes Prevention Tips', reason: 'Health prevention focus', contentIdea: 'Simple habits to prevent Type 2 diabetes' },
+        { title: 'Stress Relief Techniques', reason: 'Mental wellness priority', contentIdea: '5 minute stress relief that works' },
+        { title: 'Running for Beginners', reason: 'Cardio fitness basics', contentIdea: 'Couch to 5K complete guide' },
     ],
     ENTERTAINMENT: [
         { title: 'Pushpa 2 Box Office', reason: 'Biggest Indian movie release', contentIdea: 'Why Pushpa 2 is breaking records' },
@@ -219,6 +232,12 @@ export async function GET(request: NextRequest) {
                 contentIdea: t.contentIdea,
                 formattedTraffic: 'Hot Topic',
                 source: 'Curated for You',
+                // Pre-computed quick analysis for instant display (no loading needed)
+                quickAnalysis: {
+                    whyTrending: t.reason,
+                    contentIdea: t.contentIdea,
+                    isPreComputed: true
+                }
             }))
             // Add curated that aren't already in trends (avoid duplicates)
             const existingTitles = new Set(trends.map((t: any) => t.title.toLowerCase()))
@@ -226,18 +245,8 @@ export async function GET(request: NextRequest) {
             trends = [...trends, ...newCurated]
         }
 
-        // ALWAYS ADD: General Google Trends (with lower relevance if user has industry)
-        const generalTrends = allTrends.map((t: any) => ({
-            title: t.title,
-            formattedTraffic: t.traffic || t.formattedTraffic || 'Trending',
-            relatedQueries: t.relatedQueries || [],
-            relevanceScore: industry && industry !== 'ALL' ? 70 : 90,
-            source: 'Google Trends',
-        }))
-        // Add general trends that aren't already included
-        const existingTitles2 = new Set(trends.map((t: any) => t.title.toLowerCase()))
-        const newGeneralTrends = generalTrends.filter((t: any) => !existingTitles2.has(t.title.toLowerCase()))
-        trends = [...trends, ...newGeneralTrends]
+        // DO NOT add unfiltered Google Trends - only show 70%+ relevant trends
+        // The user's niche should not show random things like "SSC", "Dileep Case" etc.
 
         return NextResponse.json({
             success: true,

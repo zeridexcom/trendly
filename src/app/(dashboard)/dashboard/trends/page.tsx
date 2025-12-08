@@ -77,6 +77,11 @@ interface GoogleTrend {
     relevanceScore?: number
     reason?: string
     contentIdea?: string
+    quickAnalysis?: {
+        whyTrending: string
+        contentIdea: string
+        isPreComputed: boolean
+    }
 }
 
 interface GoogleTrendAnalysis {
@@ -233,6 +238,32 @@ export default function TrendsPage() {
 
     const analyzeGoogleTrend = async (trend: GoogleTrend) => {
         setSelectedGoogleTrend(trend)
+
+        // If trend has pre-computed quickAnalysis, use it instantly (no loading!)
+        if (trend.quickAnalysis?.isPreComputed || trend.reason) {
+            setGoogleTrendAnalysis({
+                whyTrending: trend.quickAnalysis?.whyTrending || trend.reason || 'This topic is trending in your niche',
+                searchIntent: 'Users are looking for information, tips, and guidance on this topic',
+                audienceProfile: 'Health-conscious individuals interested in wellness and fitness',
+                contentAngles: [
+                    trend.quickAnalysis?.contentIdea || trend.contentIdea || 'Create a comprehensive guide',
+                    'Share your personal experience or case study',
+                    'Compare different approaches or methods',
+                    'Debunk common myths about this topic'
+                ],
+                bestPlatforms: ['YouTube', 'Instagram Reels', 'TikTok'],
+                peakTiming: 'Post now while trending - mornings work best',
+                suggestedTitle: `${trend.title} - Complete Guide for 2024`,
+                suggestedHook: `Here's what nobody tells you about ${trend.title.toLowerCase()}...`,
+                hashtags: ['#health', '#wellness', '#fitness', '#trending', `#${trend.title.replace(/\s+/g, '').toLowerCase()}`],
+                keyPoints: ['Key insight 1', 'Key insight 2', 'Key insight 3'],
+                potentialViews: 'HIGH'
+            })
+            setAnalyzingGoogleTrend(false)
+            return
+        }
+
+        // Otherwise, call AI API for full analysis
         setGoogleTrendAnalysis(null)
         setAnalyzingGoogleTrend(true)
         try {
