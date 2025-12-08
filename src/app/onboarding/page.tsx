@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -82,33 +82,98 @@ const AVATAR_DIALOGUE = [
     },
 ]
 
-// Trendy Avatar Component with expressions
+// Trendy Avatar Component with mouse-following eyes
 function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expression?: 'happy' | 'excited' | 'thinking' | 'celebrating', isAnimating?: boolean }) {
-    const faces = {
-        happy: { eyes: '◠ ◠', mouth: '‿' },
-        excited: { eyes: '★ ★', mouth: 'D' },
-        thinking: { eyes: '◔ ◔', mouth: '~' },
-        celebrating: { eyes: '✦ ✦', mouth: 'O' },
-    }
+    const avatarRef = React.useRef<HTMLDivElement>(null)
+    const [eyeOffset, setEyeOffset] = React.useState({ x: 0, y: 0 })
 
-    const face = faces[expression]
+    React.useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!avatarRef.current) return
+
+            const rect = avatarRef.current.getBoundingClientRect()
+            const avatarCenterX = rect.left + rect.width / 2
+            const avatarCenterY = rect.top + rect.height / 2
+
+            // Calculate direction from avatar to mouse
+            const deltaX = e.clientX - avatarCenterX
+            const deltaY = e.clientY - avatarCenterY
+
+            // Clamp the offset so eyes don't go too far
+            const maxOffset = 6
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+            const scale = Math.min(maxOffset / distance, 1)
+
+            setEyeOffset({
+                x: deltaX * scale * 0.15,
+                y: deltaY * scale * 0.15
+            })
+        }
+
+        window.addEventListener('mousemove', handleMouseMove)
+        return () => window.removeEventListener('mousemove', handleMouseMove)
+    }, [])
+
+    const mouthExpressions = {
+        happy: 'M 8 18 Q 16 24 24 18',
+        excited: 'M 8 16 Q 16 26 24 16',
+        thinking: 'M 10 18 L 22 20',
+        celebrating: 'M 10 16 Q 16 22 22 16',
+    }
 
     return (
         <motion.div
+            ref={avatarRef}
             animate={isAnimating ? { y: [0, -10, 0], rotate: [0, 5, -5, 0] } : {}}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="relative"
         >
             {/* Body */}
-            <div className="w-32 h-32 bg-[#FF90E8] border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="w-32 h-32 bg-[#FF90E8] border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex items-center justify-center relative overflow-hidden">
                 {/* Sparkle accessory */}
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FFC900] border-2 border-black flex items-center justify-center rounded-full">
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FFC900] border-2 border-black flex items-center justify-center rounded-full z-10">
                     <Sparkles className="w-4 h-4" />
                 </div>
 
-                {/* Face */}
-                <div className="text-3xl font-black tracking-widest mb-1">{face.eyes}</div>
-                <div className="text-2xl font-black">{face.mouth}</div>
+                {/* Face with SVG */}
+                <svg width="64" height="52" viewBox="0 0 32 26" className="mt-2">
+                    {/* Left Eye */}
+                    <g transform={`translate(${eyeOffset.x}, ${eyeOffset.y})`}>
+                        {expression === 'celebrating' ? (
+                            <text x="6" y="12" fontSize="10" fontWeight="bold" fill="black">✦</text>
+                        ) : expression === 'excited' ? (
+                            <text x="6" y="12" fontSize="10" fontWeight="bold" fill="black">★</text>
+                        ) : (
+                            <>
+                                <circle cx="9" cy="9" r="5" fill="white" stroke="black" strokeWidth="1.5" />
+                                <circle cx={9 + eyeOffset.x * 0.3} cy={9 + eyeOffset.y * 0.3} r="2.5" fill="black" />
+                            </>
+                        )}
+                    </g>
+
+                    {/* Right Eye */}
+                    <g transform={`translate(${eyeOffset.x}, ${eyeOffset.y})`}>
+                        {expression === 'celebrating' ? (
+                            <text x="20" y="12" fontSize="10" fontWeight="bold" fill="black">✦</text>
+                        ) : expression === 'excited' ? (
+                            <text x="20" y="12" fontSize="10" fontWeight="bold" fill="black">★</text>
+                        ) : (
+                            <>
+                                <circle cx="23" cy="9" r="5" fill="white" stroke="black" strokeWidth="1.5" />
+                                <circle cx={23 + eyeOffset.x * 0.3} cy={9 + eyeOffset.y * 0.3} r="2.5" fill="black" />
+                            </>
+                        )}
+                    </g>
+
+                    {/* Mouth */}
+                    <path
+                        d={mouthExpressions[expression]}
+                        fill="none"
+                        stroke="black"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                    />
+                </svg>
             </div>
 
             {/* Name tag */}
@@ -118,6 +183,7 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
         </motion.div>
     )
 }
+
 
 // Speech Bubble Component
 function SpeechBubble({ greeting, message, tip }: { greeting: string, message: string, tip?: string }) {
