@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     TrendingUp, Play, Eye, Heart, MessageCircle, Clock, ExternalLink,
     Sparkles, Search, RefreshCw, Lightbulb, Hash, Target, Zap, Youtube,
-    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3,
+    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3, Globe
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -69,6 +69,29 @@ interface VideoAnalysis {
     avoidThis: string[]
 }
 
+interface GoogleTrend {
+    title: string
+    formattedTraffic: string
+    relatedQueries?: string[]
+    industry?: string
+    relevanceScore?: number
+    reason?: string
+    contentIdea?: string
+}
+
+interface GoogleTrendAnalysis {
+    whyTrending: string
+    searchIntent: string
+    audienceProfile: string
+    contentAngles: string[]
+    bestPlatforms: string[]
+    peakTiming: string
+    suggestedTitle: string
+    suggestedHook: string
+    hashtags: string[]
+    keyPoints: string[]
+    potentialViews: string
+}
 
 const container = {
     hidden: { opacity: 0 },
@@ -81,6 +104,10 @@ const item = {
 }
 
 export default function TrendsPage() {
+    // Active tab
+    const [activeTab, setActiveTab] = useState<'youtube' | 'google'>('youtube')
+
+    // YouTube state
     const [videos, setVideos] = useState<YouTubeVideo[]>([])
     const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null)
     const [loading, setLoading] = useState(true)
@@ -90,13 +117,24 @@ export default function TrendsPage() {
     const [error, setError] = useState<string | null>(null)
     const [lastFetched, setLastFetched] = useState<string>('')
 
-    // Video analysis modal state
+    // YouTube video analysis modal state
     const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
     const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null)
     const [analyzingVideo, setAnalyzingVideo] = useState(false)
 
+    // Google Trends state
+    const [googleTrends, setGoogleTrends] = useState<GoogleTrend[]>([])
+    const [loadingGoogle, setLoadingGoogle] = useState(true)
+    const [personalization, setPersonalization] = useState<{ industry: string; location: string } | null>(null)
+
+    // Google Trend analysis modal state
+    const [selectedGoogleTrend, setSelectedGoogleTrend] = useState<GoogleTrend | null>(null)
+    const [googleTrendAnalysis, setGoogleTrendAnalysis] = useState<GoogleTrendAnalysis | null>(null)
+    const [analyzingGoogleTrend, setAnalyzingGoogleTrend] = useState(false)
+
     useEffect(() => {
         fetchTrending()
+        fetchGoogleTrends()
     }, [])
 
     const fetchTrending = async () => {
@@ -118,6 +156,24 @@ export default function TrendsPage() {
             setError(err.message || 'Failed to fetch trends')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchGoogleTrends = async () => {
+        setLoadingGoogle(true)
+        try {
+            const response = await fetch('/api/trends/personalized')
+            const data = await response.json()
+            if (data.success && data.trends) {
+                setGoogleTrends(data.trends)
+                if (data.personalization) {
+                    setPersonalization(data.personalization)
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch Google trends:', err)
+        } finally {
+            setLoadingGoogle(false)
         }
     }
 
@@ -175,9 +231,39 @@ export default function TrendsPage() {
         }
     }
 
+    const analyzeGoogleTrend = async (trend: GoogleTrend) => {
+        setSelectedGoogleTrend(trend)
+        setGoogleTrendAnalysis(null)
+        setAnalyzingGoogleTrend(true)
+        try {
+            const response = await fetch('/api/trends/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    trend: trend.title,
+                    traffic: trend.formattedTraffic,
+                    industry: personalization?.industry || 'GENERAL'
+                }),
+            })
+            const data = await response.json()
+            if (data.success) {
+                setGoogleTrendAnalysis(data.analysis)
+            }
+        } catch (err) {
+            console.error('Google trend analysis error:', err)
+        } finally {
+            setAnalyzingGoogleTrend(false)
+        }
+    }
+
     const closeModal = () => {
         setSelectedVideo(null)
         setVideoAnalysis(null)
+    }
+
+    const closeGoogleTrendModal = () => {
+        setSelectedGoogleTrend(null)
+        setGoogleTrendAnalysis(null)
     }
 
     const copyToClipboard = (text: string) => {
@@ -193,10 +279,10 @@ export default function TrendsPage() {
     return (
         <div className="max-w-6xl mx-auto pb-12 font-sans text-black">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
-                        <Youtube className="w-8 h-8 text-black fill-red-500" />
+                        <TrendingUp className="w-8 h-8 text-black" />
                         <h1 className="text-4xl font-black italic uppercase tracking-tighter">
                             Real-Time Trends
                         </h1>
@@ -205,220 +291,381 @@ export default function TrendsPage() {
                         </span>
                     </div>
                     <p className="text-black font-bold border-l-4 border-black pl-3">
-                        {searchQuery ? `Results for "${searchQuery}"` : 'Trending on YouTube India right now'}
+                        {personalization?.industry && personalization.industry !== 'ALL'
+                            ? `Personalized for ${personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()}`
+                            : 'Trending in India right now'
+                        }
                         {lastFetched && <span className="ml-2 text-sm text-gray-500 font-bold">• UPDATED {lastFetched}</span>}
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={fetchTrending}
-                        disabled={loading}
+                        onClick={() => { fetchTrending(); fetchGoogleTrends(); }}
+                        disabled={loading || loadingGoogle}
                         className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                     >
-                        <RefreshCw className={cn("w-6 h-6 text-black", loading && "animate-spin")} />
+                        <RefreshCw className={cn("w-6 h-6 text-black", (loading || loadingGoogle) && "animate-spin")} />
                     </button>
                 </div>
             </motion.div>
 
-            {/* Search */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 mb-10">
-                <div className="flex-1 relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                        <Search className="w-6 h-6 text-black" strokeWidth={3} />
-                    </div>
-                    <input
-                        type="text"
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Search trends (e.g., 'tech reviews', 'cooking recipes')..."
-                        className="w-full pl-14 pr-4 py-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] text-lg font-bold placeholder:text-gray-400 focus:outline-none focus:bg-[#FFF9E5] transition-colors uppercase"
-                    />
-                </div>
+            {/* Tab Navigation */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 mb-6">
                 <button
-                    onClick={searchAndAnalyze}
-                    disabled={analyzing || !searchInput.trim()}
-                    className="px-8 py-4 bg-[#FF90E8] border-2 border-black shadow-[4px_4px_0px_0px_#000] text-black font-black uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
+                    onClick={() => setActiveTab('youtube')}
+                    className={cn(
+                        "px-6 py-3 font-black uppercase text-sm border-2 border-black transition-all flex items-center gap-2",
+                        activeTab === 'youtube'
+                            ? "bg-red-500 text-white shadow-[4px_4px_0px_0px_#000]"
+                            : "bg-white text-black hover:bg-gray-100"
+                    )}
                 >
-                    <Sparkles className={cn("w-5 h-5 fill-black", analyzing && "animate-spin")} />
-                    {analyzing ? 'Analyzing...' : 'Analyze'}
+                    <Youtube className="w-5 h-5" />
+                    YouTube Trends
+                    <span className="px-2 py-0.5 text-xs bg-black text-white rounded-full">{videos.length}</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('google')}
+                    className={cn(
+                        "px-6 py-3 font-black uppercase text-sm border-2 border-black transition-all flex items-center gap-2",
+                        activeTab === 'google'
+                            ? "bg-blue-500 text-white shadow-[4px_4px_0px_0px_#000]"
+                            : "bg-white text-black hover:bg-gray-100"
+                    )}
+                >
+                    <Globe className="w-5 h-5" />
+                    Google Trends
+                    <span className="px-2 py-0.5 text-xs bg-black text-white rounded-full">{googleTrends.length}</span>
                 </button>
             </motion.div>
 
-            {/* Error */}
-            {error && (
-                <div className="p-4 bg-red-100 border-2 border-black mb-8 font-bold text-red-600 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" /> {error}
-                </div>
+            {/* ========== YOUTUBE TAB ========== */}
+            {activeTab === 'youtube' && (
+                <>
+                    {/* Search */}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 mb-10">
+                        <div className="flex-1 relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                <Search className="w-6 h-6 text-black" strokeWidth={3} />
+                            </div>
+                            <input
+                                type="text"
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Search trends (e.g., 'tech reviews', 'cooking recipes')..."
+                                className="w-full pl-14 pr-4 py-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] text-lg font-bold placeholder:text-gray-400 focus:outline-none focus:bg-[#FFF9E5] transition-colors uppercase"
+                            />
+                        </div>
+                        <button
+                            onClick={searchAndAnalyze}
+                            disabled={analyzing || !searchInput.trim()}
+                            className="px-8 py-4 bg-[#FF90E8] border-2 border-black shadow-[4px_4px_0px_0px_#000] text-black font-black uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
+                        >
+                            <Sparkles className={cn("w-5 h-5 fill-black", analyzing && "animate-spin")} />
+                            {analyzing ? 'Analyzing...' : 'Analyze'}
+                        </button>
+                    </motion.div>
+
+                    {/* Error */}
+                    {error && (
+                        <div className="p-4 bg-red-100 border-2 border-black mb-8 font-bold text-red-600 flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" /> {error}
+                        </div>
+                    )}
+
+                    {/* AI Analysis Panel */}
+                    <AnimatePresence>
+                        {aiAnalysis && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mb-10 p-8 bg-[#FFC900] border-4 border-black shadow-[8px_8px_0px_0px_#000]"
+                            >
+                                <h3 className="text-2xl font-black uppercase mb-6 flex items-center gap-2">
+                                    <Sparkles className="w-7 h-7 fill-black" />
+                                    AI Analysis: "{searchQuery}"
+                                </h3>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="bg-white p-5 border-2 border-black">
+                                        <h4 className="font-black uppercase mb-3 flex items-center gap-2">
+                                            <TrendingUp className="w-5 h-5" /> Why It's Trending
+                                        </h4>
+                                        <p className="font-medium">{aiAnalysis.whyTrending}</p>
+                                    </div>
+                                    <div className="bg-white p-5 border-2 border-black">
+                                        <h4 className="font-black uppercase mb-3 flex items-center gap-2">
+                                            <Hash className="w-5 h-5" /> Best Hashtags
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {aiAnalysis.bestHashtags.map((tag: string, i: number) => (
+                                                <span key={i} className="px-2 py-1 bg-black text-white text-xs font-bold">{tag}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-5 border-2 border-black md:col-span-2">
+                                        <h4 className="font-black uppercase mb-3 flex items-center gap-2">
+                                            <Lightbulb className="w-5 h-5" /> Content Ideas
+                                        </h4>
+                                        <div className="grid md:grid-cols-3 gap-4">
+                                            {aiAnalysis.contentIdeas.map((idea: any, i: number) => (
+                                                <div key={i} className="p-3 border border-black">
+                                                    <p className="font-black text-sm mb-1">{idea.title}</p>
+                                                    <p className="text-xs text-gray-600">"{idea.hook}"</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Loading State */}
+                    {loading ? (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                                <div key={i} className="animate-pulse bg-white border-2 border-black">
+                                    <div className="aspect-video bg-gray-200" />
+                                    <div className="p-5">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {videos.map((video, index) => (
+                                <motion.div
+                                    key={video.id}
+                                    variants={item}
+                                    className="bg-white border-2 border-black overflow-hidden hover:shadow-[8px_8px_0px_0px_#FF4D4D] transition-shadow group"
+                                >
+                                    <a href={video.url} target="_blank" rel="noopener noreferrer" className="block relative">
+                                        <img src={video.thumbnail} alt={video.title} className="w-full aspect-video object-cover" />
+                                        <div className="absolute top-3 left-3 px-2 py-1 bg-black text-white text-xs font-black">
+                                            #{index + 1} TRENDING
+                                        </div>
+                                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black text-white text-xs font-black">
+                                            {video.formattedDuration}
+                                        </div>
+                                    </a>
+                                    <div className="p-5">
+                                        <h3 className="font-black text-lg leading-tight uppercase mb-2 line-clamp-2">
+                                            {video.title}
+                                        </h3>
+                                        <p className="text-xs font-bold text-gray-500 uppercase mb-4">{video.channelTitle}</p>
+                                        <div className="flex items-center justify-between text-xs font-bold text-black border-t-2 border-black/10 pt-3 mb-4">
+                                            <span className="flex items-center gap-1">
+                                                <Eye className="w-4 h-4" /> {video.formattedViews}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <Heart className="w-4 h-4" /> {video.formattedLikes}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <MessageCircle className="w-4 h-4" /> {video.formattedComments}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="px-2 py-1 bg-[#B1F202] border-2 border-black text-xs font-black">
+                                                {video.engagementRate} ENGAGEMENT
+                                            </span>
+                                            <button
+                                                onClick={() => analyzeVideo(video)}
+                                                className="flex-1 py-2 bg-black text-white text-xs font-black uppercase hover:bg-[#FFC900] hover:text-black transition-colors flex items-center justify-center gap-1"
+                                            >
+                                                <Sparkles className="w-3 h-3" />
+                                                Analyze This
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+
+                    {/* Empty State */}
+                    {!loading && videos.length === 0 && !error && (
+                        <div className="text-center py-16 bg-white border-2 border-black border-dashed">
+                            <Youtube className="w-16 h-16 mx-auto text-black mb-4" />
+                            <h3 className="text-xl font-black uppercase text-black mb-2">No videos found</h3>
+                            <p className="font-medium text-gray-500">Try a different search query or refresh trending</p>
+                        </div>
+                    )}
+                </>
             )}
 
-            {/* AI Analysis Panel */}
-            <AnimatePresence>
-                {aiAnalysis && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden mb-12"
-                    >
-                        <div className="p-8 bg-[#00F0FF] border-2 border-black shadow-[8px_8px_0px_0px_#000]">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-black text-white border-2 border-black">
-                                    <Sparkles className="w-6 h-6" />
+            {/* ========== GOOGLE TRENDS TAB ========== */}
+            {activeTab === 'google' && (
+                <>
+                    {loadingGoogle ? (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                                <div key={i} className="animate-pulse bg-white border-2 border-black p-6">
+                                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+                                    <div className="h-3 bg-gray-200 rounded w-1/2" />
                                 </div>
-                                <h2 className="text-2xl font-black uppercase text-black">AI Marketing Analysis</h2>
-                            </div>
-
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {/* Why Trending */}
-                                <div className="p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-black">
-                                        <TrendingUp className="w-5 h-5 text-black" />
-                                        <h3 className="font-black uppercase">Why Trending</h3>
-                                    </div>
-                                    <p className="font-medium text-black">{aiAnalysis.whyTrending}</p>
-                                </div>
-
-                                {/* Best Hashtags */}
-                                <div className="p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-black">
-                                        <Hash className="w-5 h-5 text-black" />
-                                        <h3 className="font-black uppercase">Best Hashtags</h3>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {aiAnalysis.bestHashtags.map((tag, i) => (
-                                            <span key={i} className="px-2 py-1 bg-black text-white text-xs font-bold uppercase">
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Optimal Length */}
-                                <div className="p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-black">
-                                        <Clock className="w-5 h-5 text-black" />
-                                        <h3 className="font-black uppercase">Optimal Length</h3>
-                                    </div>
-                                    <p className="font-medium text-black">{aiAnalysis.optimalLength}</p>
-                                </div>
-
-                                {/* Content Ideas */}
-                                <div className="md:col-span-2 lg:col-span-3 p-6 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-                                    <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-black">
-                                        <Lightbulb className="w-5 h-5 text-black fill-[#FFC900]" />
-                                        <h3 className="font-black uppercase">Content Ideas For You</h3>
-                                    </div>
-                                    <div className="grid md:grid-cols-3 gap-4">
-                                        {aiAnalysis.contentIdeas.map((idea, i) => (
-                                            <div key={i} className="p-4 bg-[#F3F3F3] border-2 border-black hover:bg-[#FF90E8] hover:shadow-[4px_4px_0px_0px_#000] transition-all">
-                                                <p className="font-black text-black uppercase mb-2">{idea.title}</p>
-                                                <p className="text-xs font-bold text-gray-600 mb-3">Hook: "{idea.hook}"</p>
-                                                <span className="px-2 py-1 bg-black text-white text-xs font-bold uppercase">{idea.format}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
+                    ) : (
+                        <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {googleTrends.map((trend, i) => (
+                                <motion.div
+                                    key={i}
+                                    variants={item}
+                                    className="bg-white border-2 border-black p-5 hover:shadow-[6px_6px_0px_0px_#3B82F6] transition-all group"
+                                >
+                                    <div className="flex items-start justify-between mb-3">
+                                        <span className="px-2 py-1 bg-blue-500 text-white text-xs font-black">
+                                            #{i + 1} TRENDING
+                                        </span>
+                                        <span className="text-xs font-black text-gray-500 bg-gray-100 px-2 py-1">
+                                            {trend.formattedTraffic}
+                                        </span>
+                                    </div>
+                                    <h3 className="font-black text-xl uppercase mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                                        {trend.title}
+                                    </h3>
+                                    {trend.relevanceScore && trend.relevanceScore >= 90 && (
+                                        <div className="mb-3">
+                                            <span className="px-2 py-1 bg-[#B1F202] border border-black text-xs font-black">
+                                                🎯 {trend.relevanceScore}% MATCH
+                                            </span>
+                                        </div>
+                                    )}
+                                    {trend.contentIdea && (
+                                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                                            💡 {trend.contentIdea}
+                                        </p>
+                                    )}
+                                    <button
+                                        onClick={() => analyzeGoogleTrend(trend)}
+                                        className="w-full py-3 bg-black text-white font-black uppercase hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Sparkles className="w-4 h-4" />
+                                        Why Is This Trending?
+                                    </button>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+
+                    {/* Empty State */}
+                    {!loadingGoogle && googleTrends.length === 0 && (
+                        <div className="text-center py-16 bg-white border-2 border-black border-dashed">
+                            <Globe className="w-16 h-16 mx-auto text-black mb-4" />
+                            <h3 className="text-xl font-black uppercase text-black mb-2">No Google trends found</h3>
+                            <p className="font-medium text-gray-500">Try refreshing the page</p>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* ========== GOOGLE TREND ANALYSIS MODAL ========== */}
+            <AnimatePresence>
+                {selectedGoogleTrend && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                        onClick={closeGoogleTrendModal}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white border-4 border-black shadow-[12px_12px_0px_0px_#3B82F6]"
+                        >
+                            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b-4 border-black bg-blue-500 text-white">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase">{selectedGoogleTrend.title}</h2>
+                                    <p className="font-bold">{selectedGoogleTrend.formattedTraffic} searches</p>
+                                </div>
+                                <button onClick={closeGoogleTrendModal} className="p-2 border-2 border-white hover:bg-white hover:text-blue-500 transition-colors">
+                                    <X className="w-6 h-6" strokeWidth={3} />
+                                </button>
+                            </div>
+                            <div className="p-8 space-y-6">
+                                {analyzingGoogleTrend ? (
+                                    <div className="text-center py-20">
+                                        <Sparkles className="w-16 h-16 mx-auto text-blue-500 animate-spin mb-6" />
+                                        <p className="text-xl font-black uppercase animate-pulse">Analyzing Search Intent...</p>
+                                    </div>
+                                ) : googleTrendAnalysis ? (
+                                    <>
+                                        <div className="p-5 bg-blue-100 border-2 border-black">
+                                            <h4 className="font-black uppercase mb-2 flex items-center gap-2">🔥 Why Is This Trending?</h4>
+                                            <p className="font-medium">{googleTrendAnalysis.whyTrending}</p>
+                                        </div>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="p-5 bg-white border-2 border-black">
+                                                <h4 className="font-black uppercase mb-2">🎯 Search Intent</h4>
+                                                <p className="font-medium text-sm">{googleTrendAnalysis.searchIntent}</p>
+                                            </div>
+                                            <div className="p-5 bg-white border-2 border-black">
+                                                <h4 className="font-black uppercase mb-2">👥 Who Is Searching</h4>
+                                                <p className="font-medium text-sm">{googleTrendAnalysis.audienceProfile}</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 bg-[#FFC900] border-2 border-black">
+                                            <h4 className="font-black uppercase mb-3">💡 Content Ideas For You</h4>
+                                            <ul className="space-y-2">
+                                                {googleTrendAnalysis.contentAngles.map((angle, i) => (
+                                                    <li key={i} className="font-medium flex items-start gap-2">
+                                                        <ArrowRight className="w-4 h-4 mt-0.5 shrink-0" /> {angle}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="p-5 bg-white border-2 border-black">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="font-black uppercase">📝 Title Idea</h4>
+                                                    <button onClick={() => copyToClipboard(googleTrendAnalysis.suggestedTitle)} className="text-xs px-2 py-1 bg-black text-white font-bold">Copy</button>
+                                                </div>
+                                                <p className="font-bold">{googleTrendAnalysis.suggestedTitle}</p>
+                                            </div>
+                                            <div className="p-5 bg-white border-2 border-black">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="font-black uppercase">🎬 Hook Idea</h4>
+                                                    <button onClick={() => copyToClipboard(googleTrendAnalysis.suggestedHook)} className="text-xs px-2 py-1 bg-black text-white font-bold">Copy</button>
+                                                </div>
+                                                <p className="font-medium italic">"{googleTrendAnalysis.suggestedHook}"</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-5 bg-white border-2 border-black">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="font-black uppercase flex items-center gap-2"><Hash className="w-5 h-5" /> Hashtags</h4>
+                                                <button onClick={() => copyToClipboard(googleTrendAnalysis.hashtags.join(' '))} className="text-xs px-2 py-1 bg-black text-white font-bold">Copy All</button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {googleTrendAnalysis.hashtags.map((tag, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-black text-white text-xs font-bold">{tag}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-[#B1F202] border-2 border-black">
+                                            <span className="font-black uppercase">Viral Potential:</span>
+                                            <span className="px-3 py-1 bg-black text-white font-black">{googleTrendAnalysis.potentialViews}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-10 text-gray-500">
+                                        <p className="font-medium">Loading analysis...</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Loading State */}
-            {loading && (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="animate-pulse bg-white border-2 border-gray-200">
-                            <div className="aspect-video bg-gray-200" />
-                            <div className="p-4 space-y-3">
-                                <div className="h-6 bg-gray-200 w-3/4" />
-                                <div className="h-4 bg-gray-200 w-1/2" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Videos Grid */}
-            {!loading && videos.length > 0 && (
-                <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {videos.map((video, index) => (
-                        <motion.div
-                            key={video.id}
-                            variants={item}
-                            className="group bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] hover:-translate-y-1 transition-all"
-                        >
-                            {/* Thumbnail */}
-                            <a href={video.url} target="_blank" rel="noopener noreferrer" className="relative block aspect-video border-b-2 border-black overflow-hidden">
-                                <img
-                                    src={video.thumbnail}
-                                    alt={video.title}
-                                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                                />
-                                <div className="absolute bottom-2 right-2 px-2 py-1 bg-black text-white text-xs font-black uppercase">
-                                    {video.formattedDuration}
-                                </div>
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
-                                    <Play className="w-12 h-12 text-white fill-black opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                                </div>
-                                {index < 3 && (
-                                    <div className="absolute top-2 left-2 px-3 py-1 bg-[#FF4D4D] border-2 border-black text-white text-xs font-black uppercase shadow-[2px_2px_0px_0px_#000]">
-                                        #{index + 1} Trending
-                                    </div>
-                                )}
-                            </a>
-
-                            {/* Content */}
-                            <div className="p-5">
-                                <h3 className="font-black text-lg leading-tight uppercase mb-2 line-clamp-2">
-                                    {video.title}
-                                </h3>
-                                <p className="text-xs font-bold text-gray-500 uppercase mb-4">{video.channelTitle}</p>
-
-                                {/* Stats */}
-                                <div className="flex items-center justify-between text-xs font-bold text-black border-t-2 border-black/10 pt-3 mb-4">
-                                    <span className="flex items-center gap-1">
-                                        <Eye className="w-4 h-4" /> {video.formattedViews}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Heart className="w-4 h-4" /> {video.formattedLikes}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <MessageCircle className="w-4 h-4" /> {video.formattedComments}
-                                    </span>
-                                </div>
-
-                                {/* Engagement Rate & Analyze Button */}
-                                <div className="flex items-center justify-between gap-3">
-                                    <span className="px-2 py-1 bg-[#B1F202] border-2 border-black text-xs font-black">
-                                        {video.engagementRate} ENGAGEMENT
-                                    </span>
-                                    <button
-                                        onClick={() => analyzeVideo(video)}
-                                        className="flex-1 py-2 bg-black text-white text-xs font-black uppercase hover:bg-[#FFC900] hover:text-black transition-colors flex items-center justify-center gap-1"
-                                    >
-                                        <Sparkles className="w-3 h-3" />
-                                        Analyze This
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
-                </motion.div>
-            )}
-
-            {/* Empty State */}
-            {!loading && videos.length === 0 && !error && (
-                <div className="text-center py-16 bg-white border-2 border-black border-dashed">
-                    <Youtube className="w-16 h-16 mx-auto text-black mb-4" />
-                    <h3 className="text-xl font-black uppercase text-black mb-2">No videos found</h3>
-                    <p className="font-medium text-gray-500">Try a different search query or refresh trending</p>
-                </div>
-            )}
-
-            {/* Video Analysis Modal */}
+            {/* ========== VIDEO ANALYSIS MODAL ========== */}
             <AnimatePresence>
                 {selectedVideo && (
                     <motion.div
@@ -473,7 +720,7 @@ export default function TrendsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Viral Hook - THE MONEY SHOT */}
+                                        {/* Viral Hook */}
                                         {videoAnalysis.viralHook && (
                                             <div className="p-6 bg-[#FF90E8] border-4 border-black shadow-[8px_8px_0px_0px_#000]">
                                                 <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
@@ -620,23 +867,6 @@ export default function TrendsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Deep Insights */}
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            {[
-                                                { title: "Thumbnail Strategy", icon: Eye, content: videoAnalysis.thumbnailInsights },
-                                                { title: "Title Analysis", icon: Target, content: videoAnalysis.titleAnalysis },
-                                                { title: "Content Strategy", icon: Youtube, content: videoAnalysis.contentStrategy },
-                                                { title: "Audience Appeal", icon: Heart, content: videoAnalysis.audienceAppeal },
-                                            ].map((item, i) => (
-                                                <div key={i} className="p-5 border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-                                                    <h4 className="font-black uppercase mb-3 flex items-center gap-2">
-                                                        <item.icon className="w-5 h-5" /> {item.title}
-                                                    </h4>
-                                                    <p className="text-sm font-medium">{item.content}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-
                                         {/* Recreate Strategy */}
                                         <div className="p-6 bg-[#FFC900] border-2 border-black shadow-[8px_8px_0px_0px_#000]">
                                             <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2 bg-black text-[#FFC900] inline-block px-3 py-1">
@@ -696,7 +926,7 @@ export default function TrendsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Actions */}
+                                        {/* Action Buttons */}
                                         <div className="flex gap-4 pt-4 border-t-4 border-black">
                                             <a
                                                 href={selectedVideo.url}
