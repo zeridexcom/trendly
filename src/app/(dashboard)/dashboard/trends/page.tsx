@@ -3,28 +3,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    TrendingUp,
-    Play,
-    Eye,
-    Heart,
-    MessageCircle,
-    Clock,
-    ExternalLink,
-    Sparkles,
-    Search,
-    RefreshCw,
-    Lightbulb,
-    Hash,
-    Target,
-    Zap,
-    Youtube,
-    X,
-    CheckCircle,
-    AlertTriangle,
-    ArrowRight,
-    Copy,
-    ThumbsUp,
-    BarChart3,
+    TrendingUp, Play, Eye, Heart, MessageCircle, Clock, ExternalLink,
+    Sparkles, Search, RefreshCw, Lightbulb, Hash, Target, Zap, Youtube,
+    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -198,22 +179,22 @@ export default function TrendsPage() {
     }
 
     return (
-        <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
+        <div className="max-w-6xl mx-auto pb-12 font-sans text-black">
             {/* Header */}
-            <motion.div variants={item} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <Youtube className="w-6 h-6 text-red-500" />
-                        <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Youtube className="w-8 h-8 text-black fill-red-500" />
+                        <h1 className="text-4xl font-black italic uppercase tracking-tighter">
                             Real-Time Trends
                         </h1>
-                        <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full">
+                        <span className="px-3 py-1 bg-[#B1F202] border-2 border-black font-black uppercase text-sm shadow-[2px_2px_0px_0px_#000]">
                             LIVE
                         </span>
                     </div>
-                    <p className="text-[#7E7F83]">
+                    <p className="text-black font-bold border-l-4 border-black pl-3">
                         {searchQuery ? `Results for "${searchQuery}"` : 'Trending on YouTube India right now'}
-                        {lastFetched && <span className="ml-2 text-xs">• Updated {lastFetched}</span>}
+                        {lastFetched && <span className="ml-2 text-sm text-gray-500 font-bold">• UPDATED {lastFetched}</span>}
                     </p>
                 </div>
 
@@ -221,41 +202,43 @@ export default function TrendsPage() {
                     <button
                         onClick={fetchTrending}
                         disabled={loading}
-                        className="p-2.5 rounded-lg border border-[#E8E8E9] dark:border-[#34312D] hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                        className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                     >
-                        <RefreshCw className={cn("w-5 h-5 text-[#7E7F83]", loading && "animate-spin")} />
+                        <RefreshCw className={cn("w-6 h-6 text-black", loading && "animate-spin")} />
                     </button>
                 </div>
             </motion.div>
 
             {/* Search */}
-            <motion.div variants={item} className="flex gap-3">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 mb-10">
                 <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#7E7F83]" />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                        <Search className="w-6 h-6 text-black" strokeWidth={3} />
+                    </div>
                     <input
                         type="text"
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Search trends (e.g., 'tech reviews', 'cooking recipes', 'fitness')"
-                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] text-[#14110F] dark:text-[#F3F3F4] placeholder:text-[#7E7F83] focus:outline-none focus:border-[#D9C5B2]"
+                        placeholder="Search trends (e.g., 'tech reviews', 'cooking recipes')..."
+                        className="w-full pl-14 pr-4 py-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] text-lg font-bold placeholder:text-gray-400 focus:outline-none focus:bg-[#FFF9E5] transition-colors uppercase"
                     />
                 </div>
                 <button
                     onClick={searchAndAnalyze}
                     disabled={analyzing || !searchInput.trim()}
-                    className="px-6 py-3 rounded-xl bg-[#D9C5B2] text-[#14110F] font-medium hover:bg-[#C4B09D] transition-colors disabled:opacity-50 flex items-center gap-2"
+                    className="px-8 py-4 bg-[#FF90E8] border-2 border-black shadow-[4px_4px_0px_0px_#000] text-black font-black uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 flex items-center gap-2"
                 >
-                    <Sparkles className={cn("w-5 h-5", analyzing && "animate-pulse")} />
-                    {analyzing ? 'Analyzing...' : 'Search & Analyze'}
+                    <Sparkles className={cn("w-5 h-5 fill-black", analyzing && "animate-spin")} />
+                    {analyzing ? 'Analyzing...' : 'Analyze'}
                 </button>
             </motion.div>
 
             {/* Error */}
             {error && (
-                <motion.div variants={item} className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
-                    {error}
-                </motion.div>
+                <div className="p-4 bg-red-100 border-2 border-black mb-8 font-bold text-red-600 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" /> {error}
+                </div>
             )}
 
             {/* AI Analysis Panel */}
@@ -265,58 +248,62 @@ export default function TrendsPage() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
+                        className="overflow-hidden mb-12"
                     >
-                        <div className="p-6 rounded-xl bg-gradient-to-br from-[#D9C5B2]/20 to-[#D9C5B2]/5 dark:from-[#D9C5B2]/10 dark:to-transparent border border-[#D9C5B2]/30">
-                            <div className="flex items-center gap-2 mb-4">
-                                <div className="p-2 rounded-lg bg-[#D9C5B2]">
-                                    <Sparkles className="w-5 h-5 text-[#14110F]" />
+                        <div className="p-8 bg-[#00F0FF] border-2 border-black shadow-[8px_8px_0px_0px_#000]">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-black text-white border-2 border-black">
+                                    <Sparkles className="w-6 h-6" />
                                 </div>
-                                <h2 className="font-semibold text-lg text-[#14110F] dark:text-[#F3F3F4]">AI Marketing Analysis</h2>
+                                <h2 className="text-2xl font-black uppercase text-black">AI Marketing Analysis</h2>
                             </div>
 
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <TrendingUp className="w-4 h-4 text-emerald-500" />
-                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Why Trending</h3>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {/* Why Trending */}
+                                <div className="p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-black">
+                                        <TrendingUp className="w-5 h-5 text-black" />
+                                        <h3 className="font-black uppercase">Why Trending</h3>
                                     </div>
-                                    <p className="text-sm text-[#7E7F83]">{aiAnalysis.whyTrending}</p>
+                                    <p className="font-medium text-black">{aiAnalysis.whyTrending}</p>
                                 </div>
 
-                                <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Hash className="w-4 h-4 text-blue-500" />
-                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Best Hashtags</h3>
+                                {/* Best Hashtags */}
+                                <div className="p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-black">
+                                        <Hash className="w-5 h-5 text-black" />
+                                        <h3 className="font-black uppercase">Best Hashtags</h3>
                                     </div>
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="flex flex-wrap gap-2">
                                         {aiAnalysis.bestHashtags.map((tag, i) => (
-                                            <span key={i} className="px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                            <span key={i} className="px-2 py-1 bg-black text-white text-xs font-bold uppercase">
                                                 #{tag}
                                             </span>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Clock className="w-4 h-4 text-amber-500" />
-                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Optimal Length</h3>
+                                {/* Optimal Length */}
+                                <div className="p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-black">
+                                        <Clock className="w-5 h-5 text-black" />
+                                        <h3 className="font-black uppercase">Optimal Length</h3>
                                     </div>
-                                    <p className="text-sm text-[#7E7F83]">{aiAnalysis.optimalLength}</p>
+                                    <p className="font-medium text-black">{aiAnalysis.optimalLength}</p>
                                 </div>
 
-                                <div className="md:col-span-2 lg:col-span-3 p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Lightbulb className="w-4 h-4 text-amber-500" />
-                                        <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">Content Ideas For You</h3>
+                                {/* Content Ideas */}
+                                <div className="md:col-span-2 lg:col-span-3 p-6 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+                                    <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-black">
+                                        <Lightbulb className="w-5 h-5 text-black fill-[#FFC900]" />
+                                        <h3 className="font-black uppercase">Content Ideas For You</h3>
                                     </div>
-                                    <div className="grid md:grid-cols-3 gap-3">
+                                    <div className="grid md:grid-cols-3 gap-4">
                                         {aiAnalysis.contentIdeas.map((idea, i) => (
-                                            <div key={i} className="p-3 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
-                                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-1">{idea.title}</p>
-                                                <p className="text-xs text-[#7E7F83] mb-2">Hook: "{idea.hook}"</p>
-                                                <span className="px-2 py-0.5 text-xs rounded-full bg-[#D9C5B2] text-[#14110F]">{idea.format}</span>
+                                            <div key={i} className="p-4 bg-[#F3F3F3] border-2 border-black hover:bg-[#FF90E8] hover:shadow-[4px_4px_0px_0px_#000] transition-all">
+                                                <p className="font-black text-black uppercase mb-2">{idea.title}</p>
+                                                <p className="text-xs font-bold text-gray-600 mb-3">Hook: "{idea.hook}"</p>
+                                                <span className="px-2 py-1 bg-black text-white text-xs font-bold uppercase">{idea.format}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -329,13 +316,13 @@ export default function TrendsPage() {
 
             {/* Loading State */}
             {loading && (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="animate-pulse rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden">
-                            <div className="aspect-video bg-[#F3F3F4] dark:bg-[#34312D]" />
+                        <div key={i} className="animate-pulse bg-white border-2 border-gray-200">
+                            <div className="aspect-video bg-gray-200" />
                             <div className="p-4 space-y-3">
-                                <div className="h-4 bg-[#F3F3F4] dark:bg-[#34312D] rounded w-3/4" />
-                                <div className="h-3 bg-[#F3F3F4] dark:bg-[#34312D] rounded w-1/2" />
+                                <div className="h-6 bg-gray-200 w-3/4" />
+                                <div className="h-4 bg-gray-200 w-1/2" />
                             </div>
                         </div>
                     ))}
@@ -344,70 +331,64 @@ export default function TrendsPage() {
 
             {/* Videos Grid */}
             {!loading && videos.length > 0 && (
-                <motion.div variants={item} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {videos.map((video, index) => (
                         <motion.div
                             key={video.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="group rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden hover:border-[#D9C5B2] transition-all hover:shadow-lg"
+                            variants={item}
+                            className="group bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] hover:-translate-y-1 transition-all"
                         >
                             {/* Thumbnail */}
-                            <a href={video.url} target="_blank" rel="noopener noreferrer" className="relative block aspect-video">
+                            <a href={video.url} target="_blank" rel="noopener noreferrer" className="relative block aspect-video border-b-2 border-black overflow-hidden">
                                 <img
                                     src={video.thumbnail}
                                     alt={video.title}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                 />
-                                <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-white text-xs font-medium">
+                                <div className="absolute bottom-2 right-2 px-2 py-1 bg-black text-white text-xs font-black uppercase">
                                     {video.formattedDuration}
                                 </div>
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
-                                    <Play className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <Play className="w-12 h-12 text-white fill-black opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                                 </div>
                                 {index < 3 && (
-                                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-medium flex items-center gap-1">
-                                        <Zap className="w-3 h-3" />
+                                    <div className="absolute top-2 left-2 px-3 py-1 bg-[#FF4D4D] border-2 border-black text-white text-xs font-black uppercase shadow-[2px_2px_0px_0px_#000]">
                                         #{index + 1} Trending
                                     </div>
                                 )}
                             </a>
 
                             {/* Content */}
-                            <div className="p-4">
-                                <h3 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-2">
+                            <div className="p-5">
+                                <h3 className="font-black text-lg leading-tight uppercase mb-2 line-clamp-2">
                                     {video.title}
                                 </h3>
-                                <p className="text-xs text-[#7E7F83] mb-3">{video.channelTitle}</p>
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-4">{video.channelTitle}</p>
 
                                 {/* Stats */}
-                                <div className="flex items-center gap-3 text-xs text-[#7E7F83]">
+                                <div className="flex items-center justify-between text-xs font-bold text-black border-t-2 border-black/10 pt-3 mb-4">
                                     <span className="flex items-center gap-1">
-                                        <Eye className="w-3.5 h-3.5" />
-                                        {video.formattedViews}
+                                        <Eye className="w-4 h-4" /> {video.formattedViews}
                                     </span>
                                     <span className="flex items-center gap-1">
-                                        <Heart className="w-3.5 h-3.5" />
-                                        {video.formattedLikes}
+                                        <Heart className="w-4 h-4" /> {video.formattedLikes}
                                     </span>
                                     <span className="flex items-center gap-1">
-                                        <MessageCircle className="w-3.5 h-3.5" />
-                                        {video.formattedComments}
+                                        <MessageCircle className="w-4 h-4" /> {video.formattedComments}
                                     </span>
                                 </div>
 
                                 {/* Engagement Rate & Analyze Button */}
-                                <div className="mt-3 pt-3 border-t border-[#E8E8E9] dark:border-[#34312D] flex items-center justify-between">
-                                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                        {video.engagementRate} engagement
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="px-2 py-1 bg-[#B1F202] border-2 border-black text-xs font-black">
+                                        {video.engagementRate} ENGAGEMENT
                                     </span>
                                     <button
                                         onClick={() => analyzeVideo(video)}
-                                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#D9C5B2] text-[#14110F] hover:bg-[#C4B09D] transition-colors flex items-center gap-1"
+                                        className="flex-1 py-2 bg-black text-white text-xs font-black uppercase hover:bg-[#FFC900] hover:text-black transition-colors flex items-center justify-center gap-1"
                                     >
                                         <Sparkles className="w-3 h-3" />
-                                        Why Viral?
+                                        Analyze This
                                     </button>
                                 </div>
                             </div>
@@ -418,11 +399,11 @@ export default function TrendsPage() {
 
             {/* Empty State */}
             {!loading && videos.length === 0 && !error && (
-                <motion.div variants={item} className="text-center py-12">
-                    <Youtube className="w-12 h-12 mx-auto text-[#7E7F83] mb-4" />
-                    <h3 className="font-medium text-[#14110F] dark:text-[#F3F3F4] mb-2">No videos found</h3>
-                    <p className="text-sm text-[#7E7F83]">Try a different search query or refresh trending</p>
-                </motion.div>
+                <div className="text-center py-16 bg-white border-2 border-black border-dashed">
+                    <Youtube className="w-16 h-16 mx-auto text-black mb-4" />
+                    <h3 className="text-xl font-black uppercase text-black mb-2">No videos found</h3>
+                    <p className="font-medium text-gray-500">Try a different search query or refresh trending</p>
+                </div>
             )}
 
             {/* Video Analysis Modal */}
@@ -432,156 +413,148 @@ export default function TrendsPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
                         onClick={closeModal}
                     >
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
+                            initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#1A1714] rounded-2xl shadow-2xl"
+                            className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white border-4 border-black shadow-[12px_12px_0px_0px_#FF90E8]"
                         >
                             {/* Modal Header */}
-                            <div className="sticky top-0 z-10 flex items-start gap-4 p-6 border-b border-[#E8E8E9] dark:border-[#34312D] bg-white dark:bg-[#1A1714]">
-                                <img src={selectedVideo.thumbnail} alt="" className="w-32 h-20 object-cover rounded-lg" />
+                            <div className="sticky top-0 z-10 flex items-start gap-4 p-6 border-b-4 border-black bg-white">
+                                <img src={selectedVideo.thumbnail} alt="" className="w-40 h-auto border-2 border-black shadow-[4px_4px_0px_0px_#000]" />
                                 <div className="flex-1 min-w-0">
-                                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] line-clamp-2 mb-1">
+                                    <h2 className="text-2xl font-black uppercase line-clamp-2 mb-2">
                                         {selectedVideo.title}
                                     </h2>
-                                    <p className="text-sm text-[#7E7F83]">{selectedVideo.channelTitle}</p>
-                                    <div className="flex items-center gap-3 mt-2 text-xs text-[#7E7F83]">
-                                        <span>{selectedVideo.formattedViews} views</span>
-                                        <span>{selectedVideo.engagementRate} engagement</span>
+                                    <p className="font-bold text-gray-600 uppercase mb-2">{selectedVideo.channelTitle}</p>
+                                    <div className="flex gap-2">
+                                        <span className="bg-black text-white px-2 py-1 text-xs font-black uppercase">{selectedVideo.formattedViews} VIEWS</span>
+                                        <span className="bg-[#B1F202] text-black border border-black px-2 py-1 text-xs font-black uppercase">{selectedVideo.engagementRate} ENGAGEMENT</span>
                                     </div>
                                 </div>
-                                <button onClick={closeModal} className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D]">
-                                    <X className="w-5 h-5 text-[#7E7F83]" />
+                                <button onClick={closeModal} className="p-2 border-2 border-black bg-white hover:bg-black hover:text-white transition-colors">
+                                    <X className="w-6 h-6" strokeWidth={3} />
                                 </button>
                             </div>
 
                             {/* Analysis Content */}
-                            <div className="p-6 space-y-6">
+                            <div className="p-8 space-y-8">
                                 {analyzingVideo ? (
-                                    <div className="text-center py-12">
-                                        <Sparkles className="w-10 h-10 mx-auto text-[#D9C5B2] animate-pulse mb-4" />
-                                        <p className="text-[#7E7F83]">AI is analyzing why this video went viral...</p>
+                                    <div className="text-center py-20">
+                                        <Sparkles className="w-16 h-16 mx-auto text-[#FF90E8] animate-spin mb-6" />
+                                        <p className="text-xl font-black uppercase animate-pulse">Deconstructing Virality...</p>
                                     </div>
                                 ) : videoAnalysis ? (
                                     <>
                                         {/* Viral Score */}
-                                        <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20">
-                                            <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white text-2xl font-bold">
-                                                {videoAnalysis.viralScore}
+                                        <div className="flex items-center gap-6 p-6 bg-[#B1F202] border-2 border-black shadow-[6px_6px_0px_0px_#000]">
+                                            <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center border-4 border-white">
+                                                <span className="text-4xl font-black text-[#B1F202]">{videoAnalysis.viralScore}</span>
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Viral Score</h3>
-                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.whyViral}</p>
+                                                <h3 className="text-2xl font-black uppercase mb-1">Viral Score</h3>
+                                                <p className="font-bold text-lg">{videoAnalysis.whyViral}</p>
                                             </div>
                                         </div>
 
                                         {/* Key Factors */}
                                         <div>
-                                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-3 flex items-center gap-2">
-                                                <BarChart3 className="w-5 h-5 text-[#D9C5B2]" />
+                                            <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2 border-l-4 border-black pl-3">
                                                 Key Viral Factors
                                             </h3>
-                                            <div className="grid md:grid-cols-2 gap-3">
+                                            <div className="grid md:grid-cols-2 gap-4">
                                                 {videoAnalysis.keyFactors.map((factor, i) => (
-                                                    <div key={i} className="p-4 rounded-xl bg-[#F3F3F4] dark:bg-[#34312D]">
+                                                    <div key={i} className="p-4 bg-white border-2 border-black hover:bg-[#F3F3F3]">
                                                         <div className="flex items-center justify-between mb-2">
-                                                            <span className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">{factor.factor}</span>
+                                                            <span className="font-black uppercase">{factor.factor}</span>
                                                             <span className={cn(
-                                                                "px-2 py-0.5 text-xs rounded-full font-medium",
-                                                                factor.impact === 'HIGH' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                                                                factor.impact === 'MEDIUM' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                                                                factor.impact === 'LOW' && "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                                                                "px-2 py-0.5 text-xs font-black border border-black",
+                                                                factor.impact === 'HIGH' && "bg-[#00F0FF]",
+                                                                factor.impact === 'MEDIUM' && "bg-[#FFC900]",
+                                                                factor.impact === 'LOW' && "bg-[#E0E0E0]"
                                                             )}>
                                                                 {factor.impact}
                                                             </span>
                                                         </div>
-                                                        <p className="text-xs text-[#7E7F83]">{factor.analysis}</p>
+                                                        <p className="text-sm font-medium text-gray-600">{factor.analysis}</p>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Deep Insights */}
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
-                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">🎬 Thumbnail Strategy</h4>
-                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.thumbnailInsights}</p>
-                                            </div>
-                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
-                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">📝 Title Analysis</h4>
-                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.titleAnalysis}</p>
-                                            </div>
-                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
-                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">🎯 Content Strategy</h4>
-                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.contentStrategy}</p>
-                                            </div>
-                                            <div className="p-4 rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
-                                                <h4 className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] mb-2">👥 Audience Appeal</h4>
-                                                <p className="text-sm text-[#7E7F83]">{videoAnalysis.audienceAppeal}</p>
-                                            </div>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            {[
+                                                { title: "Thumbnail Strategy", icon: Eye, content: videoAnalysis.thumbnailInsights },
+                                                { title: "Title Analysis", icon: Target, content: videoAnalysis.titleAnalysis },
+                                                { title: "Content Strategy", icon: Youtube, content: videoAnalysis.contentStrategy },
+                                                { title: "Audience Appeal", icon: Heart, content: videoAnalysis.audienceAppeal },
+                                            ].map((item, i) => (
+                                                <div key={i} className="p-5 border-2 border-black shadow-[4px_4px_0px_0px_#000]">
+                                                    <h4 className="font-black uppercase mb-3 flex items-center gap-2">
+                                                        <item.icon className="w-5 h-5" /> {item.title}
+                                                    </h4>
+                                                    <p className="text-sm font-medium">{item.content}</p>
+                                                </div>
+                                            ))}
                                         </div>
 
                                         {/* Recreate Strategy */}
-                                        <div className="p-5 rounded-xl bg-gradient-to-br from-[#D9C5B2]/20 to-transparent border border-[#D9C5B2]/30">
-                                            <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-4 flex items-center gap-2">
-                                                <Lightbulb className="w-5 h-5 text-[#D9C5B2]" />
-                                                How YOU Can Recreate This
+                                        <div className="p-6 bg-[#FFC900] border-2 border-black shadow-[8px_8px_0px_0px_#000]">
+                                            <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2 bg-black text-[#FFC900] inline-block px-3 py-1">
+                                                <Lightbulb className="w-5 h-5 fill-[#FFC900]" />
+                                                How YOU Can Steal This
                                             </h3>
-                                            <div className="space-y-3">
-                                                <div className="flex items-start gap-3">
-                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Your Title:</span>
-                                                    <div className="flex-1 flex items-center gap-2">
-                                                        <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{videoAnalysis.recreateStrategy.yourTitle}</p>
-                                                        <button onClick={() => copyToClipboard(videoAnalysis.recreateStrategy.yourTitle)} className="p-1 rounded hover:bg-[#D9C5B2]/20">
-                                                            <Copy className="w-3.5 h-3.5 text-[#7E7F83]" />
+                                            <div className="space-y-4 bg-white p-5 border-2 border-black">
+                                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center border-b-2 border-black pb-3">
+                                                    <span className="text-xs font-black uppercase w-24 shrink-0 bg-black text-white px-2 py-1 text-center">Your Title</span>
+                                                    <div className="flex-1 flex items-center justify-between gap-2">
+                                                        <p className="font-bold uppercase">{videoAnalysis.recreateStrategy.yourTitle}</p>
+                                                        <button onClick={() => copyToClipboard(videoAnalysis.recreateStrategy.yourTitle)} className="p-2 hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-colors">
+                                                            <Copy className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-start gap-3">
-                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Your Hook:</span>
-                                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">"{videoAnalysis.recreateStrategy.yourHook}"</p>
+                                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center border-b-2 border-black pb-3">
+                                                    <span className="text-xs font-black uppercase w-24 shrink-0 bg-black text-white px-2 py-1 text-center">Your Hook</span>
+                                                    <p className="font-medium italic">"{videoAnalysis.recreateStrategy.yourHook}"</p>
                                                 </div>
-                                                <div className="flex items-start gap-3">
-                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Format:</span>
-                                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{videoAnalysis.recreateStrategy.yourFormat}</p>
-                                                </div>
-                                                <div className="flex items-start gap-3">
-                                                    <span className="text-xs font-medium text-[#7E7F83] w-20">Your Angle:</span>
-                                                    <p className="text-sm text-[#14110F] dark:text-[#F3F3F4]">{videoAnalysis.recreateStrategy.yourAngle}</p>
+                                                <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                                                    <span className="text-xs font-black uppercase w-24 shrink-0 bg-black text-white px-2 py-1 text-center">Your Angle</span>
+                                                    <p className="font-medium">{videoAnalysis.recreateStrategy.yourAngle}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Do This / Avoid This */}
-                                        <div className="grid md:grid-cols-2 gap-4">
-                                            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                                                <h4 className="font-medium text-sm text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
-                                                    <CheckCircle className="w-4 h-4" />
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div className="p-6 bg-[#E0FFE0] border-2 border-black">
+                                                <h4 className="font-black uppercase mb-4 flex items-center gap-2 text-green-800">
+                                                    <CheckCircle className="w-6 h-6 fill-green-800 text-white" />
                                                     Do This
                                                 </h4>
-                                                <ul className="space-y-2">
+                                                <ul className="space-y-3">
                                                     {videoAnalysis.doThis.map((tip, i) => (
-                                                        <li key={i} className="text-sm text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
-                                                            <ArrowRight className="w-3 h-3 mt-1 shrink-0" />
+                                                        <li key={i} className="font-bold text-sm flex items-start gap-2">
+                                                            <ArrowRight className="w-4 h-4 mt-0.5 shrink-0" />
                                                             {tip}
                                                         </li>
                                                     ))}
                                                 </ul>
                                             </div>
-                                            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                                                <h4 className="font-medium text-sm text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
-                                                    <AlertTriangle className="w-4 h-4" />
+                                            <div className="p-6 bg-[#FFE0E0] border-2 border-black">
+                                                <h4 className="font-black uppercase mb-4 flex items-center gap-2 text-red-800">
+                                                    <AlertTriangle className="w-6 h-6 fill-red-800 text-white" />
                                                     Avoid This
                                                 </h4>
-                                                <ul className="space-y-2">
+                                                <ul className="space-y-3">
                                                     {videoAnalysis.avoidThis.map((tip, i) => (
-                                                        <li key={i} className="text-sm text-red-700 dark:text-red-400 flex items-start gap-2">
-                                                            <X className="w-3 h-3 mt-1 shrink-0" />
+                                                        <li key={i} className="font-bold text-sm flex items-start gap-2">
+                                                            <X className="w-4 h-4 mt-0.5 shrink-0" />
                                                             {tip}
                                                         </li>
                                                     ))}
@@ -590,19 +563,19 @@ export default function TrendsPage() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex items-center gap-3 pt-4 border-t border-[#E8E8E9] dark:border-[#34312D]">
+                                        <div className="flex gap-4 pt-4 border-t-4 border-black">
                                             <a
                                                 href={selectedVideo.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-medium text-center hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                                                className="flex-1 py-4 bg-[#FF4D4D] text-white border-2 border-black shadow-[4px_4px_0px_0px_#000] font-black uppercase text-center hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2"
                                             >
-                                                <Youtube className="w-5 h-5" />
+                                                <Youtube className="w-5 h-5 fill-white" />
                                                 Watch on YouTube
                                             </a>
                                             <button
                                                 onClick={closeModal}
-                                                className="flex-1 py-3 rounded-xl border border-[#E8E8E9] dark:border-[#34312D] text-[#14110F] dark:text-[#F3F3F4] font-medium hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                                className="flex-1 py-4 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] font-black uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                                             >
                                                 Close
                                             </button>
@@ -614,6 +587,6 @@ export default function TrendsPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </div>
     )
 }

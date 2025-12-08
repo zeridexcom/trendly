@@ -15,6 +15,8 @@ interface PlatformData {
     icon: any
     color: string
     bgColor: string
+    borderColor: string
+    shadowColor: string
     trends: string[]
     insights: {
         topCategory: string
@@ -29,8 +31,10 @@ const PLATFORMS: PlatformData[] = [
         id: 'youtube',
         name: 'YouTube',
         icon: Youtube,
-        color: 'text-red-500',
-        bgColor: 'bg-red-100 dark:bg-red-900/30',
+        color: 'text-black',
+        bgColor: 'bg-[#FF9090]',
+        borderColor: 'border-black',
+        shadowColor: 'shadow-[4px_4px_0px_0px_#000]',
         trends: [],
         insights: {
             topCategory: 'Entertainment',
@@ -43,8 +47,10 @@ const PLATFORMS: PlatformData[] = [
         id: 'instagram',
         name: 'Instagram',
         icon: Instagram,
-        color: 'text-pink-500',
-        bgColor: 'bg-pink-100 dark:bg-pink-900/30',
+        color: 'text-black',
+        bgColor: 'bg-[#FF90E8]',
+        borderColor: 'border-black',
+        shadowColor: 'shadow-[4px_4px_0px_0px_#000]',
         trends: [],
         insights: {
             topCategory: 'Lifestyle',
@@ -57,14 +63,16 @@ const PLATFORMS: PlatformData[] = [
         id: 'twitter',
         name: 'Twitter/X',
         icon: Twitter,
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+        color: 'text-black',
+        bgColor: 'bg-[#00F0FF]',
+        borderColor: 'border-black',
+        shadowColor: 'shadow-[4px_4px_0px_0px_#000]',
         trends: [],
         insights: {
             topCategory: 'News & Tech',
             avgEngagement: '2.1%',
             bestTime: '8 AM, 12 PM, 5 PM',
-            contentType: 'Threads & Quick takes',
+            contentType: 'Threads',
         }
     },
 ]
@@ -147,34 +155,34 @@ export default function PlatformInsightsPage() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto pb-12">
+        <div className="max-w-5xl mx-auto pb-12 font-sans text-black">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-                <Link href="/dashboard" className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-[#7E7F83]" />
+            <div className="flex items-center gap-4 mb-10">
+                <Link href="/dashboard" className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    <ArrowLeft className="w-5 h-5 text-black" />
                 </Link>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
-                        <BarChart3 className="w-6 h-6 text-indigo-500" />
+                    <h1 className="text-4xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                        <BarChart3 className="w-8 h-8 text-black fill-[#FFC900]" />
                         Platform Insights
                     </h1>
-                    <p className="text-[#7E7F83] text-sm">Platform-specific trends and recommendations</p>
+                    <p className="text-black font-bold border-l-4 border-black pl-3 mt-2">Where should you post next?</p>
                 </div>
                 <button
                     onClick={fetchAllTrends}
                     disabled={loading}
-                    className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                 >
-                    <RefreshCw className={cn("w-5 h-5 text-[#7E7F83]", loading && "animate-spin")} />
+                    <RefreshCw className={cn("w-5 h-5 text-black", loading && "animate-spin")} />
                 </button>
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#D9C5B2]" />
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-10 h-10 animate-spin text-black" />
                 </div>
             ) : (
-                <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+                <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
                     {/* Platform Cards */}
                     <motion.div variants={item} className="grid md:grid-cols-3 gap-6">
                         {platforms.map((platform) => (
@@ -182,38 +190,33 @@ export default function PlatformInsightsPage() {
                                 key={platform.id}
                                 onClick={() => setSelectedPlatform(selectedPlatform === platform.id ? null : platform.id)}
                                 className={cn(
-                                    "p-5 rounded-xl bg-white dark:bg-[#1A1714] border-2 cursor-pointer transition-all",
-                                    selectedPlatform === platform.id
-                                        ? "border-[#D9C5B2]"
-                                        : "border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2]/50"
+                                    "p-6 bg-white border-2 border-black cursor-pointer transition-all hover:bg-gray-50",
+                                    platform.shadowColor,
+                                    selectedPlatform === platform.id ? "translate-x-[2px] translate-y-[2px] shadow-none bg-[#F3F3F3]" : "hover:-translate-y-1"
                                 )}
                             >
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", platform.bgColor)}>
-                                        <platform.icon className={cn("w-6 h-6", platform.color)} />
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className={cn("w-14 h-14 border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000]", platform.bgColor)}>
+                                        <platform.icon className={cn("w-7 h-7", platform.color)} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">{platform.name}</h3>
-                                        <p className="text-xs text-[#7E7F83]">{platform.trends.length} trending topics</p>
+                                        <h3 className="text-xl font-black uppercase">{platform.name}</h3>
+                                        <p className="text-xs font-bold text-gray-500 uppercase">{platform.trends.length} TRENDS</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div className="p-2 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
-                                        <p className="text-xs text-[#7E7F83]">Top Category</p>
-                                        <p className="font-medium text-[#14110F] dark:text-[#F3F3F4]">{platform.insights.topCategory}</p>
+                                    <div className="p-3 border-2 border-black bg-white">
+                                        <p className="text-xs font-bold text-gray-500 uppercase">Category</p>
+                                        <p className="font-black uppercase truncate">{platform.insights.topCategory}</p>
                                     </div>
-                                    <div className="p-2 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
-                                        <p className="text-xs text-[#7E7F83]">Engagement</p>
-                                        <p className="font-medium text-emerald-600 dark:text-emerald-400">{platform.insights.avgEngagement}</p>
+                                    <div className="p-3 border-2 border-black bg-white">
+                                        <p className="text-xs font-bold text-gray-500 uppercase">Engagement</p>
+                                        <p className="font-black uppercase text-[#00AA00]">{platform.insights.avgEngagement}</p>
                                     </div>
-                                    <div className="p-2 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
-                                        <p className="text-xs text-[#7E7F83]">Best Time</p>
-                                        <p className="font-medium text-[#14110F] dark:text-[#F3F3F4] text-xs">{platform.insights.bestTime}</p>
-                                    </div>
-                                    <div className="p-2 rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]">
-                                        <p className="text-xs text-[#7E7F83]">Content</p>
-                                        <p className="font-medium text-[#14110F] dark:text-[#F3F3F4] text-xs">{platform.insights.contentType}</p>
+                                    <div className="p-3 border-2 border-black bg-white col-span-2">
+                                        <p className="text-xs font-bold text-gray-500 uppercase">Best Time</p>
+                                        <p className="font-black uppercase">{platform.insights.bestTime}</p>
                                     </div>
                                 </div>
                             </div>
@@ -225,28 +228,30 @@ export default function PlatformInsightsPage() {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-6 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D]"
+                            className="p-8 bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000]"
                         >
                             {(() => {
                                 const platform = platforms.find(p => p.id === selectedPlatform)!
                                 return (
                                     <>
-                                        <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-4 flex items-center gap-2">
-                                            <TrendingUp className={platform.color} />
-                                            Trending on {platform.name}
-                                        </h3>
-                                        <div className="space-y-2">
+                                        <div className="flex items-center gap-3 mb-6 border-b-4 border-black pb-4">
+                                            <TrendingUp className="w-8 h-8 text-black" />
+                                            <h3 className="text-2xl font-black uppercase">
+                                                Trending on {platform.name}
+                                            </h3>
+                                        </div>
+                                        <div className="space-y-3">
                                             {platform.trends.length > 0 ? (
                                                 platform.trends.map((trend, i) => (
-                                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors">
-                                                        <span className="w-6 h-6 rounded-full bg-[#F3F3F4] dark:bg-[#34312D] flex items-center justify-center text-xs font-medium text-[#7E7F83]">
+                                                    <div key={i} className="flex items-center gap-4 p-4 border-2 border-black hover:bg-[#FFF9E5] transition-colors">
+                                                        <span className="w-8 h-8 flex items-center justify-center font-black text-white bg-black border-2 border-black">
                                                             {i + 1}
                                                         </span>
-                                                        <p className="font-medium text-[#14110F] dark:text-[#F3F3F4]">{trend}</p>
+                                                        <p className="text-lg font-bold uppercase">{trend}</p>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <p className="text-[#7E7F83] text-center py-4">No specific trends detected</p>
+                                                <p className="text-gray-500 font-bold uppercase text-center py-6">No specific trends detected</p>
                                             )}
                                         </div>
                                     </>
@@ -256,13 +261,13 @@ export default function PlatformInsightsPage() {
                     )}
 
                     {/* Quick Tips */}
-                    <motion.div variants={item} className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-                        <div className="flex items-start gap-3">
-                            <Zap className="w-5 h-5 text-indigo-500 mt-0.5" />
+                    <motion.div variants={item} className="p-6 bg-[#00F0FF] border-2 border-black shadow-[8px_8px_0px_0px_#000]">
+                        <div className="flex items-start gap-4">
+                            <Zap className="w-8 h-8 text-black fill-white" />
                             <div>
-                                <p className="font-medium text-sm text-indigo-700 dark:text-indigo-400">Cross-Platform Strategy</p>
-                                <p className="text-sm text-indigo-600 dark:text-indigo-300">
-                                    Repurpose your content across platforms. A YouTube video can become Instagram Reels, Twitter threads, and LinkedIn posts to maximize reach.
+                                <p className="font-black text-xl uppercase mb-1">Strategist Tip</p>
+                                <p className="font-medium text-black">
+                                    Repurpose your content! A YouTube video can become 3 Shorts, 5 Tweets, and a LinkedIn carousel. Maximize your ROI.
                                 </p>
                             </div>
                         </div>

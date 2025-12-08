@@ -117,51 +117,51 @@ export default function MultiRegionPage() {
     const globalTrends = findGlobalTrends()
 
     return (
-        <motion.div initial="hidden" animate="show" variants={container} className="space-y-6 pb-8">
+        <motion.div initial="hidden" animate="show" variants={container} className="space-y-8 pb-12 font-sans text-black">
             {/* Header */}
             <motion.div variants={item} className="flex items-center justify-between">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <Globe className="w-6 h-6 text-blue-500" />
-                        <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                    <div className="flex items-center gap-3 mb-2">
+                        <Globe className="w-8 h-8 text-black fill-[#00F0FF]" />
+                        <h1 className="text-4xl font-black italic uppercase tracking-tighter text-black">
                             Multi-Region Trends
                         </h1>
-                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
+                        <span className="px-3 py-1 text-sm font-black bg-[#FFC900] border-2 border-black shadow-[2px_2px_0px_0px_#000]">
                             LIVE
                         </span>
                     </div>
-                    <p className="text-[#7E7F83]">
-                        Compare trending topics across different countries
+                    <p className="text-black font-bold border-l-4 border-black pl-3">
+                        Compare trending topics across different markets
                     </p>
                 </div>
                 <button
                     onClick={refreshAll}
-                    className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all uppercase font-bold flex items-center gap-2"
                 >
-                    <RefreshCw className="w-5 h-5 text-[#7E7F83]" />
+                    <RefreshCw className="w-5 h-5" /> REFRESH ALL
                 </button>
             </motion.div>
 
             {/* Global Trends */}
             {globalTrends.length > 0 && (
-                <motion.div variants={item} className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Zap className="w-5 h-5 text-purple-500" />
-                        <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">
-                            Global Trends
+                <motion.div variants={item} className="p-6 bg-[#B1F202] border-2 border-black shadow-[6px_6px_0px_0px_#000]">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Zap className="w-6 h-6 text-black fill-white" />
+                        <h2 className="text-xl font-black uppercase">
+                            Global Phenomena
                         </h2>
-                        <span className="text-xs text-[#7E7F83]">Trending in multiple regions</span>
+                        <span className="text-xs font-bold uppercase bg-black text-white px-2 py-1">Trending Everywhere</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3">
                         {globalTrends.map((trend, i) => (
                             <div
                                 key={i}
-                                className="px-3 py-2 rounded-lg bg-white dark:bg-[#1A1714] border border-purple-200 dark:border-purple-800"
+                                className="px-4 py-3 bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex flex-col"
                             >
-                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4]">
+                                <p className="font-black text-lg uppercase">
                                     {trend.title}
                                 </p>
-                                <p className="text-xs text-purple-600 dark:text-purple-400">
+                                <p className="text-xs font-bold text-gray-500 uppercase mt-1">
                                     {trend.regions.join(' • ')}
                                 </p>
                             </div>
@@ -175,67 +175,67 @@ export default function MultiRegionPage() {
                 {regions.map((region, regionIndex) => (
                     <div
                         key={region.region}
-                        className="bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D] overflow-hidden"
+                        className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col"
                     >
                         {/* Region Header */}
-                        <div className="p-4 border-b border-[#E8E8E9] dark:border-[#34312D] flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl">{region.flag}</span>
+                        <div className="p-5 border-b-2 border-black bg-[#F3F3F3] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl filter drop-shadow-md">{region.flag}</span>
                                 <div>
-                                    <h3 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                                    <h3 className="text-xl font-black uppercase text-black">
                                         {region.label}
                                     </h3>
-                                    <p className="text-xs text-[#7E7F83]">
-                                        {region.trends.length} trending
+                                    <p className="text-xs font-bold text-gray-500 uppercase">
+                                        {region.trends.length} TOPICS
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => fetchTrendsForRegion(region.region, regionIndex)}
                                 disabled={region.loading}
-                                className="p-1.5 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                className="p-2 bg-white border-2 border-black hover:bg-black hover:text-white transition-colors"
                             >
-                                <RefreshCw className={cn("w-4 h-4 text-[#7E7F83]", region.loading && "animate-spin")} />
+                                <RefreshCw className={cn("w-4 h-4", region.loading && "animate-spin")} />
                             </button>
                         </div>
 
                         {/* Trends List */}
-                        <div className="p-2">
+                        <div className="p-3 flex-1 bg-white">
                             {region.loading ? (
-                                <div className="space-y-2 p-2">
+                                <div className="space-y-3">
                                     {Array.from({ length: 5 }).map((_, i) => (
-                                        <div key={i} className="h-12 animate-pulse rounded-lg bg-[#F3F3F4] dark:bg-[#34312D]" />
+                                        <div key={i} className="h-14 animate-pulse bg-gray-100 border-2 border-transparent" />
                                     ))}
                                 </div>
                             ) : (
-                                <div className="space-y-1">
+                                <div className="space-y-2">
                                     {region.trends.map((trend, i) => (
                                         <div
                                             key={i}
-                                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors group"
+                                            className="flex items-center gap-3 p-3 border-2 border-transparent hover:border-black hover:bg-[#FF90E8]/10 hover:shadow-[2px_2px_0px_0px_#000] transition-all group"
                                         >
-                                            <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-[#7E7F83] bg-[#F3F3F4] dark:bg-[#34312D] rounded-full">
+                                            <span className="w-8 h-8 flex items-center justify-center text-sm font-black text-black bg-[#FFC900] border-2 border-black">
                                                 {i + 1}
                                             </span>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] truncate">
+                                                <p className="font-bold text-sm text-black uppercase truncate">
                                                     {trend.title}
                                                 </p>
                                                 {trend.formattedTraffic && (
-                                                    <p className="text-xs text-[#7E7F83]">
-                                                        {trend.formattedTraffic} searches
+                                                    <p className="text-xs font-bold text-gray-500">
+                                                        {trend.formattedTraffic}
                                                     </p>
                                                 )}
                                             </div>
                                             <button
                                                 onClick={() => saveTrend(trend, region.label)}
                                                 disabled={savingTrend === trend.title}
-                                                className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[#E8E8E9] dark:hover:bg-[#14110F] transition-all"
+                                                className="p-2 opacity-0 group-hover:opacity-100 bg-white border-2 border-black hover:bg-[#00F0FF] transition-all shadow-[2px_2px_0px_0px_#000]"
                                             >
                                                 {savingTrend === trend.title ? (
-                                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D9C5B2]" />
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : (
-                                                    <Bookmark className="w-3.5 h-3.5 text-[#7E7F83]" />
+                                                    <Bookmark className="w-4 h-4" />
                                                 )}
                                             </button>
                                         </div>
@@ -248,14 +248,14 @@ export default function MultiRegionPage() {
             </motion.div>
 
             {/* Tip */}
-            <motion.div variants={item} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-blue-500 mt-0.5" />
+            <motion.div variants={item} className="p-6 bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000]">
+                <div className="flex items-start gap-4">
+                    <MapPin className="w-8 h-8 text-black" strokeWidth={2} />
                     <div>
-                        <p className="font-medium text-sm text-blue-700 dark:text-blue-400">
-                            Global Trend Tip
+                        <p className="font-black text-xl uppercase mb-1 text-black">
+                            Viral Tip
                         </p>
-                        <p className="text-sm text-blue-600 dark:text-blue-300">
+                        <p className="font-medium text-black">
                             Topics trending in multiple regions have higher viral potential. Look for patterns across countries to create content that resonates globally.
                         </p>
                     </div>

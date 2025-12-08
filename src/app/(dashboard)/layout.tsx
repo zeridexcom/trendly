@@ -38,7 +38,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 <Header onMobileMenuOpen={() => setMobileNavOpen(true)} />
 
                 {/* Main Content Area */}
-                <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-[#F3F3F3]">
+                <main className="flex-1 p-4 lg:p-6 overflow-y-auto bg-[#FAF9F6]">
                     <div className="max-w-[1400px] mx-auto">
                         {/* Breadcrumbs */}
                         <Breadcrumbs />

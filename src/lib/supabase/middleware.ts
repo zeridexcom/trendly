@@ -47,6 +47,15 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
+    if (user && isProtectedPath && !request.nextUrl.pathname.startsWith('/onboarding')) {
+        const onboardingComplete = user.user_metadata?.onboarding_complete
+        if (!onboardingComplete) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/onboarding'
+            return NextResponse.redirect(url)
+        }
+    }
+
     // If logged in but not onboarded, redirect to onboarding (except if already there)
     // This will be checked after we have user preferences in DB
 

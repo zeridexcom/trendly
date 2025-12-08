@@ -5,17 +5,19 @@
 /* ===== NEO-BRUTALIST (GUMROAD STYLE) PALETTE =====
    Black:       #000000
    White:       #FFFFFF
+   Off-White:   #60 5% 96% (HSL)
    Pink:        #FF90E8
    Yellow:      #FFC900
    Cyan:        #00F0FF
    Lime:        #B1F202
+   Red:         #FF4D4D
 ===== */
 
 @layer base {
   :root {
     /* Light mode - GUMROAD STYLE */
-    --background: 0 0% 100%;
-    /* White */
+    --background: 60 5% 96%;
+    /* Off-White */
     --foreground: 0 0% 0%;
     /* Pure Black */
 
@@ -30,11 +32,11 @@
     --primary-foreground: 0 0% 0%;
 
     --secondary: 47 100% 50%;
-    /* Vibrant Yellow (#FFC900) */
+    /* Gumroad Yellow (#FFC900) */
     --secondary-foreground: 0 0% 0%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 0%;
 
     --accent: 184 100% 50%;
     /* Cyan (#00F0FF) */
@@ -48,12 +50,10 @@
     --input: 0 0% 100%;
     --ring: 0 0% 0%;
 
-    --radius: 0rem;
+    --radius: 0px;
     /* Sharp corners */
 
-    /* Custom palette colors */
-    --brutal-black: #000000;
-    --brutal-white: #FFFFFF;
+    /* Custom Neo-Brutalist Variables */
     --brutal-pink: #FF90E8;
     --brutal-yellow: #FFC900;
     --brutal-cyan: #00F0FF;
@@ -82,8 +82,9 @@
     box-shadow: 4px 4px 0px 0px #000000;
   }
 
+  /* Force light shadow even if some dark mode leaks */
   .dark .shadow-brutal {
-    box-shadow: 4px 4px 0px 0px #FFFFFF;
+    box-shadow: 4px 4px 0px 0px #000000;
   }
 
   .shadow-brutal-lg {
@@ -91,7 +92,7 @@
   }
 
   .dark .shadow-brutal-lg {
-    box-shadow: 8px 8px 0px 0px #FFFFFF;
+    box-shadow: 8px 8px 0px 0px #000000;
   }
 
   .shadow-brutal-sm {
@@ -99,7 +100,7 @@
   }
 
   .dark .shadow-brutal-sm {
-    box-shadow: 2px 2px 0px 0px #FFFFFF;
+    box-shadow: 2px 2px 0px 0px #000000;
   }
 
   /* Interaction: Press Effect */
@@ -108,17 +109,13 @@
     box-shadow: 2px 2px 0px 0px #000000;
   }
 
-  .dark .active-press:active {
-    box-shadow: 2px 2px 0px 0px #FFFFFF;
-  }
-
   /* Borders */
   .border-brutal {
     border: 2px solid #000000;
   }
 
   .dark .border-brutal {
-    border: 2px solid #FFFFFF;
+    border: 2px solid #000000;
   }
 
   /* Gradients - Loud & Flat */
@@ -132,10 +129,6 @@
     color: transparent;
   }
 
-  .dark .text-outline {
-    -webkit-text-stroke: 1px #FFFFFF;
-  }
-
   /* Scrollbar - Chunky */
   ::-webkit-scrollbar {
     width: 12px;
@@ -147,19 +140,9 @@
     border-left: 2px solid #000000;
   }
 
-  .dark ::-webkit-scrollbar-track {
-    background: #000000;
-    border-left: 2px solid #FFFFFF;
-  }
-
   ::-webkit-scrollbar-thumb {
     background: #000000;
     border: 2px solid #FFFFFF;
-  }
-
-  .dark ::-webkit-scrollbar-thumb {
-    background: #FFFFFF;
-    border: 2px solid #000000;
   }
 
   ::-webkit-scrollbar-thumb:hover {

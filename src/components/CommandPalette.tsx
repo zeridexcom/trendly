@@ -29,7 +29,7 @@ interface CommandItem {
     id: string
     label: string
     description?: string
-    icon: React.ComponentType<{ className?: string }>
+    icon: React.ComponentType<any>
     action: () => void
     category: 'navigation' | 'create' | 'actions'
 }
@@ -43,21 +43,21 @@ export default function CommandPalette() {
 
     const commands: CommandItem[] = [
         // Navigation
-        { id: 'nav-dashboard', label: 'Go to Dashboard', description: 'Overview', icon: LayoutDashboard, action: () => router.push('/dashboard'), category: 'navigation' },
-        { id: 'nav-trends', label: 'Go to Trends', description: 'Discover trending topics', icon: TrendingUp, action: () => router.push('/dashboard/trends'), category: 'navigation' },
-        { id: 'nav-ideas', label: 'Go to Ideas', description: 'AI content ideas', icon: Lightbulb, action: () => router.push('/dashboard/ideas'), category: 'navigation' },
-        { id: 'nav-scripts', label: 'Go to Scripts', description: 'AI script writer', icon: Video, action: () => router.push('/dashboard/scripts'), category: 'navigation' },
-        { id: 'nav-virality', label: 'Go to Virality Score', description: 'Score your content', icon: Zap, action: () => router.push('/dashboard/virality'), category: 'navigation' },
-        { id: 'nav-comments', label: 'Go to Comments', description: 'AI reply generator', icon: MessageCircle, action: () => router.push('/dashboard/comments'), category: 'navigation' },
-        { id: 'nav-pillars', label: 'Go to Pillars', description: 'Content strategy', icon: Layers, action: () => router.push('/dashboard/pillars'), category: 'navigation' },
-        { id: 'nav-besttime', label: 'Go to Best Time', description: 'Optimal posting times', icon: Clock, action: () => router.push('/dashboard/best-time'), category: 'navigation' },
-        { id: 'nav-competitors', label: 'Go to Competitors', description: 'Track competitors', icon: Target, action: () => router.push('/dashboard/competitors'), category: 'navigation' },
-        { id: 'nav-repurpose', label: 'Go to Repurpose', description: 'Content repurposing', icon: Sparkles, action: () => router.push('/dashboard/repurpose'), category: 'navigation' },
-        { id: 'nav-calendar', label: 'Go to Calendar', description: 'Content calendar', icon: Calendar, action: () => router.push('/dashboard/calendar'), category: 'navigation' },
-        { id: 'nav-workflows', label: 'Go to Workflows', description: 'Approval pipeline', icon: FileText, action: () => router.push('/dashboard/workflows'), category: 'navigation' },
-        { id: 'nav-scheduler', label: 'Go to Scheduler', description: 'Auto-scheduling', icon: Clock, action: () => router.push('/dashboard/scheduler'), category: 'navigation' },
-        { id: 'nav-activity', label: 'Go to Activity', description: 'Team activity', icon: Activity, action: () => router.push('/dashboard/activity'), category: 'navigation' },
-        { id: 'nav-team', label: 'Go to Team', description: 'Manage team', icon: Users, action: () => router.push('/dashboard/admin/users'), category: 'navigation' },
+        { id: 'nav-dashboard', label: 'Dashboard', description: 'Overview', icon: LayoutDashboard, action: () => router.push('/dashboard'), category: 'navigation' },
+        { id: 'nav-trends', label: 'Trends', description: 'Discover trending topics', icon: TrendingUp, action: () => router.push('/dashboard/trends'), category: 'navigation' },
+        { id: 'nav-ideas', label: 'Ideas', description: 'AI content ideas', icon: Lightbulb, action: () => router.push('/dashboard/ideas'), category: 'navigation' },
+        { id: 'nav-scripts', label: 'Scripts', description: 'AI script writer', icon: Video, action: () => router.push('/dashboard/scripts'), category: 'navigation' },
+        { id: 'nav-virality', label: 'Virality Score', description: 'Score your content', icon: Zap, action: () => router.push('/dashboard/virality'), category: 'navigation' },
+        { id: 'nav-comments', label: 'Comments', description: 'AI reply generator', icon: MessageCircle, action: () => router.push('/dashboard/comments'), category: 'navigation' },
+        { id: 'nav-pillars', label: 'Pillars', description: 'Content strategy', icon: Layers, action: () => router.push('/dashboard/pillars'), category: 'navigation' },
+        { id: 'nav-besttime', label: 'Best Time', description: 'Optimal posting times', icon: Clock, action: () => router.push('/dashboard/best-time'), category: 'navigation' },
+        { id: 'nav-competitors', label: 'Competitors', description: 'Track competitors', icon: Target, action: () => router.push('/dashboard/competitors'), category: 'navigation' },
+        { id: 'nav-repurpose', label: 'Repurpose', description: 'Content repurposing', icon: Sparkles, action: () => router.push('/dashboard/repurpose'), category: 'navigation' },
+        { id: 'nav-calendar', label: 'Calendar', description: 'Content calendar', icon: Calendar, action: () => router.push('/dashboard/calendar'), category: 'navigation' },
+        { id: 'nav-workflows', label: 'Workflows', description: 'Approval pipeline', icon: FileText, action: () => router.push('/dashboard/workflows'), category: 'navigation' },
+        { id: 'nav-scheduler', label: 'Scheduler', description: 'Auto-scheduling', icon: Clock, action: () => router.push('/dashboard/scheduler'), category: 'navigation' },
+        { id: 'nav-activity', label: 'Activity', description: 'Team activity', icon: Activity, action: () => router.push('/dashboard/activity'), category: 'navigation' },
+        { id: 'nav-team', label: 'Team', description: 'Manage team', icon: Users, action: () => router.push('/dashboard/admin/users'), category: 'navigation' },
         // Create Actions
         { id: 'create-idea', label: 'Generate Ideas', description: 'AI-powered content ideas', icon: Plus, action: () => router.push('/dashboard/ideas'), category: 'create' },
         { id: 'create-script', label: 'Write Script', description: 'Create a new script', icon: Plus, action: () => router.push('/dashboard/scripts'), category: 'create' },
@@ -128,17 +128,9 @@ export default function CommandPalette() {
 
     return (
         <>
-            {/* Trigger Button */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-input bg-background hover:bg-accent text-sm text-muted-foreground transition-colors"
-            >
-                <Search className="h-4 w-4" />
-                <span>Search...</span>
-                <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                    <Command className="h-3 w-3" />K
-                </kbd>
-            </button>
+            {/* Trigger Button - Hidden on Desktop as Header handles it, visible on mobile maybe? Actually Component is used in Layout */}
+            {/* We'll hide the trigger here since Header has one, but keys still work */}
+            <div className="hidden"></div>
 
             {/* Modal */}
             <AnimatePresence>
@@ -148,57 +140,58 @@ export default function CommandPalette() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+                            className="fixed inset-0 bg-white/50 backdrop-blur-sm"
                             onClick={() => setIsOpen(false)}
                         />
-                        <div className="fixed inset-0 flex items-start justify-center pt-[15vh]">
+                        <div className="fixed inset-0 flex items-start justify-center pt-[15vh] px-4">
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95, y: -20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                                className="relative w-full max-w-lg rounded-xl border bg-card shadow-2xl overflow-hidden"
+                                className="relative w-full max-w-lg bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000]"
                             >
                                 {/* Search Input */}
-                                <div className="flex items-center gap-3 px-4 py-3 border-b">
-                                    <Search className="h-5 w-5 text-muted-foreground" />
+                                <div className="flex items-center gap-3 px-4 py-4 border-b-2 border-black bg-[#FF90E8]">
+                                    <Search className="h-6 w-6 text-black" strokeWidth={3} />
                                     <input
                                         ref={inputRef}
                                         type="text"
                                         value={query}
                                         onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0) }}
                                         onKeyDown={handleKeyDown}
-                                        placeholder="Type a command or search..."
-                                        className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+                                        placeholder="What do you want to do?"
+                                        className="flex-1 bg-transparent outline-none text-lg font-black text-black placeholder:text-black/60 uppercase"
                                     />
-                                    <kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                                    <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 border-2 border-black bg-white text-xs font-bold text-black shadow-[2px_2px_0px_0px_#000]">
                                         ESC
                                     </kbd>
                                 </div>
 
                                 {/* Results */}
-                                <div className="max-h-[400px] overflow-y-auto p-2">
+                                <div className="max-h-[400px] overflow-y-auto p-2 bg-white">
                                     {allFiltered.length === 0 ? (
-                                        <div className="py-8 text-center text-sm text-muted-foreground">No results found.</div>
+                                        <div className="py-8 text-center text-sm font-bold text-gray-500 uppercase">No results found.</div>
                                     ) : (
                                         <>
                                             {groupedCommands.navigation.length > 0 && (
                                                 <div className="mb-2">
-                                                    <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Navigation</p>
+                                                    <p className="px-2 py-2 text-xs font-black text-black uppercase tracking-wider">Navigation</p>
                                                     {groupedCommands.navigation.map((cmd, i) => {
                                                         const globalIndex = i
                                                         return (
                                                             <button
                                                                 key={cmd.id}
                                                                 onClick={() => executeCommand(cmd)}
+                                                                onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                                 className={cn(
-                                                                    "w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left transition-colors",
-                                                                    selectedIndex === globalIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                                                    "w-full flex items-center gap-3 px-3 py-3 border-2 border-transparent transition-all",
+                                                                    selectedIndex === globalIndex ? "bg-[#FFC900] border-black shadow-[4px_4px_0px_0px_#000] -translate-y-1" : "hover:bg-gray-50"
                                                                 )}
                                                             >
-                                                                <cmd.icon className="h-4 w-4" />
-                                                                <div className="flex-1">
-                                                                    <p className="text-sm font-medium">{cmd.label}</p>
-                                                                    {cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}
+                                                                <cmd.icon className="h-5 w-5 text-black" strokeWidth={2.5} />
+                                                                <div className="flex-1 text-left">
+                                                                    <p className="text-sm font-bold text-black uppercase">{cmd.label}</p>
+                                                                    {cmd.description && <p className="text-xs font-medium text-gray-600">{cmd.description}</p>}
                                                                 </div>
                                                             </button>
                                                         )
@@ -207,22 +200,23 @@ export default function CommandPalette() {
                                             )}
                                             {groupedCommands.create.length > 0 && (
                                                 <div className="mb-2">
-                                                    <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Create</p>
+                                                    <p className="px-2 py-2 text-xs font-black text-black uppercase tracking-wider">Create</p>
                                                     {groupedCommands.create.map((cmd, i) => {
                                                         const globalIndex = groupedCommands.navigation.length + i
                                                         return (
                                                             <button
                                                                 key={cmd.id}
                                                                 onClick={() => executeCommand(cmd)}
+                                                                onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                                 className={cn(
-                                                                    "w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left transition-colors",
-                                                                    selectedIndex === globalIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                                                    "w-full flex items-center gap-3 px-3 py-3 border-2 border-transparent transition-all",
+                                                                    selectedIndex === globalIndex ? "bg-[#00F0FF] border-black shadow-[4px_4px_0px_0px_#000] -translate-y-1" : "hover:bg-gray-50"
                                                                 )}
                                                             >
-                                                                <cmd.icon className="h-4 w-4" />
-                                                                <div className="flex-1">
-                                                                    <p className="text-sm font-medium">{cmd.label}</p>
-                                                                    {cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}
+                                                                <cmd.icon className="h-5 w-5 text-black" strokeWidth={2.5} />
+                                                                <div className="flex-1 text-left">
+                                                                    <p className="text-sm font-bold text-black uppercase">{cmd.label}</p>
+                                                                    {cmd.description && <p className="text-xs font-medium text-gray-600">{cmd.description}</p>}
                                                                 </div>
                                                             </button>
                                                         )
@@ -231,22 +225,23 @@ export default function CommandPalette() {
                                             )}
                                             {groupedCommands.actions.length > 0 && (
                                                 <div>
-                                                    <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Quick Actions</p>
+                                                    <p className="px-2 py-2 text-xs font-black text-black uppercase tracking-wider">Actions</p>
                                                     {groupedCommands.actions.map((cmd, i) => {
                                                         const globalIndex = groupedCommands.navigation.length + groupedCommands.create.length + i
                                                         return (
                                                             <button
                                                                 key={cmd.id}
                                                                 onClick={() => executeCommand(cmd)}
+                                                                onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                                 className={cn(
-                                                                    "w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left transition-colors",
-                                                                    selectedIndex === globalIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                                                                    "w-full flex items-center gap-3 px-3 py-3 border-2 border-transparent transition-all",
+                                                                    selectedIndex === globalIndex ? "bg-[#B1F202] border-black shadow-[4px_4px_0px_0px_#000] -translate-y-1" : "hover:bg-gray-50"
                                                                 )}
                                                             >
-                                                                <cmd.icon className="h-4 w-4" />
-                                                                <div className="flex-1">
-                                                                    <p className="text-sm font-medium">{cmd.label}</p>
-                                                                    {cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}
+                                                                <cmd.icon className="h-5 w-5 text-black" strokeWidth={2.5} />
+                                                                <div className="flex-1 text-left">
+                                                                    <p className="text-sm font-bold text-black uppercase">{cmd.label}</p>
+                                                                    {cmd.description && <p className="text-xs font-medium text-gray-600">{cmd.description}</p>}
                                                                 </div>
                                                             </button>
                                                         )
@@ -258,7 +253,7 @@ export default function CommandPalette() {
                                 </div>
 
                                 {/* Footer */}
-                                <div className="px-4 py-2 border-t text-xs text-muted-foreground flex items-center justify-between">
+                                <div className="px-4 py-3 border-t-2 border-black bg-gray-50 text-xs font-bold text-gray-500 flex items-center justify-between uppercase tracking-wider">
                                     <span>↑↓ to navigate</span>
                                     <span>↵ to select</span>
                                     <span>esc to close</span>

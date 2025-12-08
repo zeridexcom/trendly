@@ -133,39 +133,39 @@ export default function AlertsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-[#D9C5B2]" />
+                <Loader2 className="w-8 h-8 animate-spin text-black" />
             </div>
         )
     }
 
     return (
-        <div className="max-w-3xl mx-auto pb-12">
+        <div className="max-w-4xl mx-auto pb-12 font-sans text-black">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
                 <Link
                     href="/dashboard"
-                    className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                 >
-                    <ArrowLeft className="w-5 h-5 text-[#7E7F83]" />
+                    <ArrowLeft className="w-5 h-5 text-black" />
                 </Link>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
-                        <Bell className="w-6 h-6 text-amber-500" />
+                    <h1 className="text-4xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                        <Bell className="w-8 h-8 text-black fill-[#FFC900]" />
                         Keyword Alerts
                     </h1>
-                    <p className="text-[#7E7F83] text-sm">
-                        Get notified when your keywords start trending
+                    <p className="text-black font-bold border-l-4 border-black pl-3 mt-2">
+                        Get notified when your keywords go viral
                     </p>
                 </div>
                 <button
                     onClick={checkTrends}
                     disabled={checking || alerts.length === 0}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#D9C5B2] text-[#14110F] font-medium hover:bg-[#C4B09D] transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-5 py-3 bg-[#FFC900] border-2 border-black shadow-[4px_4px_0px_0px_#000] text-black font-black uppercase hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50"
                 >
                     {checking ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Checking...</>
                     ) : (
-                        <><Search className="w-4 h-4" /> Check Trends</>
+                        <><Search className="w-4 h-4" strokeWidth={3} /> CHECK TRENDS</>
                     )}
                 </button>
             </div>
@@ -177,29 +177,29 @@ export default function AlertsPage() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800"
+                        className="mb-8 p-6 bg-[#B1F202] border-2 border-black shadow-[6px_6px_0px_0px_#000]"
                     >
-                        <div className="flex items-start gap-3">
-                            <Zap className="w-5 h-5 text-emerald-500 mt-0.5" />
+                        <div className="flex items-start gap-4">
+                            <Zap className="w-6 h-6 text-black fill-white mt-1" />
                             <div className="flex-1">
-                                <p className="font-medium text-emerald-700 dark:text-emerald-400 mb-2">
+                                <p className="font-black text-xl text-black uppercase mb-2">
                                     {matches.length} keyword{matches.length > 1 ? 's' : ''} trending now!
                                 </p>
                                 <div className="space-y-2">
                                     {matches.map((match, i) => (
-                                        <div key={i} className="text-sm">
-                                            <span className="font-medium text-emerald-600 dark:text-emerald-300">
+                                        <div key={i} className="text-sm font-bold border-b-2 border-black/20 pb-1 last:border-0">
+                                            <span className="uppercase text-black">
                                                 "{match.keyword}"
                                             </span>
-                                            <span className="text-emerald-600/70 dark:text-emerald-300/70">
+                                            <span className="text-black/70">
                                                 {' '}→ {match.matchingTrends.slice(0, 3).join(', ')}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <button onClick={() => setMatches([])} className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-800 rounded">
-                                <X className="w-4 h-4 text-emerald-600" />
+                            <button onClick={() => setMatches([])} className="p-1 hover:bg-black/10 rounded">
+                                <X className="w-6 h-6 text-black" strokeWidth={3} />
                             </button>
                         </div>
                     </motion.div>
@@ -207,28 +207,28 @@ export default function AlertsPage() {
             </AnimatePresence>
 
             {/* Add Keyword Form */}
-            <form onSubmit={addKeyword} className="mb-6">
-                <div className="flex gap-3">
+            <form onSubmit={addKeyword} className="mb-8">
+                <div className="flex gap-4">
                     <div className="flex-1 relative">
                         <input
                             type="text"
                             value={newKeyword}
                             onChange={(e) => setNewKeyword(e.target.value)}
-                            placeholder="Enter a keyword to track (e.g., 'AI', 'iPhone', 'crypto')"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-[#E8E8E9] dark:border-[#34312D] bg-white dark:bg-[#1A1714] text-[#14110F] dark:text-[#F3F3F4] placeholder:text-[#7E7F83] focus:border-[#D9C5B2] outline-none transition-colors"
+                            placeholder="Type a keyword (e.g., 'AI', 'Crypto', 'Gaming')..."
+                            className="w-full px-4 py-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] text-lg font-bold placeholder:text-gray-400 focus:outline-none focus:bg-[#FFF9E5] transition-colors"
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={adding || newKeyword.length < 2}
-                        className="px-5 py-3 rounded-xl bg-[#34312D] text-[#D9C5B2] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                        className="px-6 py-4 bg-black text-white font-black uppercase tracking-wide border-2 border-transparent hover:bg-[#FF90E8] hover:text-black hover:border-black hover:shadow-[4px_4px_0px_0px_#000] transition-all disabled:opacity-50 flex items-center gap-2"
                     >
-                        {adding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                        Add
+                        {adding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" strokeWidth={3} />}
+                        ADD
                     </button>
                 </div>
                 {error && (
-                    <p className="text-sm text-red-500 mt-2 flex items-center gap-1">
+                    <p className="text-sm text-red-600 font-bold mt-2 flex items-center gap-1">
                         <AlertCircle className="w-4 h-4" /> {error}
                     </p>
                 )}
@@ -236,42 +236,42 @@ export default function AlertsPage() {
 
             {/* Keywords List */}
             {alerts.length === 0 ? (
-                <div className="text-center py-16 px-8 bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D]">
-                    <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
-                        <Bell className="w-8 h-8 text-amber-500" />
+                <div className="text-center py-16 px-8 bg-white border-2 border-black border-dashed">
+                    <div className="w-16 h-16 bg-[#FFC900] border-2 border-black flex items-center justify-center mx-auto mb-4 shadow-[4px_4px_0px_0px_#000]">
+                        <Bell className="w-8 h-8 text-black" />
                     </div>
-                    <h2 className="text-lg font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-2">
-                        No keyword alerts yet
+                    <h2 className="text-xl font-black text-black uppercase mb-2">
+                        No alerts configured
                     </h2>
-                    <p className="text-[#7E7F83] max-w-md mx-auto">
-                        Add keywords you want to track. When they appear in trending topics, you'll be notified.
+                    <p className="text-gray-600 font-medium max-w-md mx-auto">
+                        Track specific topics. We'll notify you when they appear in the top charts.
                     </p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="grid gap-3">
                     {alerts.map((alert) => (
                         <motion.div
                             key={alert.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-4 p-4 bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D] group"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-4 p-5 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]"
                         >
-                            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                <Bell className="w-5 h-5 text-amber-500" />
+                            <div className="w-12 h-12 bg-[#F3F3F3] border-2 border-black flex items-center justify-center font-black text-xl">
+                                #
                             </div>
                             <div className="flex-1">
-                                <p className="font-medium text-[#14110F] dark:text-[#F3F3F4]">
+                                <p className="font-black text-xl text-black uppercase">
                                     {alert.keyword}
                                 </p>
-                                <div className="flex items-center gap-3 text-xs text-[#7E7F83]">
+                                <div className="flex items-center gap-4 text-xs font-bold text-gray-500 mt-1">
                                     <span className="flex items-center gap-1">
                                         <Clock className="w-3 h-3" />
-                                        Added {formatDate(alert.createdAt)}
+                                        ADDED {formatDate(alert.createdAt).toUpperCase()}
                                     </span>
                                     {alert.matchCount > 0 && (
-                                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                        <span className="flex items-center gap-1 text-black bg-[#B1F202] px-1 border border-black">
                                             <TrendingUp className="w-3 h-3" />
-                                            {alert.matchCount} matches
+                                            {alert.matchCount} MATCHES
                                         </span>
                                     )}
                                 </div>
@@ -279,12 +279,12 @@ export default function AlertsPage() {
                             <button
                                 onClick={() => deleteAlert(alert.id)}
                                 disabled={deleting === alert.id}
-                                className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                className="p-3 border-2 border-transparent hover:border-black hover:bg-red-500 hover:text-white transition-all rounded-none"
                             >
                                 {deleting === alert.id ? (
-                                    <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                    <Loader2 className="w-5 h-5 animate-spin" />
                                 ) : (
-                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                    <Trash2 className="w-5 h-5" />
                                 )}
                             </button>
                         </motion.div>
@@ -293,14 +293,14 @@ export default function AlertsPage() {
             )}
 
             {/* Tip */}
-            <div className="mt-8 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                <div className="flex items-start gap-3">
-                    <Zap className="w-5 h-5 text-amber-500 mt-0.5" />
+            <div className="mt-12 p-6 bg-white border-2 border-black shadow-[8px_8px_0px_0px_#FF90E8]">
+                <div className="flex items-start gap-4">
+                    <Zap className="w-8 h-8 text-black fill-[#FFC900]" />
                     <div>
-                        <p className="font-medium text-sm text-amber-700 dark:text-amber-400">
-                            Pro Tip
+                        <p className="font-black text-xl uppercase mb-1">
+                            Pro Strategy
                         </p>
-                        <p className="text-sm text-amber-600 dark:text-amber-300">
+                        <p className="font-medium text-black">
                             Add broad keywords like "AI", "iPhone", or your niche topics. Check trends regularly to catch trending opportunities early.
                         </p>
                     </div>

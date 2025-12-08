@@ -81,33 +81,35 @@ export default function SavedTrendsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-[#D9C5B2]" />
+                <Loader2 className="w-10 h-10 animate-spin text-black" />
             </div>
         )
     }
 
     return (
-        <div className="max-w-4xl mx-auto pb-12">
+        <div className="max-w-4xl mx-auto pb-12 font-sans text-black">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-4 mb-10">
                 <Link
                     href="/dashboard"
-                    className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                 >
-                    <ArrowLeft className="w-5 h-5 text-[#7E7F83]" />
+                    <ArrowLeft className="w-5 h-5 text-black" />
                 </Link>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4] flex items-center gap-2">
-                        <Bookmark className="w-6 h-6 text-[#D9C5B2]" />
+                    <h1 className="text-4xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                        <Bookmark className="w-8 h-8 text-black fill-[#00F0FF]" />
                         Saved Trends
                     </h1>
-                    <p className="text-[#7E7F83] text-sm">
-                        Your bookmarked trends for later reference
+                    <p className="text-black font-bold border-l-4 border-black pl-3 mt-2">
+                        Your personal idea vault
                     </p>
                 </div>
-                <span className="px-3 py-1 text-sm font-medium bg-[#D9C5B2]/20 text-[#34312D] dark:text-[#D9C5B2] rounded-full">
-                    {trends.length} saved
-                </span>
+                <div className="px-4 py-2 border-2 border-black bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000]">
+                    <span className="font-black text-lg">
+                        {trends.length} SAVED
+                    </span>
+                </div>
             </div>
 
             {/* Empty State */}
@@ -115,22 +117,22 @@ export default function SavedTrendsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-16 px-8 bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D]"
+                    className="text-center py-20 px-8 bg-white border-2 border-black border-dashed"
                 >
-                    <div className="w-16 h-16 rounded-2xl bg-[#D9C5B2]/20 flex items-center justify-center mx-auto mb-4">
-                        <Bookmark className="w-8 h-8 text-[#D9C5B2]" />
+                    <div className="w-20 h-20 bg-[#F3F3F3] border-2 border-black flex items-center justify-center mx-auto mb-6 shadow-[6px_6px_0px_0px_#000]">
+                        <Bookmark className="w-8 h-8 text-black" />
                     </div>
-                    <h2 className="text-lg font-semibold text-[#14110F] dark:text-[#F3F3F4] mb-2">
+                    <h2 className="text-2xl font-black text-black uppercase mb-3">
                         No saved trends yet
                     </h2>
-                    <p className="text-[#7E7F83] mb-6 max-w-md mx-auto">
-                        When you find interesting trends on the dashboard, click the bookmark icon to save them here for later.
+                    <p className="text-gray-600 font-medium mb-8 max-w-md mx-auto">
+                        Bookmark interesting trends from the dashboard to analyze them later.
                     </p>
                     <Link
                         href="/dashboard"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#34312D] text-[#D9C5B2] font-medium hover:opacity-90 transition-opacity"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-black text-white font-black uppercase text-lg hover:bg-[#FFC900] hover:text-black hover:shadow-[6px_6px_0px_0px_#000] border-2 border-transparent hover:border-black transition-all"
                     >
-                        <TrendingUp className="w-5 h-5" />
+                        <TrendingUp className="w-6 h-6" />
                         Explore Trends
                     </Link>
                 </motion.div>
@@ -139,58 +141,58 @@ export default function SavedTrendsPage() {
                     variants={container}
                     initial="hidden"
                     animate="show"
-                    className="space-y-3"
+                    className="space-y-4"
                 >
                     {trends.map((trend) => (
                         <motion.div
                             key={trend.title}
                             variants={item}
-                            className="flex items-center gap-4 p-4 bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group"
+                            className="flex items-center gap-5 p-6 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] transition-all group"
                         >
-                            <div className="w-10 h-10 rounded-lg bg-[#D9C5B2]/20 flex items-center justify-center">
-                                <TrendingUp className="w-5 h-5 text-[#D9C5B2]" />
+                            <div className="w-12 h-12 bg-[#FF90E8] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000]">
+                                <TrendingUp className="w-6 h-6 text-black" />
                             </div>
 
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-[#14110F] dark:text-[#F3F3F4] truncate">
+                                <h3 className="font-black text-xl text-black uppercase truncate mb-1">
                                     {trend.title}
                                 </h3>
-                                <div className="flex items-center gap-3 text-xs text-[#7E7F83]">
-                                    <span className="flex items-center gap-1">
+                                <div className="flex items-center gap-3 text-xs font-bold text-gray-500">
+                                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 border border-black">
                                         <Clock className="w-3 h-3" />
                                         {formatDate(trend.savedAt)}
                                     </span>
                                     {trend.industry && (
-                                        <span className="px-2 py-0.5 bg-[#F3F3F4] dark:bg-[#34312D] rounded">
+                                        <span className="px-2 py-0.5 bg-[#F3F3F3] border border-black text-black uppercase">
                                             {trend.industry}
                                         </span>
                                     )}
                                     {trend.formattedTraffic && (
-                                        <span>{trend.formattedTraffic} searches</span>
+                                        <span className="text-[#FFC900] bg-black px-2 py-0.5">{trend.formattedTraffic} SEARCHES</span>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-3">
                                 {trend.newsUrl && (
                                     <a
                                         href={trend.newsUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                        className="p-3 bg-white border-2 border-black hover:bg-[#00F0FF] transition-colors"
                                     >
-                                        <ExternalLink className="w-4 h-4 text-[#7E7F83]" />
+                                        <ExternalLink className="w-5 h-5 text-black" />
                                     </a>
                                 )}
                                 <button
                                     onClick={() => deleteTrend(trend.title)}
                                     disabled={deleting === trend.title}
-                                    className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    className="p-3 bg-white border-2 border-black hover:bg-red-500 hover:text-white transition-colors"
                                 >
                                     {deleting === trend.title ? (
-                                        <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                        <Loader2 className="w-5 h-5 animate-spin" />
                                     ) : (
-                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                        <Trash2 className="w-5 h-5" />
                                     )}
                                 </button>
                             </div>
@@ -201,15 +203,15 @@ export default function SavedTrendsPage() {
 
             {/* Tip */}
             {trends.length > 0 && (
-                <div className="mt-8 p-4 bg-[#D9C5B2]/10 rounded-xl border border-[#D9C5B2]/20">
-                    <div className="flex items-start gap-3">
-                        <Sparkles className="w-5 h-5 text-[#D9C5B2] mt-0.5" />
+                <div className="mt-12 p-6 bg-white border-2 border-black shadow-[8px_8px_0px_0px_#B1F202]">
+                    <div className="flex items-start gap-4">
+                        <Sparkles className="w-8 h-8 text-black fill-[#FF90E8]" />
                         <div>
-                            <p className="text-sm font-medium text-[#14110F] dark:text-[#F3F3F4]">
-                                Pro Tip
+                            <p className="font-black text-xl uppercase mb-1">
+                                Creator Tip
                             </p>
-                            <p className="text-sm text-[#7E7F83]">
-                                Save trends that match your content style. This helps build your idea library for future content creation.
+                            <p className="font-medium text-black">
+                                Batch your content creation! Use these saved trends to write 5 scripts at once on Sunday, then film all week.
                             </p>
                         </div>
                     </div>

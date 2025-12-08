@@ -127,85 +127,84 @@ export default function SettingsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-[#D9C5B2]" />
+                <Loader2 className="w-10 h-10 animate-spin text-black" />
             </div>
         )
     }
 
     return (
-        <div className="max-w-3xl mx-auto pb-12">
+        <div className="max-w-4xl mx-auto pb-12 font-sans text-black">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-4 mb-10">
                 <button
                     onClick={() => router.back()}
-                    className="p-2 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                    className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                 >
-                    <ArrowLeft className="w-5 h-5 text-[#7E7F83]" />
+                    <ArrowLeft className="w-5 h-5 text-black" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-semibold text-[#14110F] dark:text-[#F3F3F4]">Settings</h1>
-                    <p className="text-[#7E7F83] text-sm">Manage your profile and preferences</p>
+                    <h1 className="text-4xl font-black italic uppercase tracking-tighter">Settings</h1>
+                    <p className="text-black font-bold border-l-4 border-black pl-3 mt-2">Manage your profile & content preferences</p>
                 </div>
             </div>
 
             {/* Profile Section */}
-            <div className="bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D] p-6 mb-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg bg-[#D9C5B2]/20">
-                        <User className="w-5 h-5 text-[#D9C5B2]" />
+            <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000] p-8 mb-8">
+                <div className="flex items-center gap-3 mb-6 border-b-4 border-black pb-4">
+                    <div className="p-2 bg-[#FF90E8] border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+                        <User className="w-6 h-6 text-black" />
                     </div>
-                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Profile</h2>
+                    <h2 className="text-2xl font-black uppercase">Your Profile</h2>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] mb-2">Name</label>
+                        <label className="block text-sm font-black uppercase mb-2">Display Name</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border-2 border-[#E8E8E9] dark:border-[#34312D] bg-white dark:bg-[#0F0D0C] text-[#14110F] dark:text-[#F3F3F4] focus:border-[#D9C5B2] outline-none transition-colors"
+                            className="w-full px-4 py-3 border-2 border-black shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-[2px] focus:translate-y-[2px] outline-none transition-all font-bold"
                             placeholder="Your name"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] mb-2">Email</label>
+                        <label className="block text-sm font-black uppercase mb-2">Email Address</label>
                         <input
                             type="email"
                             value={email}
                             disabled
-                            className="w-full px-4 py-3 rounded-xl border-2 border-[#E8E8E9] dark:border-[#34312D] bg-[#F3F3F4] dark:bg-[#1A1714] text-[#7E7F83] cursor-not-allowed"
+                            className="w-full px-4 py-3 border-2 border-black bg-gray-100 font-medium text-gray-500 cursor-not-allowed"
                         />
-                        <p className="text-xs text-[#7E7F83] mt-1">Email cannot be changed</p>
                     </div>
                 </div>
             </div>
 
             {/* Preferences Section */}
-            <div className="bg-white dark:bg-[#1A1714] rounded-xl border border-[#E8E8E9] dark:border-[#34312D] p-6 mb-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg bg-[#D9C5B2]/20">
-                        <Settings className="w-5 h-5 text-[#D9C5B2]" />
+            <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000] p-8 mb-8">
+                <div className="flex items-center gap-3 mb-6 border-b-4 border-black pb-4">
+                    <div className="p-2 bg-[#FFC900] border-2 border-black shadow-[2px_2px_0px_0px_#000]">
+                        <Settings className="w-6 h-6 text-black" />
                     </div>
-                    <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">Trend Preferences</h2>
+                    <h2 className="text-2xl font-black uppercase">Content Preferences</h2>
                 </div>
 
                 {/* Industry */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] mb-3">Industry</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="mb-8">
+                    <label className="block text-sm font-black uppercase mb-3">Your Niche / Industry</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {INDUSTRIES.map((item) => (
                             <button
                                 key={item.id}
                                 type="button"
                                 onClick={() => setIndustry(item.id)}
-                                className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${industry === item.id
-                                        ? 'border-[#D9C5B2] bg-[#D9C5B2]/10'
-                                        : 'border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2]/50'
+                                className={`flex items-center gap-3 p-3 border-2 border-black transition-all ${industry === item.id
+                                    ? 'bg-black text-white shadow-[4px_4px_0px_0px_#FF90E8] -translate-y-1'
+                                    : 'bg-white text-black hover:bg-gray-50'
                                     }`}
                             >
-                                <item.icon className={`w-4 h-4 ${industry === item.id ? 'text-[#D9C5B2]' : 'text-[#7E7F83]'}`} />
-                                <span className={`text-sm ${industry === item.id ? 'text-[#14110F] dark:text-[#F3F3F4] font-medium' : 'text-[#7E7F83]'}`}>
+                                <item.icon className={`w-5 h-5 ${industry === item.id ? 'text-[#FF90E8]' : 'text-black'}`} />
+                                <span className="text-sm font-bold uppercase text-left leading-tight">
                                     {item.label}
                                 </span>
                             </button>
@@ -214,10 +213,10 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Location */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] mb-3">
+                <div className="mb-8">
+                    <label className="block text-sm font-black uppercase mb-3">
                         <MapPin className="w-4 h-4 inline mr-1" />
-                        Audience Location
+                        Target Audience
                     </label>
                     <div className="flex flex-wrap gap-2">
                         {LOCATIONS.map((item) => (
@@ -225,9 +224,9 @@ export default function SettingsPage() {
                                 key={item.id}
                                 type="button"
                                 onClick={() => setLocation(item.id)}
-                                className={`px-4 py-2 rounded-full border-2 transition-all ${location === item.id
-                                        ? 'border-[#D9C5B2] bg-[#D9C5B2]/10 text-[#14110F] dark:text-[#F3F3F4] font-medium'
-                                        : 'border-[#E8E8E9] dark:border-[#34312D] text-[#7E7F83] hover:border-[#D9C5B2]/50'
+                                className={`px-4 py-2 border-2 border-black font-bold uppercase text-sm transition-all ${location === item.id
+                                    ? 'bg-[#B1F202] shadow-[2px_2px_0px_0px_#000]'
+                                    : 'bg-white hover:bg-gray-50'
                                     }`}
                             >
                                 {item.label}
@@ -237,24 +236,24 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Platforms */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] mb-3">Platforms</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="mb-8">
+                    <label className="block text-sm font-black uppercase mb-3">Active Platforms</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {PLATFORMS.map((item) => (
                             <button
                                 key={item.id}
                                 type="button"
                                 onClick={() => togglePlatform(item.id)}
-                                className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${platforms.includes(item.id)
-                                        ? 'border-[#D9C5B2] bg-[#D9C5B2]/10'
-                                        : 'border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2]/50'
+                                className={`flex items-center gap-3 p-3 border-2 border-black transition-all ${platforms.includes(item.id)
+                                    ? 'bg-[#00F0FF] shadow-[4px_4px_0px_0px_#000] -translate-y-1'
+                                    : 'bg-white hover:bg-gray-50'
                                     }`}
                             >
-                                <item.icon className={`w-4 h-4 ${platforms.includes(item.id) ? 'text-[#D9C5B2]' : 'text-[#7E7F83]'}`} />
-                                <span className={`text-sm ${platforms.includes(item.id) ? 'text-[#14110F] dark:text-[#F3F3F4] font-medium' : 'text-[#7E7F83]'}`}>
+                                <item.icon className="w-5 h-5 text-black" />
+                                <span className="text-sm font-bold uppercase">
                                     {item.label}
                                 </span>
-                                {platforms.includes(item.id) && <Check className="w-4 h-4 text-[#D9C5B2] ml-auto" />}
+                                {platforms.includes(item.id) && <Check className="w-5 h-5 text-black ml-auto border-2 border-black rounded-full p-0.5 bg-white" />}
                             </button>
                         ))}
                     </div>
@@ -262,20 +261,20 @@ export default function SettingsPage() {
 
                 {/* Frequency */}
                 <div>
-                    <label className="block text-sm font-medium text-[#14110F] dark:text-[#F3F3F4] mb-3">Posting Frequency</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <label className="block text-sm font-black uppercase mb-3">Posting Frequency</label>
+                    <div className="grid grid-cols-2 gap-3">
                         {FREQUENCIES.map((item) => (
                             <button
                                 key={item.id}
                                 type="button"
                                 onClick={() => setFrequency(item.id)}
-                                className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${frequency === item.id
-                                        ? 'border-[#D9C5B2] bg-[#D9C5B2]/10'
-                                        : 'border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2]/50'
+                                className={`flex items-center gap-3 p-4 border-2 border-black transition-all ${frequency === item.id
+                                    ? 'bg-[#FF90E8] shadow-[4px_4px_0px_0px_#000]'
+                                    : 'bg-white hover:bg-gray-50'
                                     }`}
                             >
-                                <item.icon className={`w-4 h-4 ${frequency === item.id ? 'text-[#D9C5B2]' : 'text-[#7E7F83]'}`} />
-                                <span className={`text-sm ${frequency === item.id ? 'text-[#14110F] dark:text-[#F3F3F4] font-medium' : 'text-[#7E7F83]'}`}>
+                                <item.icon className="w-5 h-5 text-black" />
+                                <span className="text-sm font-bold uppercase">
                                     {item.label}
                                 </span>
                             </button>
@@ -285,23 +284,23 @@ export default function SettingsPage() {
             </div>
 
             {/* Save Button */}
-            <div className="flex items-center gap-4">
+            <div className="flex gap-4">
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#34312D] to-[#14110F] text-[#D9C5B2] font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-black text-white text-lg font-black uppercase tracking-wide border-2 border-transparent hover:bg-[#FFC900] hover:text-black hover:border-black hover:shadow-[6px_6px_0px_0px_#000] transition-all disabled:opacity-50"
                 >
                     {saving ? (
-                        <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</>
+                        <><Loader2 className="w-6 h-6 animate-spin" /> SAVING...</>
                     ) : saved ? (
-                        <><Check className="w-5 h-5" /> Saved!</>
+                        <><Check className="w-6 h-6" /> SAVED!</>
                     ) : (
-                        <><Save className="w-5 h-5" /> Save Changes</>
+                        <><Save className="w-6 h-6" /> SAVE CHANGES</>
                     )}
                 </button>
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                    className="px-6 py-4 border-2 border-black bg-white text-red-600 font-black uppercase hover:bg-red-50 transition-colors flex items-center gap-2 shadow-[4px_4px_0px_0px_#000]"
                 >
                     <LogOut className="w-5 h-5" /> Logout
                 </button>
