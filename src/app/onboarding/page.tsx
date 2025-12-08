@@ -82,16 +82,51 @@ const AVATAR_DIALOGUE = [
     },
 ]
 
-// Trendy Avatar Component with mouse-following eyes
-function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expression?: 'happy' | 'excited' | 'thinking' | 'celebrating', isAnimating?: boolean }) {
+// Trendy Avatar Component with mouse-following eyes, high-five, and idle animations
+function TrendyAvatar({ expression = 'happy', isAnimating = false, onHighFive }: {
+    expression?: 'happy' | 'excited' | 'thinking' | 'celebrating',
+    isAnimating?: boolean,
+    onHighFive?: () => void
+}) {
     const avatarRef = React.useRef<HTMLDivElement>(null)
     const [eyeOffset, setEyeOffset] = React.useState({ x: 0, y: 0 })
     const [isPanicking, setIsPanicking] = React.useState(false)
+    const [isHighFiving, setIsHighFiving] = React.useState(false)
+    const [isBlinking, setIsBlinking] = React.useState(false)
+    const [isIdle, setIsIdle] = React.useState(false)
+    const idleTimerRef = React.useRef<NodeJS.Timeout | null>(null)
+    const blinkIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
+
+    // Reset idle timer on any mouse movement
+    const resetIdleTimer = React.useCallback(() => {
+        setIsIdle(false)
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+        if (blinkIntervalRef.current) clearInterval(blinkIntervalRef.current)
+
+        // Start idle timer (5 seconds)
+        idleTimerRef.current = setTimeout(() => {
+            setIsIdle(true)
+            // Start periodic blinking when idle
+            blinkIntervalRef.current = setInterval(() => {
+                setIsBlinking(true)
+                setTimeout(() => setIsBlinking(false), 150)
+            }, 2000)
+        }, 5000)
+    }, [])
+
+    // Handle high-five click
+    const handleClick = () => {
+        if (isHighFiving) return
+        setIsHighFiving(true)
+        onHighFive?.()
+        setTimeout(() => setIsHighFiving(false), 800)
+    }
 
     React.useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!avatarRef.current) return
             setIsPanicking(false)
+            resetIdleTimer()
 
             const rect = avatarRef.current.getBoundingClientRect()
             const avatarCenterX = rect.left + rect.width / 2
@@ -119,48 +154,74 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
 
         const handleMouseEnter = () => {
             setIsPanicking(false)
+            resetIdleTimer()
         }
 
         window.addEventListener('mousemove', handleMouseMove)
         document.addEventListener('mouseleave', handleMouseLeave)
         document.addEventListener('mouseenter', handleMouseEnter)
+        resetIdleTimer()
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove)
             document.removeEventListener('mouseleave', handleMouseLeave)
             document.removeEventListener('mouseenter', handleMouseEnter)
+            if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+            if (blinkIntervalRef.current) clearInterval(blinkIntervalRef.current)
         }
-    }, [])
+    }, [resetIdleTimer])
 
-    const currentExpression = isPanicking ? 'panic' : expression
+    const currentExpression = isPanicking ? 'panic' : isHighFiving ? 'highfive' : expression
 
     const mouthExpressions: Record<string, string> = {
         happy: 'M 8 18 Q 16 24 24 18',
         excited: 'M 8 16 Q 16 26 24 16',
         thinking: 'M 10 18 L 22 20',
         celebrating: 'M 10 16 Q 16 22 22 16',
-        panic: 'M 10 20 Q 16 16 22 20', // Worried frown
+        panic: 'M 10 20 Q 16 16 22 20',
+        highfive: 'M 8 16 Q 16 28 24 16', // Big smile for high-five
     }
 
     return (
         <motion.div
             ref={avatarRef}
-            animate={isAnimating ? { y: [0, -10, 0], rotate: [0, 5, -5, 0] } : {}}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="relative"
+            animate={isHighFiving ? { y: [0, -15, 0], rotate: [0, -10, 10, 0] } : isAnimating ? { y: [0, -10, 0], rotate: [0, 5, -5, 0] } : {}}
+            transition={{ duration: isHighFiving ? 0.4 : 0.5, ease: 'easeInOut' }}
+            className="relative cursor-pointer select-none"
+            onClick={handleClick}
         >
+            {/* High-five hand */}
+            <AnimatePresence>
+                {isHighFiving && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -30, y: 20, rotate: -20 }}
+                        animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
+                        exit={{ opacity: 0, x: 30, scale: 0.5 }}
+                        className="absolute -right-8 top-4 text-4xl z-20"
+                    >
+                        ✋
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Body */}
-            <div className="w-32 h-32 bg-[#FF90E8] border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex items-center justify-center relative overflow-hidden">
-                {/* Sparkle accessory */}
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#FFC900] border-2 border-black flex items-center justify-center rounded-full z-10">
+            <div className="w-32 h-32 bg-[#FF90E8] border-4 border-black shadow-[6px_6px_0px_0px_#000] rounded-3xl flex items-center justify-center relative overflow-hidden hover:shadow-[8px_8px_0px_0px_#000] transition-shadow">
+                {/* Sparkle accessory - bounces when idle */}
+                <motion.div
+                    animate={isIdle ? { rotate: [0, 10, -10, 0], y: [0, -2, 0] } : {}}
+                    transition={{ duration: 1, repeat: Infinity, repeatDelay: 1 }}
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-[#FFC900] border-2 border-black flex items-center justify-center rounded-full z-10"
+                >
                     <Sparkles className="w-4 h-4" />
-                </div>
+                </motion.div>
 
                 {/* Face with SVG */}
                 <svg width="64" height="52" viewBox="0 0 32 26" className="mt-2">
                     {/* Left Eye */}
                     <g transform={`translate(${eyeOffset.x}, ${eyeOffset.y})`}>
-                        {currentExpression === 'panic' ? (
+                        {isBlinking ? (
+                            <line x1="4" y1="9" x2="14" y2="9" stroke="black" strokeWidth="2" strokeLinecap="round" />
+                        ) : currentExpression === 'panic' ? (
                             <>
                                 {/* Worried eyebrow */}
                                 <line x1="4" y1="4" x2="12" y2="6" stroke="black" strokeWidth="2" strokeLinecap="round" />
@@ -169,7 +230,7 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
                             </>
                         ) : currentExpression === 'celebrating' ? (
                             <text x="6" y="12" fontSize="10" fontWeight="bold" fill="black">✦</text>
-                        ) : currentExpression === 'excited' ? (
+                        ) : currentExpression === 'excited' || currentExpression === 'highfive' ? (
                             <text x="6" y="12" fontSize="10" fontWeight="bold" fill="black">★</text>
                         ) : (
                             <>
@@ -181,7 +242,9 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
 
                     {/* Right Eye */}
                     <g transform={`translate(${eyeOffset.x}, ${eyeOffset.y})`}>
-                        {currentExpression === 'panic' ? (
+                        {isBlinking ? (
+                            <line x1="18" y1="9" x2="28" y2="9" stroke="black" strokeWidth="2" strokeLinecap="round" />
+                        ) : currentExpression === 'panic' ? (
                             <>
                                 {/* Worried eyebrow */}
                                 <line x1="20" y1="6" x2="28" y2="4" stroke="black" strokeWidth="2" strokeLinecap="round" />
@@ -190,7 +253,7 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
                             </>
                         ) : currentExpression === 'celebrating' ? (
                             <text x="20" y="12" fontSize="10" fontWeight="bold" fill="black">✦</text>
-                        ) : currentExpression === 'excited' ? (
+                        ) : currentExpression === 'excited' || currentExpression === 'highfive' ? (
                             <text x="20" y="12" fontSize="10" fontWeight="bold" fill="black">★</text>
                         ) : (
                             <>
@@ -211,17 +274,62 @@ function TrendyAvatar({ expression = 'happy', isAnimating = false }: { expressio
                 </svg>
             </div>
 
-            {/* Name tag */}
+            {/* Name tag with hint */}
             <div className="mt-3 bg-black text-white px-4 py-1 font-black text-sm uppercase tracking-wide text-center border-2 border-black">
-                TRENDY
+                {isHighFiving ? '🙌 HIGH FIVE!' : 'TRENDY'}
             </div>
+
+            {/* Click me hint when idle */}
+            {isIdle && !isHighFiving && (
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-center mt-2 text-gray-500 font-bold"
+                >
+                    Click me! 👆
+                </motion.p>
+            )}
         </motion.div>
     )
 }
 
 
-// Speech Bubble Component
-function SpeechBubble({ greeting, message, tip }: { greeting: string, message: string, tip?: string }) {
+
+
+// Speech Bubble Component with Typewriter Effect
+function SpeechBubble({ greeting, message, tip, onTyping }: {
+    greeting: string,
+    message: string,
+    tip?: string,
+    onTyping?: (isTyping: boolean) => void
+}) {
+    const [displayedMessage, setDisplayedMessage] = React.useState('')
+    const [isTyping, setIsTyping] = React.useState(true)
+
+    React.useEffect(() => {
+        // Reset and start typing when message changes
+        setDisplayedMessage('')
+        setIsTyping(true)
+        onTyping?.(true)
+
+        let index = 0
+        const interval = setInterval(() => {
+            if (index < message.length) {
+                setDisplayedMessage(message.slice(0, index + 1))
+                index++
+            } else {
+                setIsTyping(false)
+                onTyping?.(false)
+                clearInterval(interval)
+            }
+        }, 25) // Type speed
+
+        return () => {
+            clearInterval(interval)
+            onTyping?.(false)
+        }
+    }, [message, onTyping])
+
     return (
         <motion.div
             initial={{ opacity: 0, x: -20, scale: 0.9 }}
@@ -235,11 +343,18 @@ function SpeechBubble({ greeting, message, tip }: { greeting: string, message: s
             <div className="absolute -left-2 top-6 w-0 h-0 border-t-[10px] border-t-transparent border-r-[12px] border-r-white border-b-[10px] border-b-transparent" />
 
             <p className="text-xl font-black mb-2">{greeting}</p>
-            <p className="text-sm font-medium text-gray-700 leading-relaxed">{message}</p>
-            {tip && (
-                <p className="mt-3 text-xs font-bold text-[#FF90E8] uppercase border-t border-gray-200 pt-2">
+            <p className="text-sm font-medium text-gray-700 leading-relaxed">
+                {displayedMessage}
+                {isTyping && <span className="inline-block w-0.5 h-4 bg-black ml-0.5 animate-pulse" />}
+            </p>
+            {!isTyping && tip && (
+                <motion.p
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-3 text-xs font-bold text-[#FF90E8] uppercase border-t border-gray-200 pt-2"
+                >
                     💡 {tip}
-                </p>
+                </motion.p>
             )}
         </motion.div>
     )
@@ -346,6 +461,9 @@ export default function OnboardingPage() {
     // Confetti state
     const [showConfetti, setShowConfetti] = useState(false)
 
+    // Talking state for typewriter effect
+    const [isTalking, setIsTalking] = useState(false)
+
     // Show achievement badge
     const triggerAchievement = (id: string, title: string, description: string) => {
         if (earnedBadges.includes(id)) return // Don't show same badge twice
@@ -437,13 +555,18 @@ export default function OnboardingPage() {
 
                     {/* Avatar Section - Left Side */}
                     <div className="hidden lg:flex flex-col items-center gap-6 sticky top-8">
-                        <TrendyAvatar expression={avatarExpression} isAnimating={isAvatarAnimating} />
+                        <TrendyAvatar
+                            expression={isTalking ? 'excited' : avatarExpression}
+                            isAnimating={isAvatarAnimating}
+                            onHighFive={() => triggerAchievement('high_five', '🙌 High Five!', 'You made a friend!')}
+                        />
                         <AnimatePresence mode="wait">
                             <SpeechBubble
                                 key={step}
                                 greeting={AVATAR_DIALOGUE[step - 1].greeting}
                                 message={AVATAR_DIALOGUE[step - 1].message}
                                 tip={AVATAR_DIALOGUE[step - 1].tip}
+                                onTyping={setIsTalking}
                             />
                         </AnimatePresence>
                     </div>
