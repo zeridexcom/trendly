@@ -139,35 +139,54 @@ export default function SocialTrendsPage() {
             ) : (
                 <motion.div variants={container} initial="hidden" animate="show" className="space-y-12">
 
-                    {/* For You Section - Personalized */}
+                    {/* For You Section - AI Filtered 95%+ Relevant */}
                     {forYouTrends.length > 0 && personalization && personalization.industry !== 'ALL' && (
                         <motion.div variants={item}>
-                            <div className="flex items-center gap-4 mb-6 p-4 border-b-4 border-black bg-gradient-to-r from-[#FF90E8] to-[#FFC900]">
+                            <div className="flex items-center gap-4 mb-6 p-4 border-b-4 border-black bg-gradient-to-r from-[#B1F202] to-[#00F0FF]">
                                 <div className="w-12 h-12 border-2 border-black bg-white flex items-center justify-center shadow-[4px_4px_0px_0px_#000]">
                                     <Sparkles className="w-6 h-6 text-black" />
                                 </div>
                                 <div className="flex-1">
-                                    <h2 className="text-2xl font-black uppercase italic">
-                                        🎯 For You
+                                    <h2 className="text-2xl font-black uppercase italic flex items-center gap-2">
+                                        🤖 AI-Curated For You
                                     </h2>
                                     <p className="text-sm font-bold text-black">
-                                        Trending in {personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()} • Based on your preferences
+                                        95%+ Relevant to {personalization.industry.charAt(0) + personalization.industry.slice(1).toLowerCase()} • Verified by AI
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {forYouTrends.map((trend, i) => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {forYouTrends.map((trend: any, i) => (
                                     <motion.div
                                         key={trend.title}
                                         variants={item}
-                                        className="relative p-5 bg-white border-3 border-black shadow-[6px_6px_0px_0px_#FF90E8] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#FFC900] transition-all group"
+                                        className="relative p-5 bg-white border-3 border-black shadow-[6px_6px_0px_0px_#B1F202] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#00F0FF] transition-all group"
                                     >
-                                        <span className="absolute -top-2 -right-2 px-2 py-1 bg-[#B1F202] border-2 border-black text-xs font-black uppercase rotate-3">
-                                            Perfect Match
+                                        {/* Relevance Score Badge */}
+                                        <span className="absolute -top-3 -right-3 px-3 py-1 bg-[#B1F202] border-2 border-black text-sm font-black uppercase rotate-3 shadow-md">
+                                            {trend.relevanceScore}% Match
                                         </span>
-                                        <h3 className="font-black text-lg text-black mb-2">{trend.title}</h3>
-                                        <div className="flex items-center justify-between">
+
+                                        {/* Trend Title */}
+                                        <h3 className="font-black text-xl text-black mb-2 pr-12">{trend.title}</h3>
+
+                                        {/* AI Reason */}
+                                        {trend.reason && (
+                                            <p className="text-sm text-gray-600 mb-3 border-l-4 border-[#B1F202] pl-3">
+                                                {trend.reason}
+                                            </p>
+                                        )}
+
+                                        {/* Content Idea */}
+                                        {trend.contentIdea && (
+                                            <div className="bg-[#FFC900]/20 border-2 border-[#FFC900] p-3 mb-3">
+                                                <p className="text-xs font-bold uppercase text-gray-700 mb-1">💡 Content Idea:</p>
+                                                <p className="text-sm font-medium text-black">{trend.contentIdea}</p>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                                             <span className="text-sm font-bold text-gray-600">
                                                 {trend.formattedTraffic || 'Trending'}
                                             </span>
@@ -181,6 +200,14 @@ export default function SocialTrendsPage() {
                                     </motion.div>
                                 ))}
                             </div>
+
+                            {/* No matches message */}
+                            {forYouTrends.length === 0 && (
+                                <div className="text-center py-8 text-gray-500">
+                                    <p className="font-bold">No 95%+ matches found right now</p>
+                                    <p className="text-sm">Check back later for trends highly relevant to your niche</p>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 

@@ -784,3 +784,119 @@ Respond with JSON in this exact format:
     }
 }
 
+// ============================================
+// SMART TREND RELEVANCE FILTERING
+// ============================================
+
+interface TrendRelevanceResult {
+    title: string
+    relevanceScore: number
+    isRelevant: boolean
+    reason: string
+    contentIdea?: string
+}
+
+// Cache for trend relevance to save API tokens
+const trendRelevanceCache: Map<string, TrendRelevanceResult> = new Map()
+
+export async function filterTrendsByRelevance(
+    trends: Array<{ title: string; traffic?: string }>,
+    userIndustry: string,
+    minRelevance: number = 95
+): Promise<TrendRelevanceResult[]> {
+    const openai = getOpenAI()
+
+    if (!openai) {
+        console.log('AI not available for trend filtering')
+        return []
+    }
+
+    // Check cache first
+    const uncachedTrends = trends.filter(t => !trendRelevanceCache.has(`${t.title}:${userIndustry}`))
+    const cachedResults = trends
+        .filter(t => trendRelevanceCache.has(`${t.title}:${userIndustry}`))
+        .map(t => trendRelevanceCache.get(`${t.title}:${userIndustry}`)!)
+
+    if (uncachedTrends.length === 0) {
+        return cachedResults.filter(r => r.relevanceScore >= minRelevance)
+    }
+
+    // Batch process trends (max 10 at a time to save tokens)
+    const batchTrends = uncachedTrends.slice(0, 10)
+    const trendList = batchTrends.map(t => t.title).join('\n- ')
+
+    const industryDescriptions: Record<string, string> = {
+        'TECH': 'Technology, startups, AI, software, gadgets, programming, apps, Silicon Valley, crypto, blockchain',
+        'ENTERTAINMENT': 'Movies, TV shows, celebrities, Bollywood, Hollywood, music, awards, streaming',
+        'BUSINESS': 'Finance, stocks, markets, startups, entrepreneurship, economy, investments',
+        'GAMING': 'Video games, esports, gaming consoles, Twitch, game releases, PUBG, Fortnite, Valorant',
+        'HEALTH': 'Fitness, wellness, nutrition, gym, yoga, mental health, medical, diet',
+        'FASHION': 'Style, clothing, beauty, makeup, models, designers, trends, aesthetic',
+        'EDUCATION': 'Schools, exams, universities, learning, courses, students, degrees',
+        'FOOD': 'Cooking, recipes, restaurants, chefs, cuisine, food trends, viral foods',
+        'TRAVEL': 'Tourism, destinations, flights, hotels, adventure, vacation, backpacking',
+        'NEWS': 'Current events, politics, breaking news, government, international affairs',
+    }
+
+    const industryContext = industryDescriptions[userIndustry] || userIndustry
+
+    const prompt = `You are a content relevance analyzer. Determine how relevant each trending topic is for a content creator in the "${userIndustry}" industry.
+
+Industry context: ${industryContext}
+
+Trending topics to analyze:
+- ${trendList}
+
+For EACH topic, determine:
+1. relevanceScore (0-100): How relevant is this for ${userIndustry} content creators?
+2. isRelevant: Is the score >= ${minRelevance}?
+3. reason: Brief explanation (why relevant or not)
+4. contentIdea: If relevant, suggest ONE specific content idea
+
+IMPORTANT: Be STRICT. Only score 95+ if the topic is DIRECTLY about ${userIndustry}.
+- Sports game scores are NOT relevant to Tech (score 0-5)
+- Celebrity gossip is NOT relevant to Tech (score 0-10)
+- AI/ChatGPT updates ARE relevant to Tech (score 95-100)
+- New iPhone release IS relevant to Tech (score 95-100)
+
+Respond with JSON:
+{"results": [{"title": "exact title", "relevanceScore": 0-100, "isRelevant": true/false, "reason": "why", "contentIdea": "idea if relevant"}]}`
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'openai/gpt-4o-mini',
+            messages: [
+                { role: 'system', content: 'You are a strict content relevance analyzer. Be very accurate about industry relevance. Always respond with valid JSON.' },
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.3, // Low temperature for consistent scoring
+        })
+
+        const content = response.choices[0]?.message?.content
+        if (!content) throw new Error('No response')
+
+        const jsonMatch = content.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0])
+            const results: TrendRelevanceResult[] = parsed.results || []
+
+            // Cache the results
+            results.forEach(r => {
+                trendRelevanceCache.set(`${r.title}:${userIndustry}`, r)
+            })
+
+            // Combine with cached results and filter by min relevance
+            const allResults = [...cachedResults, ...results]
+            return allResults.filter(r => r.relevanceScore >= minRelevance)
+        }
+        return cachedResults.filter(r => r.relevanceScore >= minRelevance)
+    } catch (error) {
+        console.error('AI Trend Filter Error:', error)
+        return cachedResults.filter(r => r.relevanceScore >= minRelevance)
+    }
+}
+
+// Clear trend relevance cache (call periodically)
+export function clearTrendRelevanceCache() {
+    trendRelevanceCache.clear()
+}

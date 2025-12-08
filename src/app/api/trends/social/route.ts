@@ -223,10 +223,29 @@ export async function GET(request: NextRequest) {
             .filter(t => t.platform === 'tiktok' || t.platform === 'both')
             .slice(0, 10)
 
-        // Get industry-specific trends for user
-        const industryTrends = userIndustry
-            ? socialTrends.filter(t => t.matchesIndustry).slice(0, 8)
-            : []
+        // Use AI to filter trends by relevance (95%+ match only)
+        let aiFilteredTrends: Array<{
+            title: string
+            relevanceScore: number
+            reason: string
+            contentIdea?: string
+            formattedTraffic?: string
+            platform?: string
+        }> = []
+
+        if (userIndustry && userIndustry !== 'ALL' && userIndustry !== 'OTHER') {
+            try {
+                const { filterTrendsByRelevance } = await import('@/lib/ai')
+                const aiResults = await filterTrendsByRelevance(googleTrends, userIndustry, 95)
+                aiFilteredTrends = aiResults.map(r => ({
+                    ...r,
+                    formattedTraffic: googleTrends.find(t => t.title === r.title)?.traffic || 'Trending',
+                    platform: 'both' as const,
+                }))
+            } catch (error) {
+                console.error('AI filtering failed:', error)
+            }
+        }
 
         return NextResponse.json({
             success: true,
@@ -234,18 +253,20 @@ export async function GET(request: NextRequest) {
                 instagram: instagramTrends,
                 tiktok: tiktokTrends,
                 all: socialTrends,
-                forYou: industryTrends, // Personalized based on industry
+                forYou: aiFilteredTrends, // AI-filtered 95%+ relevant trends
                 sources: {
                     rapidApi: rapidApiHashtags.length > 0,
                     rapidApiCached: rapidApiCache ? Math.round((Date.now() - rapidApiCache.fetchedAt) / 3600000) + 'h ago' : null,
                     curated: true,
                     googleTrends: true,
+                    aiFiltered: aiFilteredTrends.length > 0,
                 },
                 fetchedAt: new Date().toISOString(),
             },
             personalization: {
                 industry: userIndustry || 'ALL',
                 location: geo,
+                aiEnabled: aiFilteredTrends.length > 0,
             }
         })
     } catch (error: any) {
