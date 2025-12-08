@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/admin/refresh-cache?key=trendly-refresh-2024",
+            "schedule": "0 0 * * *"
+        }
+    ]
+}

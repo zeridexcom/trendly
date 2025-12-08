@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDailyTrends } from '@/lib/google-trends'
 import { createClient } from '@/lib/supabase/server'
-import { filterTrendsByRelevance, generateNicheTrends } from '@/lib/ai'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-// Curated evergreen + current trends for each industry (FALLBACK - never fails)
+// Curated fallback trends (only used if cache is completely empty)
 const CURATED_NICHE_TRENDS: Record<string, Array<{ title: string; reason: string; contentIdea: string }>> = {
     TECH: [
         { title: 'Gemini 2.0 Flash AI', reason: 'Google latest AI model release', contentIdea: 'Compare Gemini 2.0 vs ChatGPT for coding tasks' },
@@ -28,14 +27,6 @@ const CURATED_NICHE_TRENDS: Record<string, Array<{ title: string; reason: string
         { title: 'Creatine Benefits', reason: 'Supplement research trending', contentIdea: 'Why creatine is not just for gym bros' },
         { title: 'Walking for Weight Loss', reason: 'Low-impact exercise trend', contentIdea: '10K steps challenge - what happens?' },
         { title: 'Gut Health Diet', reason: 'Microbiome awareness growing', contentIdea: 'Foods that improve gut health fast' },
-        { title: 'Yoga for Beginners', reason: 'Mind-body fitness popular', contentIdea: '15 minute yoga routine for busy people' },
-        { title: 'PCOS Diet Plan', reason: 'Womens health awareness', contentIdea: 'What to eat with PCOS - complete guide' },
-        { title: 'Cold Plunge Benefits', reason: 'Cold therapy trending', contentIdea: 'I tried cold showers for 30 days' },
-        { title: 'Healthy Meal Prep Ideas', reason: 'Nutrition planning demand', contentIdea: 'Sunday meal prep for the whole week' },
-        { title: 'Weight Training for Women', reason: 'Strength training awareness', contentIdea: 'Why women should lift weights' },
-        { title: 'Diabetes Prevention Tips', reason: 'Health prevention focus', contentIdea: 'Simple habits to prevent Type 2 diabetes' },
-        { title: 'Stress Relief Techniques', reason: 'Mental wellness priority', contentIdea: '5 minute stress relief that works' },
-        { title: 'Running for Beginners', reason: 'Cardio fitness basics', contentIdea: 'Couch to 5K complete guide' },
     ],
     ENTERTAINMENT: [
         { title: 'Pushpa 2 Box Office', reason: 'Biggest Indian movie release', contentIdea: 'Why Pushpa 2 is breaking records' },
@@ -86,13 +77,27 @@ const CURATED_NICHE_TRENDS: Record<string, Array<{ title: string; reason: string
         { title: 'Flight Booking Hacks', reason: 'Travel savings tips', contentIdea: 'When to book for cheapest flights' },
         { title: 'Hidden Gems India', reason: 'Off-beat destination content', contentIdea: 'Places that should be on your list' },
     ],
-    NEWS: [
-        { title: 'Year End Review 2024', reason: 'Annual news roundup', contentIdea: 'Biggest news stories of 2024' },
-        { title: 'Election Analysis', reason: 'Political coverage', contentIdea: 'What the results mean for you' },
-        { title: 'Economic Outlook 2025', reason: 'Financial news interest', contentIdea: 'How the economy affects your wallet' },
-        { title: 'Climate Change Updates', reason: 'Environmental news', contentIdea: 'What you can do about climate change' },
-        { title: 'Technology Policy', reason: 'Tech regulation news', contentIdea: 'New laws that affect your online life' },
+    FITNESS: [
+        { title: 'Home Workout Routine', reason: 'No-gym fitness trend', contentIdea: '30-day home workout challenge' },
+        { title: 'Gym Beginner Guide', reason: 'New year fitness goals', contentIdea: 'First week at the gym - what to do' },
+        { title: 'Yoga for Flexibility', reason: 'Mind-body wellness', contentIdea: '15 minute morning yoga flow' },
+        { title: 'Running Tips 2024', reason: 'Cardio fitness basics', contentIdea: 'How to run your first 5K' },
+        { title: 'Weight Training Women', reason: 'Breaking fitness myths', contentIdea: 'Strength training wont make you bulky' },
     ],
+    FINANCE: [
+        { title: 'Stock Market Tips', reason: 'Investment interest growing', contentIdea: 'Best stocks to watch in 2025' },
+        { title: 'Mutual Funds India', reason: 'SIP investing popular', contentIdea: 'Best mutual funds for beginners' },
+        { title: 'Tax Saving Tips', reason: 'Financial planning season', contentIdea: 'Save tax legally in 2024-25' },
+        { title: 'Crypto Update 2024', reason: 'Digital currency trends', contentIdea: 'Is crypto worth it in 2025?' },
+        { title: 'Personal Finance Basics', reason: 'Financial literacy demand', contentIdea: 'Managing money in your 20s' },
+    ],
+}
+
+// Get Supabase client for reading cache
+function getSupabaseAdmin() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    return createSupabaseClient(supabaseUrl, supabaseServiceKey)
 }
 
 export async function GET(request: NextRequest) {
@@ -109,7 +114,6 @@ export async function GET(request: NextRequest) {
             const { data: { user } } = await supabase.auth.getUser()
 
             if (user?.user_metadata) {
-                // Use user's saved preferences
                 location = user.user_metadata.location || location
                 industry = user.user_metadata.industry || industry
             }
@@ -117,136 +121,77 @@ export async function GET(request: NextRequest) {
             // Not authenticated, use query params
         }
 
-        // Get all trends from Google
-        const allTrends = await getDailyTrends(location)
+        // ============ READ FROM SUPABASE CACHE (NO EXTERNAL API CALLS) ============
+        const supabaseAdmin = getSupabaseAdmin()
 
-        // If user has an industry, use AI to filter for 95%+ relevance
-        let trends: any[] = allTrends
-        let aiFiltered = false
-        let aiGenerated = false
-        let curatedFallback = false
+        // Get cached trends from database
+        const { data: cachedTrends, error: trendsError } = await supabaseAdmin
+            .from('cached_google_trends')
+            .select('*')
+            .order('id', { ascending: true })
 
-        if (industry && industry !== 'ALL' && industry !== 'OTHER') {
-            try {
-                // Step 1: Try to filter existing trends for 95%+ relevance
-                const aiResults = await filterTrendsByRelevance(allTrends, industry, 95)
+        let trends: any[] = []
+        let fromCache = false
+        let cacheInfo: { lastRefresh: string | null; count: number } = { lastRefresh: null, count: 0 }
 
-                if (aiResults.length >= 3) {
-                    // Found enough relevant trends in Google Trends
-                    trends = aiResults.map(r => ({
-                        title: r.title,
-                        traffic: allTrends.find(t => t.title === r.title)?.traffic || '0',
-                        relatedQueries: allTrends.find(t => t.title === r.title)?.relatedQueries || [],
-                        industry: industry,
-                        relevanceScore: r.relevanceScore,
-                        reason: r.reason,
-                        contentIdea: r.contentIdea,
-                        formattedTraffic: allTrends.find(t => t.title === r.title)?.traffic || 'Trending',
-                        source: 'Google Trends',
-                    }))
-                    aiFiltered = true
-                } else {
-                    // Step 2: Not enough matches - use AI to find/generate real niche trends
-                    console.log(`Only ${aiResults.length} matches found, generating niche trends...`)
-                    const generatedTrends = await generateNicheTrends(industry, 10)
-
-                    if (generatedTrends.length > 0) {
-                        // Combine any found + generated to ensure minimum 5
-                        const foundTrends = aiResults.map(r => ({
-                            title: r.title,
-                            traffic: allTrends.find(t => t.title === r.title)?.traffic || 'Trending',
-                            industry: industry,
-                            relevanceScore: r.relevanceScore,
-                            reason: r.reason,
-                            contentIdea: r.contentIdea,
-                            formattedTraffic: 'Live Trending',
-                            source: 'Google Trends',
-                        }))
-
-                        const aiTrends = generatedTrends.map(t => ({
-                            title: t.title,
-                            traffic: 'Hot Topic',
-                            industry: industry,
-                            relevanceScore: t.relevanceScore,
-                            reason: t.reason,
-                            contentIdea: t.contentIdea,
-                            formattedTraffic: 'AI Discovered',
-                            source: (t as any).source || 'AI Discovered',
-                        }))
-
-                        // Prioritize live trends, then AI discovered
-                        trends = [...foundTrends, ...aiTrends] // Return ALL trends, no limit
-                        aiFiltered = foundTrends.length > 0
-                        aiGenerated = aiTrends.length > 0
-                    } else {
-                        // AI generation failed - use curated fallback
-                        const curated = CURATED_NICHE_TRENDS[industry] || CURATED_NICHE_TRENDS['TECH']
-                        trends = curated.map((t, i) => ({
-                            title: t.title,
-                            relevanceScore: 95,
-                            reason: t.reason,
-                            contentIdea: t.contentIdea,
-                            formattedTraffic: 'Hot Topic',
-                            source: 'Curated',
-                        }))
-                        curatedFallback = true
-                    }
-                }
-            } catch (error) {
-                console.error('AI filtering failed:', error)
-                // GUARANTEED FALLBACK - Use curated trends
-                const curated = CURATED_NICHE_TRENDS[industry] || CURATED_NICHE_TRENDS['TECH']
-                trends = curated.map((t, i) => ({
-                    title: t.title,
-                    relevanceScore: 95,
-                    reason: t.reason,
-                    contentIdea: t.contentIdea,
-                    formattedTraffic: 'Hot Topic',
-                    source: 'Curated',
-                }))
-                curatedFallback = true
-            }
-        }
-
-        // FINAL SAFETY: If still empty after everything, use curated
-        if (trends.length === 0 && industry && CURATED_NICHE_TRENDS[industry]) {
-            const curated = CURATED_NICHE_TRENDS[industry]
-            trends = curated.map((t, i) => ({
+        if (cachedTrends && cachedTrends.length > 0) {
+            // Use cached trends
+            trends = cachedTrends.map((t: any) => ({
                 title: t.title,
-                relevanceScore: 95,
+                formattedTraffic: t.formatted_traffic || t.traffic || 'Trending',
+                relatedQueries: t.related_queries || [],
+                industry: t.industry,
+                relevanceScore: t.relevance_score || 90,
                 reason: t.reason,
-                contentIdea: t.contentIdea,
-                formattedTraffic: 'Hot Topic',
-                source: 'Curated',
+                contentIdea: t.content_idea,
+                source: 'Cached Google Trends',
             }))
-            curatedFallback = true
+            fromCache = true
+            cacheInfo.lastRefresh = cachedTrends[0]?.fetched_at
+            cacheInfo.count = trends.length
         }
 
-        // ALWAYS ADD: Curated trends for user's industry (guaranteed relevant)
-        if (industry && industry !== 'ALL' && industry !== 'OTHER' && CURATED_NICHE_TRENDS[industry]) {
-            const curated = CURATED_NICHE_TRENDS[industry]
+        // If user has an industry, add curated niche trends
+        if (industry && industry !== 'ALL' && industry !== 'OTHER') {
+            const curated = CURATED_NICHE_TRENDS[industry] || []
             const curatedTrends = curated.map((t) => ({
                 title: t.title,
+                formattedTraffic: 'Hot Topic',
                 relevanceScore: 95,
                 reason: t.reason,
                 contentIdea: t.contentIdea,
-                formattedTraffic: 'Hot Topic',
-                source: 'Curated for You',
-                // Pre-computed quick analysis for instant display (no loading needed)
+                source: 'Curated for ' + industry,
                 quickAnalysis: {
                     whyTrending: t.reason,
                     contentIdea: t.contentIdea,
                     isPreComputed: true
                 }
             }))
+
             // Add curated that aren't already in trends (avoid duplicates)
             const existingTitles = new Set(trends.map((t: any) => t.title.toLowerCase()))
             const newCurated = curatedTrends.filter(t => !existingTitles.has(t.title.toLowerCase()))
-            trends = [...trends, ...newCurated]
+
+            // Put curated first (most relevant), then cached
+            trends = [...newCurated, ...trends]
         }
 
-        // DO NOT add unfiltered Google Trends - only show 70%+ relevant trends
-        // The user's niche should not show random things like "SSC", "Dileep Case" etc.
+        // FALLBACK: If no cached trends at all, use curated only
+        if (trends.length === 0 && industry && CURATED_NICHE_TRENDS[industry]) {
+            trends = CURATED_NICHE_TRENDS[industry].map((t) => ({
+                title: t.title,
+                formattedTraffic: 'Hot Topic',
+                relevanceScore: 95,
+                reason: t.reason,
+                contentIdea: t.contentIdea,
+                source: 'Curated',
+                quickAnalysis: {
+                    whyTrending: t.reason,
+                    contentIdea: t.contentIdea,
+                    isPreComputed: true
+                }
+            }))
+        }
 
         return NextResponse.json({
             success: true,
@@ -254,15 +199,9 @@ export async function GET(request: NextRequest) {
             personalization: {
                 location,
                 industry: industry || 'ALL',
-                aiFiltered,
-                aiGenerated,
-                curatedFallback,
+                fromCache,
+                cacheInfo,
                 totalCount: trends.length,
-                message: curatedFallback
-                    ? `Showing curated ${(industry || 'niche').toLowerCase()} trends`
-                    : aiGenerated
-                        ? `Showing AI-discovered ${(industry || 'niche').toLowerCase()} trends`
-                        : null
             }
         })
     } catch (error) {
