@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
     Instagram, Music, RefreshCw, Loader2, ArrowLeft,
-    TrendingUp, Zap, Bookmark, ExternalLink, Sparkles
+    TrendingUp, Zap, Bookmark, Sparkles, Hash, Copy, Check
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,8 @@ interface SocialTrend {
     formattedTraffic?: string
     socialScore: number
     platform: 'instagram' | 'tiktok' | 'both'
+    source?: string
+    category?: string
 }
 
 const container = {
@@ -26,11 +28,22 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
+const categoryColors: Record<string, string> = {
+    viral: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    reels: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
+    lifestyle: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    entertainment: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    motivation: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    photography: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+    trending: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+}
+
 export default function SocialTrendsPage() {
     const [instagramTrends, setInstagramTrends] = useState<SocialTrend[]>([])
     const [tiktokTrends, setTiktokTrends] = useState<SocialTrend[]>([])
     const [loading, setLoading] = useState(true)
     const [savingTrend, setSavingTrend] = useState<string | null>(null)
+    const [copiedTag, setCopiedTag] = useState<string | null>(null)
 
     useEffect(() => {
         fetchTrends()
@@ -68,55 +81,18 @@ export default function SocialTrendsPage() {
         }
     }
 
-    const TrendCard = ({ trend, index, platform }: { trend: SocialTrend, index: number, platform: 'instagram' | 'tiktok' }) => (
-        <motion.div
-            variants={item}
-            className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-[#D9C5B2] transition-all group"
-        >
-            <span className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
-                index < 3
-                    ? platform === 'instagram'
-                        ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
-                        : "bg-gradient-to-br from-cyan-400 to-pink-500 text-white"
-                    : "bg-[#F3F3F4] dark:bg-[#34312D] text-[#7E7F83]"
-            )}>
-                {index + 1}
-            </span>
-            <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] truncate">
-                    {trend.title}
-                </p>
-                <div className="flex items-center gap-2 text-xs text-[#7E7F83]">
-                    {trend.formattedTraffic && <span>{trend.formattedTraffic}</span>}
-                    {trend.socialScore > 15 && (
-                        <span className="flex items-center gap-0.5 text-amber-500">
-                            <Zap className="w-3 h-3" /> Hot
-                        </span>
-                    )}
-                </div>
-            </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                    onClick={() => saveTrend(trend)}
-                    disabled={savingTrend === trend.title}
-                    className="p-1.5 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
-                >
-                    {savingTrend === trend.title ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-[#D9C5B2]" />
-                    ) : (
-                        <Bookmark className="w-4 h-4 text-[#7E7F83]" />
-                    )}
-                </button>
-                <Link
-                    href={`/dashboard/ideas?topic=${encodeURIComponent(trend.title)}`}
-                    className="p-1.5 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
-                >
-                    <Sparkles className="w-4 h-4 text-[#7E7F83]" />
-                </Link>
-            </div>
-        </motion.div>
-    )
+    const copyHashtag = (hashtag: string) => {
+        navigator.clipboard.writeText(hashtag)
+        setCopiedTag(hashtag)
+        setTimeout(() => setCopiedTag(null), 2000)
+    }
+
+    const copyAllHashtags = () => {
+        const all = instagramTrends.map(t => t.title).join(' ')
+        navigator.clipboard.writeText(all)
+        setCopiedTag('all')
+        setTimeout(() => setCopiedTag(null), 2000)
+    }
 
     return (
         <div className="max-w-5xl mx-auto pb-12">
@@ -131,7 +107,7 @@ export default function SocialTrendsPage() {
                         Social Media Trends
                     </h1>
                     <p className="text-[#7E7F83] text-sm">
-                        What's viral on Instagram Reels & TikTok right now
+                        Instagram hashtags & TikTok viral trends
                     </p>
                 </div>
                 <button
@@ -155,19 +131,49 @@ export default function SocialTrendsPage() {
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
                                 <Instagram className="w-5 h-5 text-white" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">
-                                    Trending on Instagram Reels
+                                    Instagram Trending Hashtags
                                 </h2>
-                                <p className="text-xs text-[#7E7F83]">Viral content people are searching for</p>
+                                <p className="text-xs text-[#7E7F83]">Copy & use these for maximum reach</p>
                             </div>
-                            <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 rounded-full">
-                                LIVE
-                            </span>
+                            <button
+                                onClick={copyAllHashtags}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-[#D9C5B2] text-[#14110F] font-medium hover:bg-[#C4B09D] transition-colors"
+                            >
+                                {copiedTag === 'all' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                Copy All
+                            </button>
                         </div>
-                        <div className="grid md:grid-cols-2 gap-3">
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                             {instagramTrends.map((trend, i) => (
-                                <TrendCard key={trend.title} trend={trend} index={i} platform="instagram" />
+                                <motion.div
+                                    key={trend.title}
+                                    variants={item}
+                                    className="relative p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-pink-300 dark:hover:border-pink-700 transition-all group cursor-pointer"
+                                    onClick={() => copyHashtag(trend.title)}
+                                >
+                                    {i < 3 && (
+                                        <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-r from-pink-500 to-orange-400 text-white text-xs font-bold flex items-center justify-center">
+                                            {i + 1}
+                                        </span>
+                                    )}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Hash className="w-4 h-4 text-pink-500" />
+                                        <span className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">
+                                            {trend.title.replace('#', '')}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className={cn("text-xs px-2 py-0.5 rounded-full", categoryColors[trend.category || 'trending'])}>
+                                            {trend.category || 'trending'}
+                                        </span>
+                                        <span className="text-xs text-[#7E7F83]">
+                                            {copiedTag === trend.title ? '✓ Copied!' : 'Click to copy'}
+                                        </span>
+                                    </div>
+                                </motion.div>
                             ))}
                         </div>
                     </motion.div>
@@ -180,9 +186,9 @@ export default function SocialTrendsPage() {
                             </div>
                             <div>
                                 <h2 className="font-semibold text-[#14110F] dark:text-[#F3F3F4]">
-                                    Trending on TikTok
+                                    TikTok Viral Trends
                                 </h2>
-                                <p className="text-xs text-[#7E7F83]">Dances, challenges & viral sounds</p>
+                                <p className="text-xs text-[#7E7F83]">What's going viral right now</p>
                             </div>
                             <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 rounded-full">
                                 LIVE
@@ -190,22 +196,78 @@ export default function SocialTrendsPage() {
                         </div>
                         <div className="grid md:grid-cols-2 gap-3">
                             {tiktokTrends.map((trend, i) => (
-                                <TrendCard key={trend.title} trend={trend} index={i} platform="tiktok" />
+                                <motion.div
+                                    key={trend.title}
+                                    variants={item}
+                                    className="flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-[#1A1714] border border-[#E8E8E9] dark:border-[#34312D] hover:border-cyan-300 dark:hover:border-cyan-700 transition-all group"
+                                >
+                                    <span className={cn(
+                                        "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
+                                        i < 3
+                                            ? "bg-gradient-to-br from-cyan-400 to-pink-500 text-white"
+                                            : "bg-[#F3F3F4] dark:bg-[#34312D] text-[#7E7F83]"
+                                    )}>
+                                        {i + 1}
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm text-[#14110F] dark:text-[#F3F3F4] truncate">
+                                            {trend.title}
+                                        </p>
+                                        <div className="flex items-center gap-2 text-xs text-[#7E7F83]">
+                                            {trend.formattedTraffic && <span>{trend.formattedTraffic}</span>}
+                                            {trend.socialScore > 15 && (
+                                                <span className="flex items-center gap-0.5 text-amber-500">
+                                                    <Zap className="w-3 h-3" /> Hot
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => saveTrend(trend)}
+                                            disabled={savingTrend === trend.title}
+                                            className="p-1.5 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                        >
+                                            {savingTrend === trend.title ? (
+                                                <Loader2 className="w-4 h-4 animate-spin text-[#D9C5B2]" />
+                                            ) : (
+                                                <Bookmark className="w-4 h-4 text-[#7E7F83]" />
+                                            )}
+                                        </button>
+                                        <Link
+                                            href={`/dashboard/ideas?topic=${encodeURIComponent(trend.title)}`}
+                                            className="p-1.5 rounded-lg hover:bg-[#F3F3F4] dark:hover:bg-[#34312D] transition-colors"
+                                        >
+                                            <Sparkles className="w-4 h-4 text-[#7E7F83]" />
+                                        </Link>
+                                    </div>
+                                </motion.div>
                             ))}
                         </div>
                     </motion.div>
 
-                    {/* Tip */}
-                    <motion.div variants={item} className="p-4 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-200 dark:border-pink-800">
-                        <div className="flex items-start gap-3">
-                            <Sparkles className="w-5 h-5 text-pink-500 mt-0.5" />
-                            <div>
-                                <p className="font-medium text-sm text-pink-700 dark:text-pink-400">
-                                    How This Works
-                                </p>
-                                <p className="text-sm text-pink-600 dark:text-pink-300">
-                                    We analyze Google search trends to identify what's going viral on social media. When something trends on Instagram or TikTok, millions search for it on Google - that's how we catch trends like "Husky Dance" in real-time!
-                                </p>
+                    {/* Usage Tips */}
+                    <motion.div variants={item} className="grid md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-200 dark:border-pink-800">
+                            <div className="flex items-start gap-3">
+                                <Instagram className="w-5 h-5 text-pink-500 mt-0.5" />
+                                <div>
+                                    <p className="font-medium text-sm text-pink-700 dark:text-pink-400">Instagram Tips</p>
+                                    <p className="text-xs text-pink-600 dark:text-pink-300 mt-1">
+                                        Use 5-10 trending hashtags per Reel. Mix popular (#viral) with niche hashtags for best reach.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-500/10 to-pink-500/10 border border-cyan-200 dark:border-cyan-800">
+                            <div className="flex items-start gap-3">
+                                <Music className="w-5 h-5 text-cyan-500 mt-0.5" />
+                                <div>
+                                    <p className="font-medium text-sm text-cyan-700 dark:text-cyan-400">TikTok Tips</p>
+                                    <p className="text-xs text-cyan-600 dark:text-cyan-300 mt-1">
+                                        Jump on trends within 24-48 hours. Use popular sounds and add your unique twist!
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </motion.div>
