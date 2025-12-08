@@ -42,11 +42,22 @@ interface AIAnalysis {
 interface VideoAnalysis {
     viralScore: number
     whyViral: string
+    viralHook?: {
+        original: string
+        englishTranslation: string
+        hookType: string
+        hookAnalysis: string
+    }
     keyFactors: { factor: string; analysis: string; impact: string }[]
     thumbnailInsights: string
     titleAnalysis: string
     contentStrategy: string
     audienceAppeal: string
+    topicSummary?: string
+    suggestedHashtags?: string[]
+    suggestedTags?: string[]
+    suggestedCaption?: string
+    suggestedDescription?: string
     recreateStrategy: {
         yourTitle: string
         yourHook: string
@@ -57,6 +68,7 @@ interface VideoAnalysis {
     doThis: string[]
     avoidThis: string[]
 }
+
 
 const container = {
     hidden: { opacity: 0 },
@@ -460,6 +472,128 @@ export default function TrendsPage() {
                                                 <p className="font-bold text-lg">{videoAnalysis.whyViral}</p>
                                             </div>
                                         </div>
+
+                                        {/* Viral Hook - THE MONEY SHOT */}
+                                        {videoAnalysis.viralHook && (
+                                            <div className="p-6 bg-[#FF90E8] border-4 border-black shadow-[8px_8px_0px_0px_#000]">
+                                                <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+                                                    <Zap className="w-6 h-6" />
+                                                    The Viral Hook 🔥
+                                                </h3>
+                                                <div className="bg-white p-4 border-2 border-black mb-4">
+                                                    <p className="text-lg font-black mb-2">"{videoAnalysis.viralHook.original}"</p>
+                                                    {videoAnalysis.viralHook.original !== videoAnalysis.viralHook.englishTranslation && (
+                                                        <p className="text-sm font-medium text-gray-600 italic">
+                                                            English: "{videoAnalysis.viralHook.englishTranslation}"
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="grid md:grid-cols-2 gap-4">
+                                                    <div className="bg-white p-3 border-2 border-black">
+                                                        <span className="text-xs font-black uppercase text-gray-500">Hook Type</span>
+                                                        <p className="font-black">{videoAnalysis.viralHook.hookType}</p>
+                                                    </div>
+                                                    <div className="bg-white p-3 border-2 border-black">
+                                                        <span className="text-xs font-black uppercase text-gray-500">Why It Works</span>
+                                                        <p className="font-medium text-sm">{videoAnalysis.viralHook.hookAnalysis}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Topic Summary */}
+                                        {videoAnalysis.topicSummary && (
+                                            <div className="p-5 bg-white border-2 border-black">
+                                                <h4 className="font-black uppercase mb-2 flex items-center gap-2">
+                                                    📝 What This Video Is About
+                                                </h4>
+                                                <p className="font-medium">{videoAnalysis.topicSummary}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Hashtags & Tags */}
+                                        {(videoAnalysis.suggestedHashtags || videoAnalysis.suggestedTags) && (
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                {videoAnalysis.suggestedHashtags && (
+                                                    <div className="p-5 bg-white border-2 border-black">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h4 className="font-black uppercase flex items-center gap-2">
+                                                                <Hash className="w-5 h-5" /> Trending Hashtags
+                                                            </h4>
+                                                            <button
+                                                                onClick={() => copyToClipboard(videoAnalysis.suggestedHashtags?.join(' ') || '')}
+                                                                className="text-xs px-2 py-1 bg-black text-white font-bold hover:bg-gray-800"
+                                                            >
+                                                                Copy All
+                                                            </button>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {videoAnalysis.suggestedHashtags.map((tag, i) => (
+                                                                <span key={i} className="px-2 py-1 bg-black text-white text-xs font-bold">
+                                                                    {tag.startsWith('#') ? tag : `#${tag}`}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {videoAnalysis.suggestedTags && (
+                                                    <div className="p-5 bg-white border-2 border-black">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h4 className="font-black uppercase flex items-center gap-2">
+                                                                🏷️ SEO Tags
+                                                            </h4>
+                                                            <button
+                                                                onClick={() => copyToClipboard(videoAnalysis.suggestedTags?.join(', ') || '')}
+                                                                className="text-xs px-2 py-1 bg-black text-white font-bold hover:bg-gray-800"
+                                                            >
+                                                                Copy All
+                                                            </button>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {videoAnalysis.suggestedTags.map((tag, i) => (
+                                                                <span key={i} className="px-2 py-1 bg-gray-200 text-black text-xs font-medium">
+                                                                    {tag}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Caption & Description */}
+                                        {(videoAnalysis.suggestedCaption || videoAnalysis.suggestedDescription) && (
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                {videoAnalysis.suggestedCaption && (
+                                                    <div className="p-5 bg-[#FFC900] border-2 border-black">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h4 className="font-black uppercase">📱 Caption Idea</h4>
+                                                            <button
+                                                                onClick={() => copyToClipboard(videoAnalysis.suggestedCaption || '')}
+                                                                className="text-xs px-2 py-1 bg-black text-white font-bold hover:bg-gray-800"
+                                                            >
+                                                                Copy
+                                                            </button>
+                                                        </div>
+                                                        <p className="font-medium">{videoAnalysis.suggestedCaption}</p>
+                                                    </div>
+                                                )}
+                                                {videoAnalysis.suggestedDescription && (
+                                                    <div className="p-5 bg-[#00F0FF] border-2 border-black">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h4 className="font-black uppercase">📄 Description Idea</h4>
+                                                            <button
+                                                                onClick={() => copyToClipboard(videoAnalysis.suggestedDescription || '')}
+                                                                className="text-xs px-2 py-1 bg-black text-white font-bold hover:bg-gray-800"
+                                                            >
+                                                                Copy
+                                                            </button>
+                                                        </div>
+                                                        <p className="font-medium text-sm whitespace-pre-line">{videoAnalysis.suggestedDescription}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Key Factors */}
                                         <div>
