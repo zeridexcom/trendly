@@ -4,44 +4,44 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     Sparkles, ArrowRight, ArrowLeft, Loader2, Check,
-    Video, Briefcase, Newspaper, GraduationCap,
-    Gamepad2, Tv, DollarSign, Heart, Music, Utensils, Plane,
-    Instagram, Youtube, Twitter
+    Target, TrendingUp, Lightbulb, Users,
+    Zap, Clock, Rocket, Crown,
+    Video, FileText, Image, Mic
 } from 'lucide-react'
 
-const USER_TYPES = [
-    { id: 'CONTENT_CREATOR', label: 'Content Creator', icon: Video, description: 'YouTube, Instagram, TikTok', emoji: '🎬' },
-    { id: 'BUSINESS', label: 'Business / Marketer', icon: Briefcase, description: 'Brand, Agency, E-commerce', emoji: '💼' },
-    { id: 'JOURNALIST', label: 'Journalist / Blogger', icon: Newspaper, description: 'News, Media, Publishing', emoji: '📰' },
-    { id: 'STUDENT', label: 'Student / Researcher', icon: GraduationCap, description: 'Learning, Academic', emoji: '🎓' },
+// Step 1: What's your main goal?
+const GOALS = [
+    { id: 'GROW_AUDIENCE', label: 'Grow My Audience', icon: TrendingUp, description: 'Get more followers and subscribers', emoji: '📈' },
+    { id: 'CONTENT_IDEAS', label: 'Find Content Ideas', icon: Lightbulb, description: 'Never run out of viral ideas', emoji: '�' },
+    { id: 'STAY_RELEVANT', label: 'Stay Trend-Ready', icon: Zap, description: 'Jump on trends before they peak', emoji: '⚡' },
+    { id: 'BEAT_COMPETITION', label: 'Beat Competition', icon: Target, description: 'Outperform others in my niche', emoji: '�' },
 ]
 
-const CONTENT_NICHES = [
-    { id: 'ENTERTAINMENT', label: 'Entertainment', icon: Tv, emoji: '🎭' },
-    { id: 'TECH', label: 'Technology', icon: Sparkles, emoji: '💻' },
-    { id: 'GAMING', label: 'Gaming', icon: Gamepad2, emoji: '🎮' },
-    { id: 'FINANCE', label: 'Finance', icon: DollarSign, emoji: '💰' },
-    { id: 'HEALTH', label: 'Health', icon: Heart, emoji: '💪' },
-    { id: 'EDUCATION', label: 'Education', icon: GraduationCap, emoji: '📚' },
-    { id: 'FOOD', label: 'Food', icon: Utensils, emoji: '🍕' },
-    { id: 'TRAVEL', label: 'Travel', icon: Plane, emoji: '✈️' },
-    { id: 'MUSIC', label: 'Music', icon: Music, emoji: '🎵' },
+// Step 2: What's your current audience size?
+const AUDIENCE_SIZES = [
+    { id: 'STARTING', label: 'Just Starting', description: '0 - 1,000 followers', emoji: '�', color: '#10B981' },
+    { id: 'GROWING', label: 'Growing', description: '1K - 10K followers', emoji: '🌿', color: '#3B82F6' },
+    { id: 'ESTABLISHED', label: 'Established', description: '10K - 100K followers', emoji: '�', color: '#8B5CF6' },
+    { id: 'INFLUENCER', label: 'Influencer', description: '100K+ followers', emoji: '�', color: '#F59E0B' },
 ]
 
-const PLATFORMS = [
-    { id: 'YOUTUBE', label: 'YouTube', icon: Youtube, color: '#FF0000', emoji: '▶️' },
-    { id: 'INSTAGRAM', label: 'Instagram', icon: Instagram, color: '#E4405F', emoji: '📸' },
-    { id: 'TIKTOK', label: 'TikTok', icon: Video, color: '#000000', emoji: '🎵' },
-    { id: 'TWITTER', label: 'Twitter/X', icon: Twitter, color: '#1DA1F2', emoji: '🐦' },
+// Step 3: What type of content do you create?
+const CONTENT_TYPES = [
+    { id: 'SHORT_VIDEO', label: 'Short Videos', description: 'Reels, TikToks, Shorts', icon: Video, emoji: '�' },
+    { id: 'LONG_VIDEO', label: 'Long Videos', description: 'YouTube, Vlogs, Tutorials', icon: Video, emoji: '📹' },
+    { id: 'WRITTEN', label: 'Written Content', description: 'Blogs, Threads, Articles', icon: FileText, emoji: '✍️' },
+    { id: 'VISUAL', label: 'Visual Content', description: 'Photos, Carousels, Graphics', icon: Image, emoji: '📸' },
+    { id: 'AUDIO', label: 'Audio Content', description: 'Podcasts, Spaces, Audio', icon: Mic, emoji: '�️' },
+    { id: 'MIXED', label: 'Mix of Everything', description: 'I do it all!', icon: Sparkles, emoji: '🌟' },
 ]
 
 export default function OnboardingPage() {
     const router = useRouter()
     const [step, setStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
-    const [userType, setUserType] = useState('')
-    const [niche, setNiche] = useState('')
-    const [platforms, setPlatforms] = useState<string[]>([])
+    const [goal, setGoal] = useState('')
+    const [audienceSize, setAudienceSize] = useState('')
+    const [contentType, setContentType] = useState('')
     const [animateIn, setAnimateIn] = useState(true)
     const [hoveredCard, setHoveredCard] = useState<string | null>(null)
 
@@ -51,17 +51,10 @@ export default function OnboardingPage() {
         return () => clearTimeout(timer)
     }, [step])
 
-    const togglePlatform = (platformId: string) => {
-        setPlatforms(prev =>
-            prev.includes(platformId)
-                ? prev.filter(p => p !== platformId)
-                : [...prev, platformId]
-        )
-    }
-
     const handleComplete = async () => {
         setIsLoading(true)
         try {
+            // Here you would save preferences to database
             router.push('/dashboard')
             router.refresh()
         } catch (error) {
@@ -77,17 +70,16 @@ export default function OnboardingPage() {
     }
 
     const canProceed = () => {
-        if (step === 1) return !!userType
-        if (step === 2) return !!niche
-        if (step === 3) return platforms.length > 0
+        if (step === 1) return !!goal
+        if (step === 2) return !!audienceSize
+        if (step === 3) return !!contentType
         return false
     }
 
-    const stepTitles = ['Who are you?', "What's your niche?", 'Which platforms?']
-    const stepSubtitles = [
-        'Help us understand your role',
-        'Select your main content area',
-        'Choose where you create content'
+    const stepData = [
+        { title: "What's your main goal?", subtitle: "We'll customize trends for your success" },
+        { title: "Where are you in your journey?", subtitle: "We'll match insights to your level" },
+        { title: "What content do you create?", subtitle: "We'll find trends that fit your style" },
     ]
 
     return (
@@ -101,7 +93,7 @@ export default function OnboardingPage() {
             position: 'relative',
             overflow: 'hidden',
         }}>
-            {/* Animated background elements */}
+            {/* Animated background */}
             <div style={{
                 position: 'absolute',
                 top: '10%',
@@ -147,23 +139,24 @@ export default function OnboardingPage() {
                         boxShadow: '0 20px 60px rgba(217,197,178,0.3)',
                         animation: 'pulse 2s ease-in-out infinite',
                     }}>
-                        <Sparkles size={36} color="#14110F" />
+                        {step === 1 ? <Target size={36} color="#14110F" /> :
+                            step === 2 ? <Users size={36} color="#14110F" /> :
+                                <Rocket size={36} color="#14110F" />}
                     </div>
                     <h1 style={{
-                        fontSize: '36px',
+                        fontSize: '32px',
                         fontWeight: 800,
                         color: '#D9C5B2',
                         marginBottom: '12px',
-                        letterSpacing: '-0.5px',
                     }}>
-                        {stepTitles[step - 1]}
+                        {stepData[step - 1].title}
                     </h1>
                     <p style={{ color: 'rgba(217,197,178,0.7)', fontSize: '16px' }}>
-                        {stepSubtitles[step - 1]} • Step {step} of 3
+                        {stepData[step - 1].subtitle}
                     </p>
                 </div>
 
-                {/* Progress Bar */}
+                {/* Progress */}
                 <div style={{
                     display: 'flex',
                     gap: '12px',
@@ -187,7 +180,7 @@ export default function OnboardingPage() {
                                 height: '100%',
                                 borderRadius: 3,
                                 background: s <= step ? 'linear-gradient(90deg, #D9C5B2, #BFA68F)' : 'transparent',
-                                width: s < step ? '100%' : s === step ? '100%' : '0%',
+                                width: s <= step ? '100%' : '0%',
                                 transition: 'width 0.5s ease-out',
                                 boxShadow: s <= step ? '0 0 10px rgba(217,197,178,0.5)' : 'none',
                             }} />
@@ -195,7 +188,7 @@ export default function OnboardingPage() {
                     ))}
                 </div>
 
-                {/* Card Container */}
+                {/* Card */}
                 <div style={{
                     background: 'rgba(255,255,255,0.03)',
                     backdropFilter: 'blur(20px)',
@@ -205,15 +198,15 @@ export default function OnboardingPage() {
                     boxShadow: '0 40px 80px rgba(0,0,0,0.3)',
                     animation: animateIn ? 'fadeInUp 0.5s ease-out' : 'none',
                 }}>
-                    {/* Step 1: User Type */}
+                    {/* Step 1: Goals */}
                     {step === 1 && (
                         <div style={{ display: 'grid', gap: '16px' }}>
-                            {USER_TYPES.map((type, index) => (
+                            {GOALS.map((item, index) => (
                                 <button
-                                    key={type.id}
+                                    key={item.id}
                                     type="button"
-                                    onClick={() => setUserType(type.id)}
-                                    onMouseEnter={() => setHoveredCard(type.id)}
+                                    onClick={() => setGoal(item.id)}
+                                    onMouseEnter={() => setHoveredCard(item.id)}
                                     onMouseLeave={() => setHoveredCard(null)}
                                     style={{
                                         display: 'flex',
@@ -223,15 +216,15 @@ export default function OnboardingPage() {
                                         borderRadius: '16px',
                                         cursor: 'pointer',
                                         textAlign: 'left',
-                                        border: userType === type.id
+                                        border: goal === item.id
                                             ? '2px solid #D9C5B2'
                                             : '2px solid rgba(217,197,178,0.15)',
-                                        background: userType === type.id
+                                        background: goal === item.id
                                             ? 'rgba(217,197,178,0.15)'
-                                            : hoveredCard === type.id
+                                            : hoveredCard === item.id
                                                 ? 'rgba(217,197,178,0.08)'
                                                 : 'rgba(255,255,255,0.02)',
-                                        transform: hoveredCard === type.id || userType === type.id ? 'scale(1.02)' : 'scale(1)',
+                                        transform: hoveredCard === item.id || goal === item.id ? 'scale(1.02)' : 'scale(1)',
                                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                         animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
                                     }}
@@ -240,7 +233,7 @@ export default function OnboardingPage() {
                                         width: 56,
                                         height: 56,
                                         borderRadius: '14px',
-                                        background: userType === type.id
+                                        background: goal === item.id
                                             ? 'linear-gradient(135deg, #D9C5B2, #BFA68F)'
                                             : 'rgba(217,197,178,0.1)',
                                         display: 'flex',
@@ -249,22 +242,22 @@ export default function OnboardingPage() {
                                         fontSize: '28px',
                                         transition: 'all 0.3s ease',
                                     }}>
-                                        {type.emoji}
+                                        {item.emoji}
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div style={{
                                             fontWeight: 600,
                                             fontSize: '17px',
-                                            color: userType === type.id ? '#D9C5B2' : 'rgba(217,197,178,0.9)',
+                                            color: goal === item.id ? '#D9C5B2' : 'rgba(217,197,178,0.9)',
                                             marginBottom: '4px',
                                         }}>
-                                            {type.label}
+                                            {item.label}
                                         </div>
                                         <div style={{ fontSize: '14px', color: 'rgba(217,197,178,0.5)' }}>
-                                            {type.description}
+                                            {item.description}
                                         </div>
                                     </div>
-                                    {userType === type.id && (
+                                    {goal === item.id && (
                                         <div style={{
                                             width: 28,
                                             height: 28,
@@ -283,53 +276,59 @@ export default function OnboardingPage() {
                         </div>
                     )}
 
-                    {/* Step 2: Niche */}
+                    {/* Step 2: Audience Size */}
                     {step === 2 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                            {CONTENT_NICHES.map((n, index) => (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                            {AUDIENCE_SIZES.map((item, index) => (
                                 <button
-                                    key={n.id}
+                                    key={item.id}
                                     type="button"
-                                    onClick={() => setNiche(n.id)}
-                                    onMouseEnter={() => setHoveredCard(n.id)}
+                                    onClick={() => setAudienceSize(item.id)}
+                                    onMouseEnter={() => setHoveredCard(item.id)}
                                     onMouseLeave={() => setHoveredCard(null)}
                                     style={{
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
                                         gap: '12px',
-                                        padding: '24px 16px',
+                                        padding: '28px 20px',
                                         borderRadius: '16px',
                                         cursor: 'pointer',
-                                        border: niche === n.id
+                                        border: audienceSize === item.id
                                             ? '2px solid #D9C5B2'
                                             : '2px solid rgba(217,197,178,0.15)',
-                                        background: niche === n.id
+                                        background: audienceSize === item.id
                                             ? 'rgba(217,197,178,0.15)'
-                                            : hoveredCard === n.id
+                                            : hoveredCard === item.id
                                                 ? 'rgba(217,197,178,0.08)'
                                                 : 'rgba(255,255,255,0.02)',
-                                        transform: hoveredCard === n.id || niche === n.id ? 'scale(1.05) translateY(-4px)' : 'scale(1)',
+                                        transform: hoveredCard === item.id || audienceSize === item.id ? 'scale(1.03) translateY(-4px)' : 'scale(1)',
                                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`,
+                                        animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
                                         position: 'relative',
                                     }}
                                 >
-                                    <span style={{ fontSize: '36px' }}>{n.emoji}</span>
-                                    <span style={{
-                                        fontSize: '14px',
-                                        fontWeight: 600,
-                                        color: niche === n.id ? '#D9C5B2' : 'rgba(217,197,178,0.8)',
-                                    }}>
-                                        {n.label}
-                                    </span>
-                                    {niche === n.id && (
+                                    <span style={{ fontSize: '48px' }}>{item.emoji}</span>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{
+                                            fontWeight: 700,
+                                            fontSize: '16px',
+                                            color: audienceSize === item.id ? '#D9C5B2' : 'rgba(217,197,178,0.9)',
+                                            marginBottom: '4px',
+                                        }}>
+                                            {item.label}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: 'rgba(217,197,178,0.5)' }}>
+                                            {item.description}
+                                        </div>
+                                    </div>
+                                    {audienceSize === item.id && (
                                         <div style={{
                                             position: 'absolute',
                                             top: -8,
                                             right: -8,
-                                            width: 24,
-                                            height: 24,
+                                            width: 26,
+                                            height: 26,
                                             borderRadius: '50%',
                                             background: '#D9C5B2',
                                             display: 'flex',
@@ -345,49 +344,59 @@ export default function OnboardingPage() {
                         </div>
                     )}
 
-                    {/* Step 3: Platforms */}
+                    {/* Step 3: Content Type */}
                     {step === 3 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                            {PLATFORMS.map((p, index) => (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                            {CONTENT_TYPES.map((item, index) => (
                                 <button
-                                    key={p.id}
+                                    key={item.id}
                                     type="button"
-                                    onClick={() => togglePlatform(p.id)}
-                                    onMouseEnter={() => setHoveredCard(p.id)}
+                                    onClick={() => setContentType(item.id)}
+                                    onMouseEnter={() => setHoveredCard(item.id)}
                                     onMouseLeave={() => setHoveredCard(null)}
                                     style={{
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
-                                        gap: '16px',
-                                        padding: '24px',
+                                        gap: '10px',
+                                        padding: '24px 12px',
                                         borderRadius: '16px',
                                         cursor: 'pointer',
-                                        border: platforms.includes(p.id)
+                                        border: contentType === item.id
                                             ? '2px solid #D9C5B2'
                                             : '2px solid rgba(217,197,178,0.15)',
-                                        background: platforms.includes(p.id)
+                                        background: contentType === item.id
                                             ? 'rgba(217,197,178,0.15)'
-                                            : hoveredCard === p.id
+                                            : hoveredCard === item.id
                                                 ? 'rgba(217,197,178,0.08)'
                                                 : 'rgba(255,255,255,0.02)',
-                                        transform: hoveredCard === p.id || platforms.includes(p.id) ? 'scale(1.03)' : 'scale(1)',
+                                        transform: hoveredCard === item.id || contentType === item.id ? 'scale(1.05) translateY(-4px)' : 'scale(1)',
                                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
+                                        animation: `fadeInUp 0.5s ease-out ${index * 0.05}s both`,
+                                        position: 'relative',
                                     }}
                                 >
-                                    <span style={{ fontSize: '32px' }}>{p.emoji}</span>
-                                    <span style={{
-                                        fontWeight: 600,
-                                        fontSize: '16px',
-                                        color: platforms.includes(p.id) ? '#D9C5B2' : 'rgba(217,197,178,0.8)',
-                                    }}>
-                                        {p.label}
-                                    </span>
-                                    {platforms.includes(p.id) && (
+                                    <span style={{ fontSize: '36px' }}>{item.emoji}</span>
+                                    <div style={{ textAlign: 'center' }}>
                                         <div style={{
-                                            marginLeft: 'auto',
-                                            width: 28,
-                                            height: 28,
+                                            fontWeight: 600,
+                                            fontSize: '13px',
+                                            color: contentType === item.id ? '#D9C5B2' : 'rgba(217,197,178,0.9)',
+                                            marginBottom: '2px',
+                                        }}>
+                                            {item.label}
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: 'rgba(217,197,178,0.5)', lineHeight: 1.3 }}>
+                                            {item.description}
+                                        </div>
+                                    </div>
+                                    {contentType === item.id && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: -8,
+                                            right: -8,
+                                            width: 24,
+                                            height: 24,
                                             borderRadius: '50%',
                                             background: '#D9C5B2',
                                             display: 'flex',
@@ -395,7 +404,7 @@ export default function OnboardingPage() {
                                             justifyContent: 'center',
                                             animation: 'scaleIn 0.3s ease-out',
                                         }}>
-                                            <Check size={16} color="#14110F" strokeWidth={3} />
+                                            <Check size={12} color="#14110F" strokeWidth={3} />
                                         </div>
                                     )}
                                 </button>
@@ -403,7 +412,7 @@ export default function OnboardingPage() {
                         </div>
                     )}
 
-                    {/* Navigation Buttons */}
+                    {/* Navigation */}
                     <div style={{ display: 'flex', gap: '16px', marginTop: '40px' }}>
                         {step > 1 && (
                             <button
@@ -451,13 +460,12 @@ export default function OnboardingPage() {
                                 fontWeight: 700,
                                 boxShadow: canProceed() ? '0 20px 40px rgba(217,197,178,0.3)' : 'none',
                                 transition: 'all 0.3s ease',
-                                transform: canProceed() ? 'translateY(0)' : 'translateY(0)',
                             }}
                         >
                             {isLoading ? (
-                                <><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Loading...</>
+                                <><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> Setting up...</>
                             ) : step === 3 ? (
-                                <>Let&apos;s Go! <Sparkles size={20} /></>
+                                <>Start Discovering Trends <Sparkles size={20} /></>
                             ) : (
                                 <>Continue <ArrowRight size={20} /></>
                             )}
@@ -476,7 +484,6 @@ export default function OnboardingPage() {
                             border: 'none',
                             cursor: 'pointer',
                             fontSize: '14px',
-                            transition: 'color 0.3s ease',
                         }}
                     >
                         Skip for now
@@ -498,8 +505,8 @@ export default function OnboardingPage() {
                     to { opacity: 1; transform: scale(1); }
                 }
                 @keyframes pulse {
-                    0%, 100% { transform: scale(1); box-shadow: 0 20px 60px rgba(217,197,178,0.3); }
-                    50% { transform: scale(1.05); box-shadow: 0 25px 70px rgba(217,197,178,0.4); }
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
                 }
                 @keyframes float {
                     0%, 100% { transform: translateY(0px); }
