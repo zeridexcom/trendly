@@ -6,7 +6,6 @@ import {
     Users,
     TrendingUp,
     Youtube,
-    Zap,
     RefreshCw,
     Clock,
     CheckCircle,
@@ -14,14 +13,11 @@ import {
     Globe,
     Database,
     Activity,
-    ArrowUpRight,
-    ArrowDownRight,
     Loader2,
-    Play,
-    Search,
-    Eye
+    Zap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 interface CacheStatus {
     last_google_refresh: string | null
@@ -35,8 +31,6 @@ interface CacheStatus {
 interface Stats {
     totalUsers: number
     activeToday: number
-    totalSearches: number
-    apiCallsToday: number
     trendsCount: number
     videosCount: number
 }
@@ -56,14 +50,11 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<Stats>({
         totalUsers: 0,
         activeToday: 0,
-        totalSearches: 0,
-        apiCallsToday: 0,
         trendsCount: 0,
         videosCount: 0
     })
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
-    const [recentActivity, setRecentActivity] = useState<any[]>([])
 
     useEffect(() => {
         fetchDashboardData()
@@ -91,9 +82,7 @@ export default function AdminDashboard() {
                 setStats(prev => ({
                     ...prev,
                     totalUsers: statsData.totalUsers || 0,
-                    activeToday: statsData.activeToday || 0,
-                    totalSearches: statsData.totalSearches || 0,
-                    apiCallsToday: statsData.apiCallsToday || 0
+                    activeToday: statsData.activeToday || 0
                 }))
             }
         } catch (error) {
@@ -118,6 +107,11 @@ export default function AdminDashboard() {
                     last_youtube_refresh: new Date().toISOString(),
                     last_error: null
                 })
+                setStats(prev => ({
+                    ...prev,
+                    trendsCount: data.stats.googleTrendsCount,
+                    videosCount: data.stats.youtubeVideosCount
+                }))
             }
         } catch (error) {
             console.error('Cache refresh failed:', error)
@@ -142,35 +136,27 @@ export default function AdminDashboard() {
     const statCards = [
         {
             title: 'Total Users',
-            value: stats.totalUsers.toLocaleString(),
-            change: '+12%',
-            changeType: 'positive',
+            value: stats.totalUsers,
             icon: Users,
-            color: 'bg-blue-500'
+            color: 'bg-[#00F0FF]'
         },
         {
             title: 'Active Today',
-            value: stats.activeToday.toLocaleString(),
-            change: '+5%',
-            changeType: 'positive',
+            value: stats.activeToday,
             icon: Activity,
-            color: 'bg-green-500'
+            color: 'bg-[#B1F202]'
         },
         {
             title: 'Cached Trends',
-            value: stats.trendsCount.toLocaleString(),
-            change: 'Updated',
-            changeType: 'neutral',
+            value: stats.trendsCount,
             icon: TrendingUp,
-            color: 'bg-purple-500'
+            color: 'bg-[#FF90E8]'
         },
         {
             title: 'Cached Videos',
-            value: stats.videosCount.toLocaleString(),
-            change: 'Updated',
-            changeType: 'neutral',
+            value: stats.videosCount,
             icon: Youtube,
-            color: 'bg-red-500'
+            color: 'bg-[#FF4D4D]'
         }
     ]
 
@@ -185,11 +171,11 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black uppercase tracking-tight">Dashboard</h1>
-                    <p className="text-[#888] mt-1">Welcome back! Here's what's happening today.</p>
+                    <p className="text-black/60 mt-1 font-medium">Welcome back! Here's your real-time data.</p>
                 </div>
                 <button
                     onClick={fetchDashboardData}
-                    className="px-4 py-2 bg-[#1A1A1A] border-2 border-[#333] rounded-lg text-sm font-semibold hover:border-[#FFC900] transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-white border-2 border-black font-bold uppercase text-sm shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center gap-2"
                     disabled={loading}
                 >
                     <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
@@ -202,26 +188,16 @@ export default function AdminDashboard() {
                 {statCards.map((stat, index) => (
                     <div
                         key={stat.title}
-                        className="bg-[#111] border-2 border-[#222] rounded-xl p-5 hover:border-[#FFC900] transition-all group"
+                        className="bg-white border-4 border-black p-5 shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
                     >
                         <div className="flex items-start justify-between">
-                            <div className={cn("p-3 rounded-lg", stat.color)}>
-                                <stat.icon className="w-5 h-5 text-white" />
-                            </div>
-                            <div className={cn(
-                                "flex items-center gap-1 text-sm font-semibold",
-                                stat.changeType === 'positive' && "text-green-400",
-                                stat.changeType === 'negative' && "text-red-400",
-                                stat.changeType === 'neutral' && "text-[#888]"
-                            )}>
-                                {stat.changeType === 'positive' && <ArrowUpRight className="w-4 h-4" />}
-                                {stat.changeType === 'negative' && <ArrowDownRight className="w-4 h-4" />}
-                                {stat.change}
+                            <div className={cn("p-3 border-2 border-black", stat.color)}>
+                                <stat.icon className="w-5 h-5 text-black" />
                             </div>
                         </div>
                         <div className="mt-4">
-                            <p className="text-3xl font-black">{stat.value}</p>
-                            <p className="text-sm text-[#888] mt-1">{stat.title}</p>
+                            <p className="text-4xl font-black">{stat.value.toLocaleString()}</p>
+                            <p className="text-sm text-black/60 mt-1 font-bold uppercase">{stat.title}</p>
                         </div>
                     </div>
                 ))}
@@ -230,18 +206,18 @@ export default function AdminDashboard() {
             {/* Cache Control Panel */}
             <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Cache Status */}
-                <div className="bg-[#111] border-2 border-[#222] rounded-xl p-6">
+                <div className="bg-white border-4 border-black p-6 shadow-brutal">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-black uppercase flex items-center gap-2">
-                            <Database className="w-5 h-5 text-[#FFC900]" />
+                            <Database className="w-5 h-5" />
                             Cache Status
                         </h2>
                         <div className={cn(
-                            "px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1",
-                            cacheStatus?.refresh_status === 'success' && "bg-green-500/20 text-green-400",
-                            cacheStatus?.refresh_status === 'refreshing' && "bg-yellow-500/20 text-yellow-400",
-                            cacheStatus?.refresh_status === 'error' && "bg-red-500/20 text-red-400",
-                            !cacheStatus && "bg-[#333] text-[#888]"
+                            "px-3 py-1 border-2 border-black text-xs font-black uppercase flex items-center gap-1",
+                            cacheStatus?.refresh_status === 'success' && "bg-[#B1F202]",
+                            cacheStatus?.refresh_status === 'refreshing' && "bg-[#FFC900]",
+                            cacheStatus?.refresh_status === 'error' && "bg-[#FF4D4D]",
+                            !cacheStatus && "bg-gray-200"
                         )}>
                             {cacheStatus?.refresh_status === 'success' && <CheckCircle className="w-3 h-3" />}
                             {cacheStatus?.refresh_status === 'refreshing' && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -252,42 +228,42 @@ export default function AdminDashboard() {
 
                     <div className="space-y-4">
                         {/* Google Trends */}
-                        <div className="flex items-center justify-between p-4 bg-[#1A1A1A] rounded-lg border border-[#333]">
+                        <div className="flex items-center justify-between p-4 bg-[#F5F5F0] border-2 border-black">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                    <Globe className="w-5 h-5 text-blue-400" />
+                                <div className="w-10 h-10 bg-[#00F0FF] border-2 border-black flex items-center justify-center">
+                                    <Globe className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="font-bold">Google Trends</p>
-                                    <p className="text-sm text-[#888]">
+                                    <p className="font-black uppercase">Google Trends</p>
+                                    <p className="text-sm text-black/60 font-medium">
                                         {cacheStatus?.google_trends_count || 0} trends cached
                                     </p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm text-[#888]">Last updated</p>
-                                <p className="font-semibold text-[#FFC900]">
+                                <p className="text-sm text-black/60 font-medium">Last updated</p>
+                                <p className="font-black text-[#FF90E8]">
                                     {formatTimeAgo(cacheStatus?.last_google_refresh || null)}
                                 </p>
                             </div>
                         </div>
 
                         {/* YouTube Videos */}
-                        <div className="flex items-center justify-between p-4 bg-[#1A1A1A] rounded-lg border border-[#333]">
+                        <div className="flex items-center justify-between p-4 bg-[#F5F5F0] border-2 border-black">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                                    <Youtube className="w-5 h-5 text-red-400" />
+                                <div className="w-10 h-10 bg-[#FF4D4D] border-2 border-black flex items-center justify-center">
+                                    <Youtube className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
-                                    <p className="font-bold">YouTube Videos</p>
-                                    <p className="text-sm text-[#888]">
+                                    <p className="font-black uppercase">YouTube Videos</p>
+                                    <p className="text-sm text-black/60 font-medium">
                                         {cacheStatus?.youtube_videos_count || 0} videos cached
                                     </p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm text-[#888]">Last updated</p>
-                                <p className="font-semibold text-[#FFC900]">
+                                <p className="text-sm text-black/60 font-medium">Last updated</p>
+                                <p className="font-black text-[#FF90E8]">
                                     {formatTimeAgo(cacheStatus?.last_youtube_refresh || null)}
                                 </p>
                             </div>
@@ -295,8 +271,8 @@ export default function AdminDashboard() {
 
                         {/* Error Display */}
                         {cacheStatus?.last_error && (
-                            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
-                                <p className="text-sm text-red-400">
+                            <div className="p-4 bg-[#FF4D4D] border-2 border-black">
+                                <p className="text-sm text-white font-bold">
                                     <strong>Error:</strong> {cacheStatus.last_error}
                                 </p>
                             </div>
@@ -307,10 +283,10 @@ export default function AdminDashboard() {
                             onClick={refreshCache}
                             disabled={refreshing}
                             className={cn(
-                                "w-full py-3 rounded-lg font-black uppercase text-black flex items-center justify-center gap-2 transition-all",
+                                "w-full py-3 font-black uppercase flex items-center justify-center gap-2 transition-all border-4 border-black",
                                 refreshing
-                                    ? "bg-[#333] text-[#888] cursor-not-allowed"
-                                    : "bg-[#FFC900] hover:bg-[#FFD93D] shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+                                    ? "bg-gray-200 text-black/50 cursor-not-allowed"
+                                    : "bg-[#FFC900] hover:bg-[#FFD93D] shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
                             )}
                         >
                             {refreshing ? (
@@ -325,108 +301,56 @@ export default function AdminDashboard() {
                                 </>
                             )}
                         </button>
-                        <p className="text-xs text-[#666] text-center">
-                            This will fetch fresh data from SerpAPI & YouTube
+                        <p className="text-xs text-black/50 text-center font-medium">
+                            Fetches fresh data from SerpAPI & YouTube
                         </p>
                     </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-[#111] border-2 border-[#222] rounded-xl p-6">
+                <div className="bg-white border-4 border-black p-6 shadow-brutal">
                     <h2 className="text-xl font-black uppercase flex items-center gap-2 mb-6">
-                        <Zap className="w-5 h-5 text-[#FFC900]" />
+                        <Zap className="w-5 h-5" />
                         Quick Actions
                     </h2>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <button className="p-4 bg-[#1A1A1A] border-2 border-[#333] rounded-lg hover:border-[#FFC900] transition-all group">
+                        <Link href="/admin/trends" className="p-4 bg-[#F5F5F0] border-2 border-black hover:bg-[#FF90E8] transition-all group">
                             <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <TrendingUp className="w-6 h-6 text-purple-400" />
+                                <div className="w-12 h-12 bg-[#FF90E8] border-2 border-black flex items-center justify-center group-hover:bg-white transition-colors">
+                                    <TrendingUp className="w-6 h-6" />
                                 </div>
-                                <span className="font-semibold text-sm">Add Trend</span>
+                                <span className="font-black text-sm uppercase">Manage Trends</span>
                             </div>
-                        </button>
+                        </Link>
 
-                        <button className="p-4 bg-[#1A1A1A] border-2 border-[#333] rounded-lg hover:border-[#FFC900] transition-all group">
+                        <Link href="/admin/videos" className="p-4 bg-[#F5F5F0] border-2 border-black hover:bg-[#FF4D4D] hover:text-white transition-all group">
                             <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Youtube className="w-6 h-6 text-red-400" />
+                                <div className="w-12 h-12 bg-[#FF4D4D] border-2 border-black flex items-center justify-center">
+                                    <Youtube className="w-6 h-6 text-white" />
                                 </div>
-                                <span className="font-semibold text-sm">Feature Video</span>
+                                <span className="font-black text-sm uppercase">Manage Videos</span>
                             </div>
-                        </button>
+                        </Link>
 
-                        <button className="p-4 bg-[#1A1A1A] border-2 border-[#333] rounded-lg hover:border-[#FFC900] transition-all group">
+                        <Link href="/admin/users" className="p-4 bg-[#F5F5F0] border-2 border-black hover:bg-[#00F0FF] transition-all group">
                             <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Users className="w-6 h-6 text-blue-400" />
+                                <div className="w-12 h-12 bg-[#00F0FF] border-2 border-black flex items-center justify-center">
+                                    <Users className="w-6 h-6" />
                                 </div>
-                                <span className="font-semibold text-sm">View Users</span>
+                                <span className="font-black text-sm uppercase">View Users</span>
                             </div>
-                        </button>
+                        </Link>
 
-                        <button className="p-4 bg-[#1A1A1A] border-2 border-[#333] rounded-lg hover:border-[#FFC900] transition-all group">
+                        <Link href="/admin/api-usage" className="p-4 bg-[#F5F5F0] border-2 border-black hover:bg-[#FFC900] transition-all group">
                             <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Eye className="w-6 h-6 text-green-400" />
+                                <div className="w-12 h-12 bg-[#FFC900] border-2 border-black flex items-center justify-center">
+                                    <Zap className="w-6 h-6" />
                                 </div>
-                                <span className="font-semibold text-sm">View Logs</span>
+                                <span className="font-black text-sm uppercase">API Usage</span>
                             </div>
-                        </button>
+                        </Link>
                     </div>
-
-                    {/* API Usage */}
-                    <div className="mt-6 p-4 bg-[#1A1A1A] rounded-lg border border-[#333]">
-                        <div className="flex items-center justify-between mb-3">
-                            <p className="font-bold text-sm">API Usage Today</p>
-                            <span className="text-xs text-[#888]">10,000 limit</span>
-                        </div>
-                        <div className="h-2 bg-[#333] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-[#FFC900] to-[#FF6B00] rounded-full transition-all"
-                                style={{ width: `${Math.min((stats.apiCallsToday / 10000) * 100, 100)}%` }}
-                            />
-                        </div>
-                        <p className="text-xs text-[#888] mt-2">
-                            {stats.apiCallsToday.toLocaleString()} / 10,000 calls used
-                        </p>
-                    </div>
-                </div>
-            </motion.div>
-
-            {/* Recent Activity */}
-            <motion.div variants={item} className="bg-[#111] border-2 border-[#222] rounded-xl p-6">
-                <h2 className="text-xl font-black uppercase flex items-center gap-2 mb-6">
-                    <Activity className="w-5 h-5 text-[#FFC900]" />
-                    Recent Activity
-                </h2>
-
-                <div className="space-y-3">
-                    {[
-                        { action: 'Cache refreshed', time: '2 mins ago', type: 'system' },
-                        { action: 'New user registered', time: '15 mins ago', type: 'user' },
-                        { action: 'YouTube quota warning (80%)', time: '1 hour ago', type: 'warning' },
-                        { action: 'Admin login detected', time: '2 hours ago', type: 'admin' },
-                        { action: 'Cache refreshed', time: '6 hours ago', type: 'system' },
-                    ].map((activity, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-[#1A1A1A] rounded-lg border border-[#333] hover:border-[#444] transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={cn(
-                                    "w-2 h-2 rounded-full",
-                                    activity.type === 'system' && "bg-blue-400",
-                                    activity.type === 'user' && "bg-green-400",
-                                    activity.type === 'warning' && "bg-yellow-400",
-                                    activity.type === 'admin' && "bg-purple-400"
-                                )} />
-                                <span className="text-sm">{activity.action}</span>
-                            </div>
-                            <span className="text-xs text-[#888]">{activity.time}</span>
-                        </div>
-                    ))}
                 </div>
             </motion.div>
         </motion.div>

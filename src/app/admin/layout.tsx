@@ -1,14 +1,9 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-
-// Force dynamic rendering to prevent prerendering issues with Supabase
-export const runtime = 'nodejs'
-
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
     LayoutDashboard,
     Users,
@@ -17,18 +12,16 @@ import {
     BarChart3,
     Settings,
     Shield,
-    LogOut,
     Menu,
     X,
     RefreshCw,
     Bell,
-    Search,
     ChevronRight,
     Zap,
     Globe,
     Youtube,
-    FileText,
-    AlertCircle
+    AlertCircle,
+    Home
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -49,7 +42,6 @@ const sidebarItems = [
         items: [
             { name: 'Trends', href: '/admin/trends', icon: TrendingUp },
             { name: 'YouTube Videos', href: '/admin/videos', icon: Youtube },
-            { name: 'Custom Posts', href: '/admin/posts', icon: FileText },
         ]
     },
     {
@@ -78,7 +70,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const [adminName, setAdminName] = useState('')
 
     useEffect(() => {
-        // Check if user is admin
         const checkAdmin = async () => {
             try {
                 const response = await fetch('/api/admin/check')
@@ -101,10 +92,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     if (isAdmin === null) {
         return (
-            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+            <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <RefreshCw className="w-8 h-8 text-[#FFC900] animate-spin" />
-                    <p className="text-white font-mono">Verifying admin access...</p>
+                    <RefreshCw className="w-8 h-8 text-[#FF90E8] animate-spin" />
+                    <p className="text-black font-black uppercase">Verifying admin access...</p>
                 </div>
             </div>
         )
@@ -115,29 +106,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] text-white">
-            {/* Desktop Sidebar */}
+        <div className="min-h-screen bg-[#F5F5F0] text-black">
+            {/* Desktop Sidebar - Neo-Brutalist Style */}
             <aside
                 className={cn(
-                    "fixed left-0 top-0 z-40 h-screen bg-[#111111] border-r-2 border-[#FFC900] transition-all duration-300",
+                    "fixed left-0 top-0 z-40 h-screen bg-white border-r-4 border-black transition-all duration-300",
                     sidebarOpen ? "w-64" : "w-20"
                 )}
             >
                 {/* Logo */}
-                <div className="h-16 flex items-center justify-between px-4 border-b-2 border-[#222]">
+                <div className="h-16 flex items-center justify-between px-4 border-b-4 border-black bg-[#FFC900]">
                     <Link href="/admin" className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#FFC900] flex items-center justify-center">
-                            <Shield className="w-6 h-6 text-black" />
+                        <div className="w-10 h-10 bg-black flex items-center justify-center">
+                            <Shield className="w-6 h-6 text-[#FFC900]" />
                         </div>
                         {sidebarOpen && (
-                            <span className="font-black text-lg uppercase tracking-tight">
+                            <span className="font-black text-lg uppercase tracking-tight text-black">
                                 Admin
                             </span>
                         )}
                     </Link>
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="p-2 hover:bg-[#222] rounded-lg transition-colors"
+                        className="p-2 hover:bg-black/10 transition-colors"
                     >
                         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                     </button>
@@ -148,7 +139,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     {sidebarItems.map((section) => (
                         <div key={section.title}>
                             {sidebarOpen && (
-                                <p className="text-xs font-bold text-[#666] mb-2 tracking-widest">
+                                <p className="text-xs font-black text-black/50 mb-2 tracking-widest uppercase">
                                     {section.title}
                                 </p>
                             )}
@@ -160,10 +151,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                             <Link
                                                 href={item.href}
                                                 className={cn(
-                                                    "flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all",
+                                                    "flex items-center gap-3 px-3 py-2.5 font-bold uppercase text-sm transition-all border-2",
                                                     isActive
-                                                        ? "bg-[#FFC900] text-black"
-                                                        : "text-[#888] hover:text-white hover:bg-[#1A1A1A]"
+                                                        ? "bg-[#FF90E8] text-black border-black shadow-brutal"
+                                                        : "text-black/70 hover:text-black hover:bg-[#F5F5F0] border-transparent hover:border-black"
                                                 )}
                                             >
                                                 <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -178,15 +169,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </nav>
 
                 {/* User Section */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t-2 border-[#222] bg-[#111]">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t-4 border-black bg-white">
                     <div className={cn("flex items-center", sidebarOpen ? "gap-3" : "justify-center")}>
-                        <div className="w-10 h-10 bg-[#FFC900] rounded-full flex items-center justify-center font-black text-black">
+                        <div className="w-10 h-10 bg-[#FF90E8] border-2 border-black flex items-center justify-center font-black text-black">
                             {adminName.charAt(0).toUpperCase()}
                         </div>
                         {sidebarOpen && (
                             <div className="flex-1">
-                                <p className="font-bold text-sm">{adminName}</p>
-                                <p className="text-xs text-[#666]">Super Admin</p>
+                                <p className="font-black text-sm uppercase">{adminName}</p>
+                                <p className="text-xs text-black/50 font-bold">Super Admin</p>
                             </div>
                         )}
                     </div>
@@ -201,27 +192,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 )}
             >
                 {/* Top Header */}
-                <header className="h-16 bg-[#111] border-b-2 border-[#222] flex items-center justify-between px-6 sticky top-0 z-30">
+                <header className="h-16 bg-white border-b-4 border-black flex items-center justify-between px-6 sticky top-0 z-30">
                     <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className="bg-[#1A1A1A] border-2 border-[#333] rounded-lg pl-10 pr-4 py-2 text-sm focus:border-[#FFC900] focus:outline-none w-64"
-                            />
-                        </div>
+                        <h2 className="font-black uppercase text-lg">
+                            {pathname === '/admin' && 'Dashboard'}
+                            {pathname === '/admin/analytics' && 'Analytics'}
+                            {pathname === '/admin/trends' && 'Trends'}
+                            {pathname === '/admin/videos' && 'YouTube Videos'}
+                            {pathname === '/admin/users' && 'Users'}
+                            {pathname === '/admin/cache' && 'Cache Control'}
+                            {pathname === '/admin/api-usage' && 'API Usage'}
+                            {pathname === '/admin/logs' && 'Logs'}
+                            {pathname === '/admin/settings' && 'Settings'}
+                        </h2>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button className="p-2 bg-[#1A1A1A] border-2 border-[#333] rounded-lg hover:border-[#FFC900] transition-colors relative">
+                        <button className="p-2 bg-white border-2 border-black hover:bg-[#FFC900] transition-colors relative shadow-brutal-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                             <Bell className="w-5 h-5" />
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center">3</span>
                         </button>
                         <Link
                             href="/dashboard"
-                            className="px-4 py-2 bg-[#1A1A1A] border-2 border-[#333] rounded-lg text-sm font-semibold hover:border-[#FFC900] transition-colors flex items-center gap-2"
+                            className="px-4 py-2 bg-[#FFC900] border-2 border-black font-black uppercase text-sm shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center gap-2"
                         >
-                            <Globe className="w-4 h-4" />
+                            <Home className="w-4 h-4" />
                             View Site
                         </Link>
                     </div>
