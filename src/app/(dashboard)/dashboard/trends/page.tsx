@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     TrendingUp, Play, Eye, Heart, MessageCircle, Clock, ExternalLink,
     Sparkles, Search, RefreshCw, Lightbulb, Hash, Target, Zap, Youtube,
-    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3, Globe
+    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3, Globe, Loader2, RotateCcw
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -122,6 +122,13 @@ export default function TrendsPage() {
     const [error, setError] = useState<string | null>(null)
     const [lastFetched, setLastFetched] = useState<string>('')
 
+    // Pagination state for cached videos
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalVideos, setTotalVideos] = useState(0)
+    const [hasMore, setHasMore] = useState(false)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [userNiche, setUserNiche] = useState('TECH')
+
     // YouTube video analysis modal state
     const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
     const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysis | null>(null)
@@ -138,20 +145,69 @@ export default function TrendsPage() {
     const [analyzingGoogleTrend, setAnalyzingGoogleTrend] = useState(false)
 
     useEffect(() => {
-        fetchTrending()
+        // Get user's niche from preferences
+        getUserNiche()
+        fetchTrending(true) // true = fresh start with random offset
         fetchGoogleTrends()
     }, [])
 
-    const fetchTrending = async () => {
-        setLoading(true)
-        setError(null)
+    const getUserNiche = async () => {
         try {
-            const response = await fetch('/api/youtube/trending?region=IN&limit=20')
+            const response = await fetch('/api/user/preferences')
+            const data = await response.json()
+            if (data.industry) {
+                setUserNiche(data.industry.toUpperCase())
+            }
+        } catch (e) {
+            console.log('Using default niche')
+        }
+    }
+
+    const fetchTrending = async (freshStart: boolean = false) => {
+        if (freshStart) {
+            setLoading(true)
+            setVideos([])
+            setCurrentPage(1)
+        }
+        setError(null)
+
+        try {
+            // Use cache API with random page for variety
+            const page = freshStart ? Math.floor(Math.random() * 3) + 1 : currentPage
+            const response = await fetch(`/api/youtube/cache?niche=${userNiche}&page=${page}&limit=20`)
             const data = await response.json()
 
             if (data.success) {
-                setVideos(data.data.videos)
-                setLastFetched(new Date(data.data.fetchedAt).toLocaleTimeString())
+                const formattedVideos = data.videos.map((v: any) => ({
+                    id: v.id,
+                    title: v.title,
+                    description: v.description || '',
+                    thumbnail: v.thumbnail,
+                    channelTitle: v.channelTitle,
+                    publishedAt: v.publishedAt,
+                    viewCount: parseInt(v.viewCount || '0'),
+                    likeCount: parseInt(v.likeCount || '0'),
+                    commentCount: parseInt(v.commentCount || '0'),
+                    formattedViews: v.formattedViews || '0',
+                    formattedLikes: v.formattedLikes || '0',
+                    formattedComments: '0',
+                    formattedDuration: '',
+                    engagementRate: '',
+                    categoryName: userNiche,
+                    tags: v.tags || [],
+                    url: `https://youtube.com/watch?v=${v.id}`
+                }))
+
+                if (freshStart) {
+                    setVideos(formattedVideos)
+                } else {
+                    setVideos(prev => [...prev, ...formattedVideos])
+                }
+
+                setTotalVideos(data.pagination?.totalVideos || 0)
+                setHasMore(data.pagination?.hasMore || false)
+                setCurrentPage(data.pagination?.page || 1)
+                setLastFetched(new Date().toLocaleTimeString())
                 setSearchQuery('')
                 setAiAnalysis(null)
             } else {
@@ -161,7 +217,52 @@ export default function TrendsPage() {
             setError(err.message || 'Failed to fetch trends')
         } finally {
             setLoading(false)
+            setLoadingMore(false)
         }
+    }
+
+    const loadMoreVideos = async () => {
+        setLoadingMore(true)
+        const nextPage = currentPage + 1
+        setCurrentPage(nextPage)
+
+        try {
+            const response = await fetch(`/api/youtube/cache?niche=${userNiche}&page=${nextPage}&limit=20`)
+            const data = await response.json()
+
+            if (data.success) {
+                const formattedVideos = data.videos.map((v: any) => ({
+                    id: v.id,
+                    title: v.title,
+                    description: v.description || '',
+                    thumbnail: v.thumbnail,
+                    channelTitle: v.channelTitle,
+                    publishedAt: v.publishedAt,
+                    viewCount: parseInt(v.viewCount || '0'),
+                    likeCount: parseInt(v.likeCount || '0'),
+                    commentCount: parseInt(v.commentCount || '0'),
+                    formattedViews: v.formattedViews || '0',
+                    formattedLikes: v.formattedLikes || '0',
+                    formattedComments: '0',
+                    formattedDuration: '',
+                    engagementRate: '',
+                    categoryName: userNiche,
+                    tags: v.tags || [],
+                    url: `https://youtube.com/watch?v=${v.id}`
+                }))
+
+                setVideos(prev => [...prev, ...formattedVideos])
+                setHasMore(data.pagination?.hasMore || false)
+            }
+        } catch (err) {
+            console.error('Failed to load more:', err)
+        } finally {
+            setLoadingMore(false)
+        }
+    }
+
+    const refreshVideos = () => {
+        fetchTrending(true)
     }
 
     const fetchGoogleTrends = async () => {
@@ -332,7 +433,7 @@ export default function TrendsPage() {
 
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => { fetchTrending(); fetchGoogleTrends(); }}
+                        onClick={() => { refreshVideos(); fetchGoogleTrends(); }}
                         disabled={loading || loadingGoogle}
                         className="p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
                     >
@@ -515,6 +616,50 @@ export default function TrendsPage() {
                                     </div>
                                 </motion.div>
                             ))}
+                        </motion.div>
+                    )}
+
+                    {/* Load More Button */}
+                    {!loading && videos.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="mt-8 flex flex-col items-center gap-4"
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm font-bold text-gray-500">
+                                    Showing {videos.length} of {totalVideos} videos
+                                </span>
+                            </div>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={refreshVideos}
+                                    disabled={loading}
+                                    className="px-6 py-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black uppercase text-sm flex items-center gap-2"
+                                >
+                                    <RotateCcw className={cn("w-5 h-5", loading && "animate-spin")} />
+                                    Refresh
+                                </button>
+                                {hasMore && (
+                                    <button
+                                        onClick={loadMoreVideos}
+                                        disabled={loadingMore}
+                                        className="px-8 py-3 bg-[#B1F202] border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black uppercase text-sm flex items-center gap-2"
+                                    >
+                                        {loadingMore ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Loading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Load More Videos
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </motion.div>
                     )}
 
