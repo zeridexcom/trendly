@@ -19,9 +19,9 @@ import {
     Clock,
     TrendingUp,
     Zap,
-    ArrowRight
+    Rocket
 } from 'lucide-react'
-import Link from 'next/link'
+import ContentWizard from './ContentWizard'
 
 interface VideoAnalysis {
     whyPopular: string
@@ -61,6 +61,7 @@ export default function VideoDetailModal({ video, userIndustry, isOpen, onClose 
     const [analysis, setAnalysis] = useState<VideoAnalysis | null>(null)
     const [loading, setLoading] = useState(false)
     const [copied, setCopied] = useState<string | null>(null)
+    const [wizardOpen, setWizardOpen] = useState(false)
 
     useEffect(() => {
         if (isOpen && video && !analysis) {
@@ -317,18 +318,33 @@ export default function VideoDetailModal({ video, userIndustry, isOpen, onClose 
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div>
                                     <h4 className="font-black text-black text-lg">Ready to Create?</h4>
-                                    <p className="text-black/70 text-sm">Turn this inspiration into your own viral content</p>
+                                    <p className="text-black/70 text-sm">Launch the wizard to create your own viral content</p>
                                 </div>
-                                <Link
-                                    href={`/dashboard/scripts?topic=${encodeURIComponent(video.title)}&idea=${encodeURIComponent(analysis?.contentIdea || '')}`}
+                                <button
+                                    onClick={() => setWizardOpen(true)}
                                     className="px-6 py-3 bg-black text-white font-black rounded-xl hover:bg-gray-800 transition-all shadow-[4px_4px_0px_0px_#FFC900] hover:shadow-none hover:translate-x-1 hover:translate-y-1 flex items-center gap-2"
-                                    onClick={onClose}
                                 >
-                                    Create Your Own Content
-                                    <ArrowRight className="w-5 h-5" />
-                                </Link>
+                                    <Rocket className="w-5 h-5" />
+                                    🚀 Create Content
+                                </button>
                             </div>
                         </div>
+
+                        {/* Content Wizard */}
+                        <ContentWizard
+                            video={{
+                                id: video.id,
+                                title: video.title,
+                                thumbnail: video.thumbnail,
+                                channelTitle: video.channelTitle,
+                                whyViral: analysis?.whyPopular,
+                                hook: analysis?.hook,
+                                contentIdea: analysis?.contentIdea
+                            }}
+                            userIndustry={userIndustry}
+                            isOpen={wizardOpen}
+                            onClose={() => setWizardOpen(false)}
+                        />
                     </div>
                 </motion.div>
             </motion.div>
