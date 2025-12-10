@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
 
             for (const niche of niches) {
                 console.log(`Caching ${niche}...`)
-                results[niche] = await cacheNicheVideos(niche, 100) // 100 per niche for quick cache
+                results[niche] = await cacheNicheVideos(niche, 1000) // 1000 per niche
                 await new Promise(r => setTimeout(r, 500)) // Delay between niches
             }
 
