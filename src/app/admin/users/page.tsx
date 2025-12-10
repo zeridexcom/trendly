@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     Users,
     Search,
-    Filter,
-    MoreVertical,
     Mail,
     Calendar,
     MapPin,
@@ -19,9 +17,8 @@ import {
     ChevronRight,
     X,
     Shield,
-    User,
     TrendingUp,
-    AlertTriangle
+    Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,11 +29,11 @@ interface UserData {
     avatar: string
     industry: string
     location: string
-    createdAt: string
-    lastActive: string
+    created_at: string
+    updated_at: string
     status: 'active' | 'banned' | 'inactive'
-    totalSearches: number
-    isAdmin: boolean
+    total_searches: number
+    is_admin: boolean
 }
 
 const container = {
@@ -49,12 +46,14 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
+const INDUSTRIES = ['ALL', 'TECH', 'HEALTH', 'FITNESS', 'GAMING', 'ENTERTAINMENT', 'FINANCE', 'FOOD', 'TRAVEL', 'EDUCATION', 'BEAUTY']
+
 export default function UsersPage() {
     const [users, setUsers] = useState<UserData[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'banned' | 'inactive'>('all')
-    const [filterIndustry, setFilterIndustry] = useState<string>('all')
+    const [filterIndustry, setFilterIndustry] = useState<string>('ALL')
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
     const [modalOpen, setModalOpen] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
@@ -70,32 +69,15 @@ export default function UsersPage() {
             const response = await fetch(`/api/admin/users?page=${currentPage}&status=${filterStatus}&industry=${filterIndustry}`)
             const data = await response.json()
             if (data.success) {
-                setUsers(data.users)
+                setUsers(data.users || [])
                 setTotalPages(data.totalPages || 1)
             }
         } catch (error) {
             console.error('Failed to fetch users:', error)
-            // Use mock data for demo
-            setUsers(generateMockUsers())
+            setUsers([])
         } finally {
             setLoading(false)
         }
-    }
-
-    const generateMockUsers = (): UserData[] => {
-        return Array.from({ length: 10 }, (_, i) => ({
-            id: `user-${i + 1}`,
-            email: `user${i + 1}@example.com`,
-            name: ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'Chris Brown'][i % 5],
-            avatar: ['J', 'J', 'M', 'S', 'C'][i % 5],
-            industry: ['TECH', 'HEALTH', 'GAMING', 'FINANCE', 'ENTERTAINMENT'][i % 5],
-            location: ['IN', 'US', 'UK', 'CA', 'AU'][i % 5],
-            createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-            lastActive: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            status: ['active', 'active', 'active', 'inactive', 'banned'][i % 5] as any,
-            totalSearches: Math.floor(Math.random() * 500),
-            isAdmin: i === 0
-        }))
     }
 
     const toggleBanUser = async (userId: string, currentStatus: string) => {
@@ -117,25 +99,27 @@ export default function UsersPage() {
             await fetch('/api/admin/users', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, isAdmin: true })
+                body: JSON.stringify({ userId, is_admin: true })
             })
-            setUsers(users.map(u => u.id === userId ? { ...u, isAdmin: true } : u))
+            setUsers(users.map(u => u.id === userId ? { ...u, is_admin: true } : u))
         } catch (error) {
             console.error('Failed to make admin:', error)
         }
     }
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesSearch = (user.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (user.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
         return matchesSearch
     })
 
     const formatDate = (dateString: string) => {
+        if (!dateString) return 'N/A'
         return new Date(dateString).toLocaleDateString('en-IN', { dateStyle: 'medium' })
     }
 
     const formatTimeAgo = (dateString: string) => {
+        if (!dateString) return 'N/A'
         const date = new Date(dateString)
         const now = new Date()
         const diffMs = now.getTime() - date.getTime()
@@ -159,16 +143,16 @@ export default function UsersPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-                        <Users className="w-8 h-8 text-[#FFC900]" />
+                        <Users className="w-8 h-8" />
                         Users
                     </h1>
-                    <p className="text-[#888] mt-1">Manage all registered users</p>
+                    <p className="text-black/60 mt-1 font-medium">Manage all registered users</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-sm text-[#888]">{filteredUsers.length} users</span>
+                    <span className="text-sm font-bold">{filteredUsers.length} users</span>
                     <button
                         onClick={fetchUsers}
-                        className="px-4 py-2 bg-[#1A1A1A] border-2 border-[#333] rounded-lg text-sm font-semibold hover:border-[#FFC900] transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-white border-2 border-black font-bold uppercase text-sm shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center gap-2"
                         disabled={loading}
                     >
                         <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
@@ -179,23 +163,21 @@ export default function UsersPage() {
 
             {/* Filters */}
             <motion.div variants={item} className="flex flex-wrap gap-4">
-                {/* Search */}
                 <div className="relative flex-1 min-w-[250px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40" />
                     <input
                         type="text"
                         placeholder="Search by name or email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-[#111] border-2 border-[#333] rounded-lg pl-10 pr-4 py-2.5 focus:border-[#FFC900] focus:outline-none"
+                        className="w-full bg-white border-2 border-black pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-[#FFC900] focus:outline-none"
                     />
                 </div>
 
-                {/* Status Filter */}
                 <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value as any)}
-                    className="bg-[#111] border-2 border-[#333] rounded-lg px-4 py-2.5 focus:border-[#FFC900] focus:outline-none min-w-[150px]"
+                    className="bg-white border-2 border-black px-4 py-2.5 font-bold focus:ring-2 focus:ring-[#FFC900] focus:outline-none min-w-[150px]"
                 >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -203,102 +185,99 @@ export default function UsersPage() {
                     <option value="banned">Banned</option>
                 </select>
 
-                {/* Industry Filter */}
                 <select
                     value={filterIndustry}
                     onChange={(e) => setFilterIndustry(e.target.value)}
-                    className="bg-[#111] border-2 border-[#333] rounded-lg px-4 py-2.5 focus:border-[#FFC900] focus:outline-none min-w-[150px]"
+                    className="bg-white border-2 border-black px-4 py-2.5 font-bold focus:ring-2 focus:ring-[#FFC900] focus:outline-none min-w-[150px]"
                 >
-                    <option value="all">All Industries</option>
-                    <option value="TECH">Tech</option>
-                    <option value="HEALTH">Health</option>
-                    <option value="GAMING">Gaming</option>
-                    <option value="FINANCE">Finance</option>
-                    <option value="ENTERTAINMENT">Entertainment</option>
+                    {INDUSTRIES.map(ind => (
+                        <option key={ind} value={ind}>{ind}</option>
+                    ))}
                 </select>
             </motion.div>
 
             {/* Users Table */}
-            <motion.div variants={item} className="bg-[#111] border-2 border-[#222] rounded-xl overflow-hidden">
+            <motion.div variants={item} className="bg-white border-4 border-black shadow-brutal overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="bg-[#0A0A0A] border-b border-[#333]">
-                                <th className="text-left py-4 px-4 text-sm font-bold text-[#888] uppercase">User</th>
-                                <th className="text-left py-4 px-4 text-sm font-bold text-[#888] uppercase">Industry</th>
-                                <th className="text-left py-4 px-4 text-sm font-bold text-[#888] uppercase">Status</th>
-                                <th className="text-left py-4 px-4 text-sm font-bold text-[#888] uppercase">Searches</th>
-                                <th className="text-left py-4 px-4 text-sm font-bold text-[#888] uppercase">Last Active</th>
-                                <th className="text-right py-4 px-4 text-sm font-bold text-[#888] uppercase">Actions</th>
+                            <tr className="bg-[#FFC900] border-b-4 border-black">
+                                <th className="text-left py-4 px-4 text-sm font-black uppercase">User</th>
+                                <th className="text-left py-4 px-4 text-sm font-black uppercase">Industry</th>
+                                <th className="text-left py-4 px-4 text-sm font-black uppercase">Status</th>
+                                <th className="text-left py-4 px-4 text-sm font-black uppercase">Searches</th>
+                                <th className="text-left py-4 px-4 text-sm font-black uppercase">Last Active</th>
+                                <th className="text-right py-4 px-4 text-sm font-black uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
                                     <td colSpan={6} className="text-center py-12">
-                                        <RefreshCw className="w-8 h-8 text-[#FFC900] animate-spin mx-auto" />
-                                        <p className="text-[#888] mt-2">Loading users...</p>
+                                        <Loader2 className="w-8 h-8 text-[#FF90E8] animate-spin mx-auto" />
+                                        <p className="text-black/60 mt-2 font-medium">Loading users...</p>
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="text-center py-12">
-                                        <Users className="w-8 h-8 text-[#666] mx-auto" />
-                                        <p className="text-[#888] mt-2">No users found</p>
+                                        <Users className="w-12 h-12 text-black/30 mx-auto" />
+                                        <p className="text-black/60 mt-2 font-medium">No users found</p>
+                                        <p className="text-black/40 text-sm">Users will appear here when they sign up</p>
                                     </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map((user) => (
                                     <tr
                                         key={user.id}
-                                        className="border-b border-[#222] hover:bg-[#1A1A1A] transition-colors"
+                                        className="border-b-2 border-black/10 hover:bg-[#F5F5F0] transition-colors"
                                     >
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={cn(
-                                                    "w-10 h-10 rounded-full flex items-center justify-center font-bold text-black",
-                                                    user.isAdmin ? "bg-[#FFC900]" : "bg-[#333] text-white"
+                                                    "w-10 h-10 border-2 border-black flex items-center justify-center font-black text-black",
+                                                    user.is_admin ? "bg-[#FFC900]" : "bg-[#FF90E8]"
                                                 )}>
-                                                    {user.avatar}
+                                                    {user.avatar || user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || '?'}
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="font-bold">{user.name}</p>
-                                                        {user.isAdmin && (
-                                                            <span className="px-2 py-0.5 bg-[#FFC900]/20 text-[#FFC900] text-xs font-bold rounded">
+                                                        <p className="font-black">{user.name || 'No name'}</p>
+                                                        {user.is_admin && (
+                                                            <span className="px-2 py-0.5 bg-[#FFC900] text-black text-xs font-black border border-black">
                                                                 ADMIN
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm text-[#888]">{user.email}</p>
+                                                    <p className="text-sm text-black/60">{user.email}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <span className="px-2 py-1 bg-[#333] rounded text-sm font-semibold">
-                                                {user.industry}
+                                            <span className="px-2 py-1 bg-[#00F0FF] border border-black text-sm font-bold uppercase">
+                                                {user.industry || 'N/A'}
                                             </span>
                                         </td>
                                         <td className="py-4 px-4">
                                             <span className={cn(
-                                                "px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-1 w-fit",
-                                                user.status === 'active' && "bg-green-500/20 text-green-400",
-                                                user.status === 'inactive' && "bg-yellow-500/20 text-yellow-400",
-                                                user.status === 'banned' && "bg-red-500/20 text-red-400"
+                                                "px-3 py-1 border border-black text-xs font-black uppercase flex items-center gap-1 w-fit",
+                                                user.status === 'active' && "bg-[#B1F202]",
+                                                user.status === 'inactive' && "bg-gray-200",
+                                                user.status === 'banned' && "bg-[#FF4D4D] text-white"
                                             )}>
                                                 {user.status === 'active' && <CheckCircle className="w-3 h-3" />}
                                                 {user.status === 'banned' && <Ban className="w-3 h-3" />}
-                                                {user.status}
+                                                {user.status || 'active'}
                                             </span>
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-2">
-                                                <TrendingUp className="w-4 h-4 text-[#888]" />
-                                                <span>{user.totalSearches}</span>
+                                                <TrendingUp className="w-4 h-4 text-black/40" />
+                                                <span className="font-bold">{user.total_searches || 0}</span>
                                             </div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <span className="text-sm text-[#888]">{formatTimeAgo(user.lastActive)}</span>
+                                            <span className="text-sm text-black/60 font-medium">{formatTimeAgo(user.updated_at)}</span>
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="flex items-center justify-end gap-2">
@@ -307,7 +286,7 @@ export default function UsersPage() {
                                                         setSelectedUser(user)
                                                         setModalOpen(true)
                                                     }}
-                                                    className="p-2 hover:bg-[#333] rounded-lg transition-colors"
+                                                    className="p-2 bg-white border border-black hover:bg-[#F5F5F0] transition-colors"
                                                     title="View Details"
                                                 >
                                                     <Eye className="w-4 h-4" />
@@ -315,19 +294,19 @@ export default function UsersPage() {
                                                 <button
                                                     onClick={() => toggleBanUser(user.id, user.status)}
                                                     className={cn(
-                                                        "p-2 rounded-lg transition-colors",
+                                                        "p-2 border border-black transition-colors",
                                                         user.status === 'banned'
-                                                            ? "hover:bg-green-500/20 text-green-400"
-                                                            : "hover:bg-red-500/20 text-red-400"
+                                                            ? "bg-[#B1F202] hover:bg-[#9ED700]"
+                                                            : "bg-[#FF4D4D] text-white hover:bg-[#FF3333]"
                                                     )}
                                                     title={user.status === 'banned' ? 'Unban User' : 'Ban User'}
                                                 >
                                                     <Ban className="w-4 h-4" />
                                                 </button>
-                                                {!user.isAdmin && (
+                                                {!user.is_admin && (
                                                     <button
                                                         onClick={() => makeAdmin(user.id)}
-                                                        className="p-2 hover:bg-[#FFC900]/20 text-[#FFC900] rounded-lg transition-colors"
+                                                        className="p-2 bg-[#FFC900] border border-black hover:bg-[#FFD93D] transition-colors"
                                                         title="Make Admin"
                                                     >
                                                         <Shield className="w-4 h-4" />
@@ -343,22 +322,22 @@ export default function UsersPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between p-4 border-t border-[#333]">
-                    <p className="text-sm text-[#888]">
+                <div className="flex items-center justify-between p-4 border-t-4 border-black bg-[#F5F5F0]">
+                    <p className="text-sm font-bold">
                         Page {currentPage} of {totalPages}
                     </p>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 bg-[#1A1A1A] border border-[#333] rounded-lg hover:border-[#FFC900] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 bg-white border-2 border-black hover:bg-[#FFC900] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="p-2 bg-[#1A1A1A] border border-[#333] rounded-lg hover:border-[#FFC900] disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 bg-white border-2 border-black hover:bg-[#FFC900] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -373,21 +352,21 @@ export default function UsersPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
                         onClick={() => setModalOpen(false)}
                     >
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[#111] border-2 border-[#333] rounded-xl w-full max-w-lg p-6"
+                            className="bg-white border-4 border-black w-full max-w-lg p-6 shadow-brutal-lg"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-black">User Details</h3>
+                                <h3 className="text-xl font-black uppercase">User Details</h3>
                                 <button
                                     onClick={() => setModalOpen(false)}
-                                    className="p-2 hover:bg-[#333] rounded-lg"
+                                    className="p-2 hover:bg-[#F5F5F0] border border-black"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -396,45 +375,45 @@ export default function UsersPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4">
                                     <div className={cn(
-                                        "w-16 h-16 rounded-full flex items-center justify-center font-black text-2xl",
-                                        selectedUser.isAdmin ? "bg-[#FFC900] text-black" : "bg-[#333] text-white"
+                                        "w-16 h-16 border-2 border-black flex items-center justify-center font-black text-2xl",
+                                        selectedUser.is_admin ? "bg-[#FFC900]" : "bg-[#FF90E8]"
                                     )}>
-                                        {selectedUser.avatar}
+                                        {selectedUser.avatar || selectedUser.name?.charAt(0)?.toUpperCase() || '?'}
                                     </div>
                                     <div>
-                                        <h4 className="text-xl font-bold">{selectedUser.name}</h4>
-                                        <p className="text-[#888]">{selectedUser.email}</p>
+                                        <h4 className="text-xl font-black">{selectedUser.name || 'No name'}</h4>
+                                        <p className="text-black/60">{selectedUser.email}</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-[#1A1A1A] rounded-lg">
-                                        <div className="flex items-center gap-2 text-[#888] mb-1">
+                                    <div className="p-4 bg-[#F5F5F0] border-2 border-black">
+                                        <div className="flex items-center gap-2 text-black/60 mb-1">
                                             <Briefcase className="w-4 h-4" />
-                                            <span className="text-sm">Industry</span>
+                                            <span className="text-sm font-bold uppercase">Industry</span>
                                         </div>
-                                        <p className="font-bold">{selectedUser.industry}</p>
+                                        <p className="font-black">{selectedUser.industry || 'N/A'}</p>
                                     </div>
-                                    <div className="p-4 bg-[#1A1A1A] rounded-lg">
-                                        <div className="flex items-center gap-2 text-[#888] mb-1">
+                                    <div className="p-4 bg-[#F5F5F0] border-2 border-black">
+                                        <div className="flex items-center gap-2 text-black/60 mb-1">
                                             <MapPin className="w-4 h-4" />
-                                            <span className="text-sm">Location</span>
+                                            <span className="text-sm font-bold uppercase">Location</span>
                                         </div>
-                                        <p className="font-bold">{selectedUser.location}</p>
+                                        <p className="font-black">{selectedUser.location || 'N/A'}</p>
                                     </div>
-                                    <div className="p-4 bg-[#1A1A1A] rounded-lg">
-                                        <div className="flex items-center gap-2 text-[#888] mb-1">
+                                    <div className="p-4 bg-[#F5F5F0] border-2 border-black">
+                                        <div className="flex items-center gap-2 text-black/60 mb-1">
                                             <Calendar className="w-4 h-4" />
-                                            <span className="text-sm">Joined</span>
+                                            <span className="text-sm font-bold uppercase">Joined</span>
                                         </div>
-                                        <p className="font-bold">{formatDate(selectedUser.createdAt)}</p>
+                                        <p className="font-black">{formatDate(selectedUser.created_at)}</p>
                                     </div>
-                                    <div className="p-4 bg-[#1A1A1A] rounded-lg">
-                                        <div className="flex items-center gap-2 text-[#888] mb-1">
+                                    <div className="p-4 bg-[#F5F5F0] border-2 border-black">
+                                        <div className="flex items-center gap-2 text-black/60 mb-1">
                                             <TrendingUp className="w-4 h-4" />
-                                            <span className="text-sm">Total Searches</span>
+                                            <span className="text-sm font-bold uppercase">Searches</span>
                                         </div>
-                                        <p className="font-bold">{selectedUser.totalSearches}</p>
+                                        <p className="font-black">{selectedUser.total_searches || 0}</p>
                                     </div>
                                 </div>
 
@@ -442,19 +421,19 @@ export default function UsersPage() {
                                     <button
                                         onClick={() => toggleBanUser(selectedUser.id, selectedUser.status)}
                                         className={cn(
-                                            "flex-1 py-3 rounded-lg font-bold flex items-center justify-center gap-2",
+                                            "flex-1 py-3 font-black uppercase flex items-center justify-center gap-2 border-2 border-black",
                                             selectedUser.status === 'banned'
-                                                ? "bg-green-500 text-white"
-                                                : "bg-red-500 text-white"
+                                                ? "bg-[#B1F202]"
+                                                : "bg-[#FF4D4D] text-white"
                                         )}
                                     >
                                         <Ban className="w-5 h-5" />
                                         {selectedUser.status === 'banned' ? 'Unban User' : 'Ban User'}
                                     </button>
-                                    {!selectedUser.isAdmin && (
+                                    {!selectedUser.is_admin && (
                                         <button
                                             onClick={() => makeAdmin(selectedUser.id)}
-                                            className="flex-1 py-3 bg-[#FFC900] text-black rounded-lg font-bold flex items-center justify-center gap-2"
+                                            className="flex-1 py-3 bg-[#FFC900] border-2 border-black font-black uppercase flex items-center justify-center gap-2"
                                         >
                                             <Shield className="w-5 h-5" />
                                             Make Admin

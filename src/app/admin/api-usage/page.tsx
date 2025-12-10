@@ -10,10 +10,9 @@ import {
     CheckCircle,
     RefreshCw,
     Key,
-    Shield,
-    Activity,
     Play,
-    XCircle
+    XCircle,
+    Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -87,7 +86,6 @@ export default function ApiUsagePage() {
                     ? `✅ Working! Found ${data.resultsCount} videos in ${data.duration}`
                     : `❌ Error: ${data.error}`
             })
-            // Refresh status after test
             fetchYouTubeStatus()
         } catch (error: any) {
             setTestResult({
@@ -99,19 +97,6 @@ export default function ApiUsagePage() {
         }
     }
 
-    const formatLastUsed = (date: string | null) => {
-        if (!date) return 'Never'
-        const d = new Date(date)
-        const now = new Date()
-        const diff = now.getTime() - d.getTime()
-        const mins = Math.floor(diff / 60000)
-        if (mins < 1) return 'Just now'
-        if (mins < 60) return `${mins} min ago`
-        const hours = Math.floor(mins / 60)
-        if (hours < 24) return `${hours} hr ago`
-        return d.toLocaleDateString()
-    }
-
     return (
         <motion.div
             variants={container}
@@ -119,223 +104,191 @@ export default function ApiUsagePage() {
             animate="show"
             className="space-y-6"
         >
-            {/* Page Header */}
+            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-                        <Zap className="w-8 h-8 text-[#FFC900]" />
+                        <Zap className="w-8 h-8" />
                         API Usage
                     </h1>
-                    <p className="text-[#888] mt-1">Monitor your API quotas and multi-key rotation</p>
+                    <p className="text-black/60 mt-1 font-medium">Monitor YouTube API key rotation and usage</p>
                 </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={testYouTubeApi}
-                        disabled={testing}
-                        className="px-4 py-2 bg-red-500/20 border-2 border-red-500/50 rounded-lg text-sm font-semibold hover:bg-red-500/30 transition-colors flex items-center gap-2 text-red-400"
-                    >
-                        {testing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                        Test YouTube API
-                    </button>
-                    <button
-                        onClick={fetchYouTubeStatus}
-                        disabled={loading}
-                        className="px-4 py-2 bg-[#1A1A1A] border-2 border-[#333] rounded-lg text-sm font-semibold hover:border-[#FFC900] transition-colors flex items-center gap-2"
-                    >
-                        <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-                        Refresh
-                    </button>
-                </div>
+                <button
+                    onClick={fetchYouTubeStatus}
+                    className="px-4 py-2 bg-white border-2 border-black font-bold uppercase text-sm shadow-brutal hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center gap-2"
+                    disabled={loading}
+                >
+                    <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+                    Refresh
+                </button>
             </div>
 
-            {/* Test Result */}
-            {testResult && (
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                        "p-4 rounded-lg border-2",
-                        testResult.success
-                            ? "bg-green-500/10 border-green-500/50 text-green-400"
-                            : "bg-red-500/10 border-red-500/50 text-red-400"
-                    )}
-                >
-                    {testResult.message}
-                </motion.div>
-            )}
-
-            {/* YouTube Multi-Key Status */}
-            <motion.div variants={item} className="bg-[#111] border-2 border-[#222] rounded-xl p-6">
+            {/* YouTube Overview */}
+            <motion.div variants={item} className="bg-white border-4 border-black p-6 shadow-brutal">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-black uppercase flex items-center gap-2">
-                        <Youtube className="w-5 h-5 text-red-500" />
+                        <Youtube className="w-5 h-5" />
                         YouTube Multi-Key System
                     </h2>
-                    {youtubeStatus && (
-                        <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-bold">
-                            {youtubeStatus.activeKeys} / {youtubeStatus.totalKeys} Keys Active
+                    <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-[#B1F202] border-2 border-black font-black text-sm uppercase">
+                            {youtubeStatus?.activeKeys || 0}/{youtubeStatus?.totalKeys || 0} Active
                         </span>
-                    )}
+                    </div>
                 </div>
 
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <RefreshCw className="w-8 h-8 text-[#FFC900] animate-spin" />
+                {/* Quota Progress */}
+                <div className="mb-6">
+                    <div className="flex justify-between mb-2">
+                        <span className="font-bold">Daily Quota</span>
+                        <span className="font-black">
+                            {youtubeStatus?.usedQuota?.toLocaleString() || 0} / {youtubeStatus?.totalQuota?.toLocaleString() || 0}
+                        </span>
                     </div>
-                ) : youtubeStatus ? (
-                    <>
-                        {/* Summary Stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            <div className="bg-[#1A1A1A] p-4 rounded-lg">
-                                <p className="text-3xl font-black text-[#FFC900]">{youtubeStatus.totalKeys}</p>
-                                <p className="text-xs text-[#888] uppercase font-semibold">Total Keys</p>
-                            </div>
-                            <div className="bg-[#1A1A1A] p-4 rounded-lg">
-                                <p className="text-3xl font-black text-green-400">{youtubeStatus.totalQuota.toLocaleString()}</p>
-                                <p className="text-xs text-[#888] uppercase font-semibold">Daily Quota</p>
-                            </div>
-                            <div className="bg-[#1A1A1A] p-4 rounded-lg">
-                                <p className="text-3xl font-black text-blue-400">{youtubeStatus.usedQuota.toLocaleString()}</p>
-                                <p className="text-xs text-[#888] uppercase font-semibold">Used Today</p>
-                            </div>
-                            <div className="bg-[#1A1A1A] p-4 rounded-lg">
-                                <p className="text-3xl font-black text-purple-400">{youtubeStatus.remainingQuota.toLocaleString()}</p>
-                                <p className="text-xs text-[#888] uppercase font-semibold">Remaining</p>
-                            </div>
-                        </div>
+                    <div className="h-4 bg-[#F5F5F0] border-2 border-black overflow-hidden">
+                        <div
+                            className={cn(
+                                "h-full transition-all",
+                                (youtubeStatus?.percentUsed || 0) < 50 && "bg-[#B1F202]",
+                                (youtubeStatus?.percentUsed || 0) >= 50 && (youtubeStatus?.percentUsed || 0) < 80 && "bg-[#FFC900]",
+                                (youtubeStatus?.percentUsed || 0) >= 80 && "bg-[#FF4D4D]"
+                            )}
+                            style={{ width: `${youtubeStatus?.percentUsed || 0}%` }}
+                        />
+                    </div>
+                    <p className="text-sm text-black/60 mt-1 font-medium">
+                        {youtubeStatus?.remainingQuota?.toLocaleString() || 0} units remaining ({Math.round(100 - (youtubeStatus?.percentUsed || 0))}%)
+                    </p>
+                </div>
 
-                        {/* Overall Progress */}
-                        <div className="mb-6">
-                            <div className="flex justify-between text-sm mb-2">
-                                <span className="text-[#888]">Daily Quota Usage</span>
-                                <span className="font-bold">{youtubeStatus.percentUsed}%</span>
-                            </div>
-                            <div className="h-4 bg-[#333] rounded-full overflow-hidden">
-                                <div
-                                    className={cn(
-                                        "h-full rounded-full transition-all duration-500",
-                                        youtubeStatus.percentUsed < 50
-                                            ? "bg-gradient-to-r from-green-500 to-green-400"
-                                            : youtubeStatus.percentUsed < 80
-                                                ? "bg-gradient-to-r from-yellow-500 to-yellow-400"
-                                                : "bg-gradient-to-r from-red-500 to-red-400"
-                                    )}
-                                    style={{ width: `${youtubeStatus.percentUsed}%` }}
-                                />
-                            </div>
-                        </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="p-4 bg-[#F5F5F0] border-2 border-black">
+                        <Key className="w-5 h-5 mb-2" />
+                        <p className="text-2xl font-black">{youtubeStatus?.totalKeys || 0}</p>
+                        <p className="text-sm text-black/60 font-bold uppercase">Total Keys</p>
+                    </div>
+                    <div className="p-4 bg-[#B1F202] border-2 border-black">
+                        <CheckCircle className="w-5 h-5 mb-2" />
+                        <p className="text-2xl font-black">{youtubeStatus?.activeKeys || 0}</p>
+                        <p className="text-sm font-bold uppercase">Active</p>
+                    </div>
+                    <div className="p-4 bg-[#FF4D4D] border-2 border-black text-white">
+                        <XCircle className="w-5 h-5 mb-2" />
+                        <p className="text-2xl font-black">{youtubeStatus?.exhaustedKeys || 0}</p>
+                        <p className="text-sm font-bold uppercase">Exhausted</p>
+                    </div>
+                    <div className="p-4 bg-[#FFC900] border-2 border-black">
+                        <Zap className="w-5 h-5 mb-2" />
+                        <p className="text-2xl font-black">{youtubeStatus?.totalQuota?.toLocaleString() || 0}</p>
+                        <p className="text-sm font-bold uppercase">Daily Quota</p>
+                    </div>
+                </div>
 
-                        {/* Individual Keys Table */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-[#333]">
-                                        <th className="text-left py-3 px-4 text-xs font-bold text-[#888] uppercase">Key</th>
-                                        <th className="text-left py-3 px-4 text-xs font-bold text-[#888] uppercase">Status</th>
-                                        <th className="text-left py-3 px-4 text-xs font-bold text-[#888] uppercase">Used Today</th>
-                                        <th className="text-left py-3 px-4 text-xs font-bold text-[#888] uppercase">Last Used</th>
-                                        <th className="text-left py-3 px-4 text-xs font-bold text-[#888] uppercase">Errors</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {youtubeStatus.keys.map((key, index) => (
-                                        <tr key={index} className="border-b border-[#222] hover:bg-[#1A1A1A]">
-                                            <td className="py-3 px-4">
-                                                <code className="text-sm font-mono text-[#888]">{key.keyPreview}</code>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                {key.isExhausted ? (
-                                                    <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold flex items-center gap-1 w-fit">
-                                                        <XCircle className="w-3 h-3" />
-                                                        Exhausted
-                                                    </span>
-                                                ) : (
-                                                    <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-bold flex items-center gap-1 w-fit">
-                                                        <CheckCircle className="w-3 h-3" />
-                                                        Active
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-16 h-1.5 bg-[#333] rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-red-400 rounded-full"
-                                                            style={{ width: `${(key.usedToday / 10000) * 100}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-sm font-mono">{key.usedToday.toLocaleString()}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-3 px-4 text-sm text-[#888]">
-                                                {formatLastUsed(key.lastUsed)}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                {key.errorCount > 0 ? (
-                                                    <span className="text-yellow-400 text-sm">{key.errorCount}</span>
-                                                ) : (
-                                                    <span className="text-[#888] text-sm">0</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
-                ) : (
-                    <div className="text-center py-8 text-[#888]">
-                        <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
-                        <p>Failed to load YouTube key status</p>
+                {/* Test Button */}
+                <button
+                    onClick={testYouTubeApi}
+                    disabled={testing}
+                    className={cn(
+                        "w-full py-3 font-black uppercase flex items-center justify-center gap-2 border-4 border-black transition-all",
+                        testing
+                            ? "bg-gray-200 cursor-not-allowed"
+                            : "bg-[#FF90E8] shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
+                    )}
+                >
+                    {testing ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                        <Play className="w-5 h-5" />
+                    )}
+                    Test YouTube API
+                </button>
+
+                {testResult && (
+                    <div className={cn(
+                        "mt-4 p-4 border-2 border-black font-bold",
+                        testResult.success ? "bg-[#B1F202]" : "bg-[#FF4D4D] text-white"
+                    )}>
+                        {testResult.message}
                     </div>
                 )}
             </motion.div>
 
-            {/* Other APIs */}
-            <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* SerpAPI */}
-                <div className="bg-[#111] border-2 border-[#222] rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                            <Globe className="w-5 h-5 text-blue-400" />
-                        </div>
-                        <div>
-                            <p className="font-bold">SerpAPI</p>
-                            <p className="text-xs text-[#888]">Google Trends Data</p>
-                        </div>
-                    </div>
-                    <p className="text-sm text-[#888]">Using cached trends (no live API calls)</p>
-                </div>
+            {/* Individual Keys */}
+            <motion.div variants={item} className="bg-white border-4 border-black p-6 shadow-brutal">
+                <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
+                    <Key className="w-5 h-5" />
+                    Individual Key Status
+                </h2>
 
-                {/* OpenRouter */}
-                <div className="bg-[#111] border-2 border-[#222] rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                            <Activity className="w-5 h-5 text-purple-400" />
+                <div className="space-y-3">
+                    {youtubeStatus?.keys?.map((key, index) => (
+                        <div
+                            key={index}
+                            className={cn(
+                                "flex items-center justify-between p-4 border-2 border-black",
+                                key.isExhausted ? "bg-[#FF4D4D]/10" : "bg-[#F5F5F0]"
+                            )}
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className={cn(
+                                    "w-10 h-10 border-2 border-black flex items-center justify-center font-black",
+                                    key.isExhausted ? "bg-[#FF4D4D] text-white" : "bg-[#B1F202]"
+                                )}>
+                                    {index + 1}
+                                </div>
+                                <div>
+                                    <p className="font-mono font-bold">{key.keyPreview}</p>
+                                    <p className="text-sm text-black/60">
+                                        {key.isExhausted ? 'Exhausted' : 'Active'} • {key.errorCount} errors
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="font-black">{key.usedToday?.toLocaleString() || 0}</p>
+                                <p className="text-sm text-black/60">units today</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="font-bold">OpenRouter AI</p>
-                            <p className="text-xs text-[#888]">GPT-4 / Claude</p>
-                        </div>
-                    </div>
-                    <p className="text-sm text-[#888]">Pay-per-use, no daily limit</p>
+                    )) || (
+                            <div className="text-center py-8 text-black/40 font-medium">
+                                No keys loaded. Check YouTube key configuration.
+                            </div>
+                        )}
                 </div>
             </motion.div>
 
-            {/* Info Banner */}
-            <motion.div variants={item} className="bg-gradient-to-br from-[#FFC900]/10 to-transparent border-2 border-[#FFC900]/30 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                    <div className="p-3 bg-[#FFC900] rounded-lg">
-                        <Shield className="w-6 h-6 text-black" />
+            {/* Other APIs */}
+            <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* SerpAPI */}
+                <div className="bg-white border-4 border-black p-6 shadow-brutal">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-[#00F0FF] border-2 border-black flex items-center justify-center">
+                            <Globe className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="font-black uppercase">SerpAPI</p>
+                            <p className="text-sm text-black/60">Google Trends</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="font-black text-lg">Multi-Key Rotation Active</h3>
-                        <p className="text-sm text-[#888] mt-1">
-                            Using {youtubeStatus?.totalKeys || 11} YouTube API keys with automatic round-robin rotation.
-                            When one key hits quota, the system automatically switches to the next key.
-                            Total daily capacity: {(youtubeStatus?.totalQuota || 110000).toLocaleString()} units ({Math.floor((youtubeStatus?.totalQuota || 110000) / 100)} searches).
-                        </p>
+                    <p className="text-black/60 font-medium">
+                        Cached data - minimal API calls. Daily refresh caches all trends.
+                    </p>
+                </div>
+
+                {/* OpenRouter */}
+                <div className="bg-white border-4 border-black p-6 shadow-brutal">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-[#FF90E8] border-2 border-black flex items-center justify-center">
+                            <Zap className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="font-black uppercase">OpenRouter AI</p>
+                            <p className="text-sm text-black/60">Content Analysis</p>
+                        </div>
                     </div>
+                    <p className="text-black/60 font-medium">
+                        Pay-per-use pricing. No daily limits.
+                    </p>
                 </div>
             </motion.div>
         </motion.div>
