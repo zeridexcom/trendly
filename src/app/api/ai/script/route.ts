@@ -69,59 +69,67 @@ export async function POST(request: NextRequest) {
 
         const platformConfig = PLATFORM_CONFIG[platform] || PLATFORM_CONFIG.instagram
 
-        const prompt = `You are a viral content scriptwriter. Create a COMPLETE, DETAILED script.
+        const prompt = `You are a top-tier human content creator who writes scripts that feel REAL, AUTHENTIC, and PERSONAL. 
+Your scripts should sound like a friend talking to a friend - NOT like an AI or a corporate robot.
 
 CONTENT IDEA: ${idea}
 PLATFORM: ${platform.replace('_', ' ').toUpperCase()} (${platformConfig.format}, ${platformConfig.maxDuration})
-INDUSTRY: ${userIndustry || 'General'}
-${videoContext ? `INSPIRATION VIDEO: "${videoContext.title}"` : ''}
+CREATOR'S NICHE: ${userIndustry || 'General'}
+${videoContext ? `INSPIRED BY: "${videoContext.title}"` : ''}
 
-Generate a DETAILED script with this EXACT JSON structure:
+WRITING STYLE REQUIREMENTS:
+- Write like a REAL PERSON, not a robot. Use contractions (I'm, you're, don't, can't)
+- Include natural filler words occasionally (like, honestly, look, okay so)
+- Add personality - be witty, relatable, maybe even slightly imperfect
+- Use casual language, not corporate speak
+- Include personal touches like "I've been doing this for years" or "here's what I learned"
+- Make it sound like something you'd actually hear a real YouTuber or TikToker say
+- Add emotion - excitement, surprise, frustration, humor where appropriate
+- Include rhetorical questions to engage viewers
+- Use short punchy sentences mixed with longer ones for rhythm
+
+Generate a script in this JSON structure:
 {
-    "title": "Catchy title for the content",
+    "title": "Catchy, clickable title that sounds human",
     "hook": {
-        "text": "Attention-grabbing opening line - specific to the topic",
+        "text": "Opening line that grabs attention IMMEDIATELY. Should sound natural, like you're already mid-conversation. Examples: 'Okay so I need to tell you about this...' or 'You're not gonna believe what happened' or 'Stop scrolling - this is important'",
         "duration": "0-3 seconds",
-        "delivery": "Energy level, emotion, pace instructions",
-        "visualNote": "What should appear on screen"
+        "delivery": "Natural, like talking to a friend",
+        "visualNote": "Close-up, expressive"
     },
     "sections": [
         {
             "title": "Section name",
-            "script": "Full script text - exactly what to say. At least 2-3 complete sentences.",
-            "duration": "Time for this section",
-            "delivery": "Tone and delivery instructions",
-            "bRoll": ["B-roll suggestion 1", "B-roll suggestion 2"],
-            "camera": "Camera angle/shot type",
-            "graphics": "Text overlays or graphics"
+            "script": "Write this exactly as you would SAY it out loud. Include natural pauses, emphasis words, and casual language. Make it feel like a real person talking, not reading from a teleprompter. 3-5 sentences that flow naturally.",
+            "duration": "Time estimate",
+            "delivery": "Tone - conversational, excited, serious, etc",
+            "bRoll": ["Specific relevant footage"],
+            "camera": "Shot type",
+            "graphics": "Any text overlays"
         }
     ],
     "cta": {
-        "text": "Call-to-action script",
-        "type": "follow/like/comment/subscribe"
+        "text": "Natural call-to-action that doesn't sound forced. Like 'If this helped, smash that follow button!' or 'Drop a comment telling me your experience'",
+        "type": "follow/like/comment"
     },
     "production": {
-        "musicMood": "Music style/mood",
-        "props": ["Prop 1", "Prop 2"],
-        "location": "Filming location",
-        "lighting": "Lighting setup",
-        "outfit": "What to wear"
+        "musicMood": "Trending/upbeat/chill",
+        "props": ["Relevant items"],
+        "location": "Where to film",
+        "lighting": "Setup",
+        "outfit": "Casual/professional"
     },
-    "caption": "Ready-to-post caption with emojis",
-    "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"],
+    "caption": "Caption that sounds human with emojis, not overly polished. Include a question to boost engagement.",
+    "hashtags": ["relevant", "trending", "niche", "hashtags"],
     "viralityScore": 85,
-    "viralityReason": "Why this has viral potential",
-    "estimatedViews": "10K-50K",
-    "bestTimeToPost": "Best posting time"
+    "viralityReason": "Why this will resonate",
+    "estimatedViews": "View range",
+    "bestTimeToPost": "Best time"
 }
 
-RULES:
-1. Include 4-5 content sections with detailed scripts
-2. Make the hook specific to the topic
-3. Each section script should be 2-3 full sentences minimum
-4. Return ONLY valid JSON, no markdown
+CRITICAL: The script text in each section MUST sound like a real human speaking naturally. NO corporate language, NO AI-sounding phrases like "In this video we will explore" or "Let me break this down for you". Instead use phrases like "Okay so here's the thing..." or "I gotta be honest with you..." or "This is gonna blow your mind..."
 
-Return ONLY the JSON object.`
+Return ONLY valid JSON.`
 
         console.log('Calling OpenRouter API...')
 
