@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import OpenAI from 'openai'
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+// Lazy initialization of OpenAI client
+let openaiClient: OpenAI | null = null
+
+function getOpenAI(): OpenAI | null {
+    if (openaiClient) return openaiClient
+
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY
+    if (!apiKey) return null
+
+    openaiClient = new OpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey,
+        defaultHeaders: {
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://trendly.app',
+            'X-Title': 'Trendly - Content Creation',
+        },
+    })
+
+    return openaiClient
+}
 
 interface ScriptRequest {
     idea: string
@@ -13,82 +33,15 @@ interface ScriptRequest {
     userIndustry: string
 }
 
-// Platform-specific configurations
-const PLATFORM_CONFIG: Record<string, {
-    maxDuration: string
-    format: string
-    tips: string[]
-}> = {
-    instagram: {
-        maxDuration: '60-90 seconds',
-        format: 'Vertical 9:16 Reels',
-        tips: [
-            'Hook in first 0.5 seconds (face close-up or bold text)',
-            'Use trending audio for 2x reach',
-            'Add captions - 85% watch without sound',
-            'End with CTA before loop point'
-        ]
-    },
-    youtube: {
-        maxDuration: '8-15 minutes',
-        format: 'Horizontal 16:9',
-        tips: [
-            'First 30 seconds = retention killer or maker',
-            'Pattern interrupt every 30-60 seconds',
-            'Use chapters for longer videos',
-            'End screen + cards in last 20 seconds'
-        ]
-    },
-    youtube_shorts: {
-        maxDuration: '30-60 seconds',
-        format: 'Vertical 9:16',
-        tips: [
-            'Start with the payoff/result',
-            'Fast cuts every 2-3 seconds',
-            'Loop-worthy ending',
-            'Text on screen for accessibility'
-        ]
-    },
-    tiktok: {
-        maxDuration: '15-60 seconds',
-        format: 'Vertical 9:16',
-        tips: [
-            'Hook in first frame - no build up',
-            'Trending sounds = algorithm boost',
-            'Green screen effects work well',
-            'Reply to comments with video'
-        ]
-    },
-    blog: {
-        maxDuration: '1500-2500 words',
-        format: 'Written Article',
-        tips: [
-            'H2 every 300 words for scannability',
-            'First paragraph = mini-summary',
-            'Use bullet points and numbered lists',
-            'Add internal/external links'
-        ]
-    },
-    twitter: {
-        maxDuration: '280 chars or thread',
-        format: 'Thread (5-10 tweets)',
-        tips: [
-            'First tweet = hook + promise',
-            'Each tweet = standalone value',
-            'Use numbers and lists',
-            'End with engagement question'
-        ]
-    },
-    linkedin: {
-        maxDuration: '1300 characters',
-        format: 'Text Post or Article',
-        tips: [
-            'First line = hook (shows in preview)',
-            'Use short paragraphs (1-2 lines)',
-            'Add white space liberally',
-            'End with question for engagement'
-        ]
-    }
+// Platform configs
+const PLATFORM_CONFIG: Record<string, { maxDuration: string; format: string; tips: string[] }> = {
+    instagram: { maxDuration: '60-90 seconds', format: 'Vertical 9:16 Reels', tips: ['Hook in first 0.5 seconds', 'Use trending audio', 'Add captions'] },
+    youtube: { maxDuration: '8-15 minutes', format: 'Horizontal 16:9', tips: ['First 30 seconds = retention killer', 'Pattern interrupt every 30-60 seconds'] },
+    youtube_shorts: { maxDuration: '30-60 seconds', format: 'Vertical 9:16', tips: ['Start with the payoff', 'Fast cuts every 2-3 seconds'] },
+    tiktok: { maxDuration: '15-60 seconds', format: 'Vertical 9:16', tips: ['Hook in first frame', 'Trending sounds = algorithm boost'] },
+    blog: { maxDuration: '1500-2500 words', format: 'Written Article', tips: ['H2 every 300 words', 'Use bullet points'] },
+    twitter: { maxDuration: '280 chars or thread', format: 'Thread (5-10 tweets)', tips: ['First tweet = hook + promise'] },
+    linkedin: { maxDuration: '1300 characters', format: 'Text Post', tips: ['First line = hook', 'Short paragraphs'] }
 }
 
 export async function POST(request: NextRequest) {
@@ -100,118 +53,125 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Missing idea or platform' }, { status: 400 })
         }
 
+        const openai = getOpenAI()
+        if (!openai) {
+            return NextResponse.json({ success: false, error: 'AI service not configured' }, { status: 500 })
+        }
+
         const platformConfig = PLATFORM_CONFIG[platform] || PLATFORM_CONFIG.instagram
 
-        const prompt = `You are an expert viral content creator and scriptwriter who has studied thousands of viral videos.
+        const prompt = `You are a viral content scriptwriter. Create a COMPLETE, DETAILED script.
 
-TASK: Create a complete, ready-to-use script for ${platform.replace('_', ' ').toUpperCase()}.
+CONTENT IDEA: ${idea}
+PLATFORM: ${platform.replace('_', ' ').toUpperCase()} (${platformConfig.format}, ${platformConfig.maxDuration})
+INDUSTRY: ${userIndustry}
+${videoContext ? `INSPIRATION: "${videoContext.title}"` : ''}
 
-CONTEXT:
-- User's Industry: ${userIndustry}
-- Content Idea: ${idea}
-${videoContext ? `- Inspiration Video: "${videoContext.title}"
-- Why It Went Viral: ${videoContext.whyViral || 'High engagement'}
-- Original Hook: ${videoContext.hook || 'Compelling opening'}` : ''}
-
-PLATFORM REQUIREMENTS:
-- Format: ${platformConfig.format}
-- Duration: ${platformConfig.maxDuration}
-- Key Tips: ${platformConfig.tips.join(', ')}
-
-Generate a complete script in this EXACT JSON format:
+Generate a DETAILED script with this EXACT JSON structure:
 {
-    "title": "Catchy title for the content",
+    "title": "Catchy title",
     "hook": {
-        "text": "The exact opening line/hook (attention-grabbing, controversial, or curiosity-inducing)",
+        "text": "Attention-grabbing opening line that creates curiosity or shock. Make it SPECIFIC and PUNCHY, not generic.",
         "duration": "0-3 seconds",
-        "delivery": "How to deliver this hook (tone, speed, emotion)",
-        "visualNote": "What should be on screen during hook"
+        "delivery": "How to deliver (energy level, emotion, pace)",
+        "visualNote": "What should be on screen"
     },
     "sections": [
         {
-            "title": "Section name (e.g., 'Problem', 'Solution', 'Story')",
-            "script": "Exact words to say in this section",
-            "duration": "Time for this section",
-            "delivery": "Tone and delivery instructions",
-            "bRoll": ["List of B-roll footage suggestions"],
-            "camera": "Camera angle/shot type (close-up, wide, etc.)",
-            "graphics": "Any text overlays or graphics"
+            "title": "PROBLEM/SETUP",
+            "script": "Full paragraph of exactly what to say. Be specific, conversational, engaging. At least 2-3 sentences.",
+            "duration": "10-15 seconds",
+            "delivery": "Tone instructions",
+            "bRoll": ["Specific B-roll 1", "Specific B-roll 2"],
+            "camera": "Close-up / Medium / Wide",
+            "graphics": "Text overlay description"
+        },
+        {
+            "title": "MAIN POINT 1",
+            "script": "Detailed explanation of the first key point. Be specific and actionable. Include examples.",
+            "duration": "15-20 seconds",
+            "delivery": "Delivery notes",
+            "bRoll": ["B-roll suggestion"],
+            "camera": "Shot type",
+            "graphics": "Graphics/text"
+        },
+        {
+            "title": "MAIN POINT 2",
+            "script": "Second key insight or tip. Make it practical and memorable.",
+            "duration": "15-20 seconds",
+            "delivery": "Notes",
+            "bRoll": ["B-roll"],
+            "camera": "Shot",
+            "graphics": "Text overlay"
+        },
+        {
+            "title": "MAIN POINT 3",
+            "script": "Third insight or the 'secret sauce' that makes this content valuable.",
+            "duration": "15-20 seconds",
+            "delivery": "Notes",
+            "bRoll": ["B-roll"],
+            "camera": "Shot",
+            "graphics": "Graphics"
+        },
+        {
+            "title": "CONCLUSION/WRAP-UP",
+            "script": "Summarize the key takeaways. Remind them why this matters.",
+            "duration": "5-10 seconds",
+            "delivery": "Notes",
+            "bRoll": ["B-roll"],
+            "camera": "Shot",
+            "graphics": "Summary graphic"
         }
     ],
     "cta": {
-        "text": "The call-to-action script",
-        "type": "follow/like/comment/subscribe/link"
+        "text": "Strong call-to-action that tells them exactly what to do next",
+        "type": "follow/like/comment/subscribe"
     },
-    "storyboard": [
-        {
-            "scene": 1,
-            "duration": "0:00-0:03",
-            "visual": "Description of what's on screen",
-            "audio": "What's being said/music",
-            "camera": "Camera setup/angle"
-        }
-    ],
     "production": {
-        "musicMood": "Type of background music/trending sound",
-        "props": ["List of props/items needed"],
-        "location": "Suggested filming location",
-        "lighting": "Lighting setup suggestion",
-        "outfit": "What to wear suggestion"
+        "musicMood": "Specific music style/mood",
+        "props": ["Prop 1", "Prop 2"],
+        "location": "Specific location suggestion",
+        "lighting": "Lighting setup",
+        "outfit": "What to wear"
     },
-    "caption": "Ready-to-post caption for the platform",
-    "hashtags": ["relevant", "trending", "hashtags"],
+    "caption": "Ready-to-post caption with emojis and line breaks. Make it engaging and include a question.",
+    "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5", "hashtag6", "hashtag7", "hashtag8"],
     "viralityScore": 85,
-    "viralityReason": "Why this script has viral potential",
+    "viralityReason": "Why this has viral potential",
     "estimatedViews": "10K-50K",
-    "bestTimeToPost": "Optimal posting time"
+    "bestTimeToPost": "Best posting time"
 }
 
-IMPORTANT RULES:
-1. Hook MUST grab attention in first 0.5-1 second
-2. Script should feel natural, not robotic
-3. Include specific camera directions for each scene
-4. Add pattern interrupts every 30-60 seconds for longer content
-5. Make it actionable and ready to film TODAY
-6. Tailor language and style to ${platform}
-7. Use viral patterns: curiosity gap, controversy, transformation, before/after
+CRITICAL RULES:
+1. Each section's "script" must be DETAILED - at least 2-3 full sentences of what to actually SAY
+2. Hook must be PUNCHY and SPECIFIC to the topic, not generic
+3. Include at least 5 content sections (not just 3)
+4. B-roll suggestions must be specific and actionable
+5. Caption must be ready to copy-paste with line breaks and emojis
 
-Return ONLY valid JSON, no markdown or explanation.`
+Return ONLY valid JSON.`
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://trendly.app',
-            },
-            body: JSON.stringify({
-                model: 'google/gemini-2.0-flash-001',
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.8,
-                max_tokens: 3000,
-            }),
+        const response = await openai.chat.completions.create({
+            model: 'google/gemini-2.0-flash-001',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 4000,
         })
 
-        if (!response.ok) {
-            throw new Error('OpenRouter API failed')
+        const content = response.choices[0]?.message?.content
+
+        if (!content) {
+            throw new Error('No response from AI')
         }
 
-        const data = await response.json()
-        const content = data.choices?.[0]?.message?.content
-
-        // Parse JSON from response
+        // Parse JSON
         let script
         try {
-            // Remove markdown code blocks if present
             const jsonStr = content.replace(/```json\n?|\n?```/g, '').trim()
             script = JSON.parse(jsonStr)
         } catch {
-            // If parsing fails, return raw content
-            return NextResponse.json({
-                success: false,
-                error: 'Failed to parse script',
-                raw: content
-            })
+            console.error('Failed to parse:', content)
+            throw new Error('Failed to parse script JSON')
         }
 
         return NextResponse.json({
