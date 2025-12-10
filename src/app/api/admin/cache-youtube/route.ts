@@ -261,22 +261,43 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ success: true, cacheStatus: stats })
         }
 
-        // Cache all niches
+        // Cache single niche (use this to avoid timeout!)
+        if (action === 'cache') {
+            const niche = (searchParams.get('niche') || 'TECH').toUpperCase()
+            const count = parseInt(searchParams.get('count') || '200')
+
+            const validNiches = Object.keys(NICHE_QUERIES)
+            if (!validNiches.includes(niche)) {
+                return NextResponse.json({ error: `Invalid niche. Valid: ${validNiches.join(', ')}` }, { status: 400 })
+            }
+
+            console.log(`Caching ${count} videos for ${niche}...`)
+            const cached = await cacheNicheVideos(niche, count)
+
+            return NextResponse.json({
+                success: true,
+                niche,
+                videosCached: cached,
+                message: `Cached ${cached} videos for ${niche}. Run again for more.`
+            })
+        }
+
+        // Cache all niches (may timeout on Vercel - use single niche instead)
         if (action === 'cache-all') {
             const niches = Object.keys(NICHE_QUERIES)
             const results: Record<string, number> = {}
 
             for (const niche of niches) {
                 console.log(`Caching ${niche}...`)
-                results[niche] = await cacheNicheVideos(niche, 1000) // 1000 per niche
-                await new Promise(r => setTimeout(r, 500)) // Delay between niches
+                results[niche] = await cacheNicheVideos(niche, 200) // 200 per niche to avoid timeout
+                await new Promise(r => setTimeout(r, 200))
             }
 
             return NextResponse.json({ success: true, cached: results })
         }
 
         return NextResponse.json({
-            message: 'Use ?action=status to check cache, or ?action=cache-all to cache all niches',
+            message: 'Available actions: ?action=status, ?action=cache&niche=TECH&count=200, ?action=cache-all',
             availableNiches: Object.keys(NICHE_QUERIES)
         })
 
