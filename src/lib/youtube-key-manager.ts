@@ -12,8 +12,9 @@ interface KeyStatus {
     errorCount: number
 }
 
-// 11 YouTube API Keys from different projects
+// 21 YouTube API Keys from different projects = 210,000 quota/day!
 const YOUTUBE_API_KEYS = [
+    // Original 11 keys
     'AIzaSyA3iYhZKZmAd0ineTnYPoYr88GCvPftvZY',
     'AIzaSyC6tp3u8bHbpxCchsz3EXKx_R1cocqf8J0',
     'AIzaSyDTNa8lapxmD1F-CcAliH811dpEK87XUsE',
@@ -24,7 +25,18 @@ const YOUTUBE_API_KEYS = [
     'AIzaSyBKqzW2dhFrlPwL55oZWnaGqk2Qja9LcSY',
     'AIzaSyASIz4Fccf6bXfgao5KU5QnOmvN6S0z0q0',
     'AIzaSyDHTJSZ8AGuUQJTjhy2o2jRvSTWBVMrn4s',
-    'AIzaSyD-LwsjwET3kNCWlq-RoVEs_m_L-_rwR0w'
+    'AIzaSyD-LwsjwET3kNCWlq-RoVEs_m_L-_rwR0w',
+    // 10 new keys
+    'AIzaSyB8Zoky8ERGiclB5D9OkalYuDFeYjKIADQ',
+    'AIzaSyBz21UMDDEtcD9XuKDui2heGWOd0I0q5b4',
+    'AIzaSyCN_tdWMhi2vvj5NSFlMA-q_S9hAEuiQJU',
+    'AIzaSyB97y9keMXMPGuOrLQZf0o6aQE37ynEpAs',
+    'AIzaSyCJGKGJR1GaOog8dBj_9-qmIyTMMUY7SJ4',
+    'AIzaSyCdylwaSeG-lbUhxunHY5RQmHwYgEjAfls',
+    'AIzaSyAWpeD4D6jshS5CnUlYLhgkFqpBvblAdGc',
+    'AIzaSyCELpsyCkGwGgX6NxDaCuVKxxuaR50t9WY',
+    'AIzaSyC7W3DbzylvdrzzISXneln7P4I9zLc-2Sw',
+    'AIzaSyAvOGpxjuLh3s_LnJStm1KYybqJnD7qOoY',
 ]
 
 // In-memory key status (resets on server restart)

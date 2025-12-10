@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getNextKey, markKeyUsed, markKeyExhausted } from '@/lib/youtube-key-manager'
 
 // Supabase admin client
 function getSupabaseAdmin() {
@@ -8,27 +9,12 @@ function getSupabaseAdmin() {
     return createClient(supabaseUrl, supabaseServiceKey)
 }
 
-// YouTube API keys (rotated)
-const YOUTUBE_API_KEYS = [
-    process.env.YOUTUBE_API_KEY_1,
-    process.env.YOUTUBE_API_KEY_2,
-    process.env.YOUTUBE_API_KEY_3,
-    process.env.YOUTUBE_API_KEY_4,
-    process.env.YOUTUBE_API_KEY_5,
-    process.env.YOUTUBE_API_KEY_6,
-    process.env.YOUTUBE_API_KEY_7,
-    process.env.YOUTUBE_API_KEY_8,
-    process.env.YOUTUBE_API_KEY_9,
-    process.env.YOUTUBE_API_KEY_10,
-    process.env.YOUTUBE_API_KEY_11,
-    process.env.YOUTUBE_API_KEY_12,
-].filter(Boolean) as string[]
-
-let currentKeyIndex = 0
-
-function getNextApiKey(): string {
-    const key = YOUTUBE_API_KEYS[currentKeyIndex]
-    currentKeyIndex = (currentKeyIndex + 1) % YOUTUBE_API_KEYS.length
+// Get API key from centralized manager
+function getApiKey(): string {
+    const key = getNextKey()
+    if (!key) {
+        throw new Error('All YouTube API keys exhausted')
+    }
     return key
 }
 
@@ -93,7 +79,7 @@ const NICHE_QUERIES: Record<string, string[]> = {
 
 // Fetch videos from YouTube
 async function fetchYouTubeVideos(query: string, maxResults: number = 50): Promise<any[]> {
-    const apiKey = getNextApiKey()
+    const apiKey = getApiKey()
 
     try {
         // Search for videos
