@@ -11,14 +11,10 @@ import {
     CheckCircle,
     RefreshCw,
     Search,
-    Filter,
     Download,
     Trash2,
-    Clock,
-    Server,
-    Database,
-    Zap,
-    X
+    X,
+    Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -46,10 +42,8 @@ export default function LogsPage() {
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [filterLevel, setFilterLevel] = useState<string>('all')
-    const [filterSource, setFilterSource] = useState<string>('all')
     const [autoRefresh, setAutoRefresh] = useState(false)
     const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
-    const logsEndRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         fetchLogs()
@@ -69,41 +63,14 @@ export default function LogsPage() {
             const response = await fetch('/api/admin/logs')
             const data = await response.json()
             if (data.success) {
-                setLogs(data.logs)
+                setLogs(data.logs || [])
             }
         } catch (error) {
             console.error('Failed to fetch logs:', error)
-            // Demo data
-            setLogs(generateDemoLogs())
+            setLogs([])
         } finally {
             setLoading(false)
         }
-    }
-
-    const generateDemoLogs = (): LogEntry[] => {
-        const levels: LogEntry['level'][] = ['info', 'warning', 'error', 'success', 'debug']
-        const sources = ['API', 'Cache', 'Auth', 'Database', 'YouTube', 'SerpAPI']
-        const messages = [
-            { level: 'success', msg: 'Cache refresh completed', source: 'Cache' },
-            { level: 'info', msg: 'User login successful', source: 'Auth' },
-            { level: 'warning', msg: 'API quota at 80%', source: 'YouTube' },
-            { level: 'error', msg: 'Failed to fetch trends', source: 'SerpAPI' },
-            { level: 'debug', msg: 'Query executed in 45ms', source: 'Database' },
-            { level: 'info', msg: 'New user registered', source: 'Auth' },
-            { level: 'success', msg: 'Video analysis completed', source: 'API' },
-            { level: 'warning', msg: 'Rate limit approaching', source: 'API' },
-            { level: 'info', msg: 'Cache hit ratio: 85%', source: 'Cache' },
-            { level: 'error', msg: 'Connection timeout', source: 'Database' },
-        ]
-
-        return messages.map((m, i) => ({
-            id: `log-${i}`,
-            timestamp: new Date(Date.now() - i * 300000).toISOString(),
-            level: m.level as LogEntry['level'],
-            source: m.source,
-            message: m.msg,
-            details: m.level === 'error' ? 'Stack trace: Error at line 42...' : undefined
-        }))
     }
 
     const clearLogs = async () => {
@@ -136,23 +103,13 @@ export default function LogsPage() {
         }
     }
 
-    const getLevelColor = (level: LogEntry['level']) => {
+    const getLevelStyle = (level: LogEntry['level']) => {
         switch (level) {
-            case 'info': return 'text-blue-400 bg-blue-400/10'
-            case 'warning': return 'text-yellow-400 bg-yellow-400/10'
-            case 'error': return 'text-red-400 bg-red-400/10'
-            case 'success': return 'text-green-400 bg-green-400/10'
-            case 'debug': return 'text-purple-400 bg-purple-400/10'
-        }
-    }
-
-    const getSourceIcon = (source: string) => {
-        switch (source) {
-            case 'API': return <Zap className="w-4 h-4" />
-            case 'Cache': return <Database className="w-4 h-4" />
-            case 'Auth': return <Server className="w-4 h-4" />
-            case 'Database': return <Database className="w-4 h-4" />
-            default: return <Server className="w-4 h-4" />
+            case 'info': return 'bg-[#00F0FF] text-black'
+            case 'warning': return 'bg-[#FFC900] text-black'
+            case 'error': return 'bg-[#FF4D4D] text-white'
+            case 'success': return 'bg-[#B1F202] text-black'
+            case 'debug': return 'bg-[#FF90E8] text-black'
         }
     }
 
@@ -175,8 +132,7 @@ export default function LogsPage() {
         const matchesSearch = log.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
             log.source.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesLevel = filterLevel === 'all' || log.level === filterLevel
-        const matchesSource = filterSource === 'all' || log.source === filterSource
-        return matchesSearch && matchesLevel && matchesSource
+        return matchesSearch && matchesLevel
     })
 
     const logCounts = {
@@ -186,8 +142,6 @@ export default function LogsPage() {
         error: logs.filter(l => l.level === 'error').length,
         success: logs.filter(l => l.level === 'success').length,
     }
-
-    const uniqueSources = [...new Set(logs.map(l => l.source))]
 
     return (
         <motion.div
@@ -200,19 +154,19 @@ export default function LogsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-                        <FileText className="w-8 h-8 text-[#FFC900]" />
+                        <FileText className="w-8 h-8" />
                         System Logs
                     </h1>
-                    <p className="text-[#888] mt-1">Monitor system activity and errors</p>
+                    <p className="text-black/60 mt-1 font-medium">Monitor system activity and errors</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setAutoRefresh(!autoRefresh)}
                         className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors",
+                            "px-4 py-2 font-bold uppercase text-sm flex items-center gap-2 transition-all border-2 border-black",
                             autoRefresh
-                                ? "bg-green-500/20 text-green-400 border border-green-500/50"
-                                : "bg-[#1A1A1A] border border-[#333] hover:border-[#FFC900]"
+                                ? "bg-[#B1F202] shadow-brutal"
+                                : "bg-white hover:bg-[#F5F5F0]"
                         )}
                     >
                         <RefreshCw className={cn("w-4 h-4", autoRefresh && "animate-spin")} />
@@ -220,7 +174,7 @@ export default function LogsPage() {
                     </button>
                     <button
                         onClick={fetchLogs}
-                        className="p-2 bg-[#1A1A1A] border border-[#333] rounded-lg hover:border-[#FFC900]"
+                        className="p-2 bg-white border-2 border-black hover:bg-[#FFC900] transition-colors"
                     >
                         <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
                     </button>
@@ -234,14 +188,14 @@ export default function LogsPage() {
                         key={level}
                         onClick={() => setFilterLevel(level)}
                         className={cn(
-                            "p-3 rounded-lg border-2 transition-all text-left",
+                            "p-3 border-2 border-black transition-all text-left",
                             filterLevel === level
-                                ? "border-[#FFC900] bg-[#FFC900]/10"
-                                : "border-[#333] bg-[#111] hover:border-[#444]"
+                                ? "bg-[#FFC900] shadow-brutal"
+                                : "bg-white hover:bg-[#F5F5F0]"
                         )}
                     >
                         <p className="text-2xl font-black">{count}</p>
-                        <p className="text-xs text-[#888] capitalize">{level}</p>
+                        <p className="text-xs text-black/60 font-bold uppercase">{level}</p>
                     </button>
                 ))}
             </motion.div>
@@ -249,35 +203,25 @@ export default function LogsPage() {
             {/* Filters */}
             <motion.div variants={item} className="flex flex-wrap gap-4">
                 <div className="relative flex-1 min-w-[250px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40" />
                     <input
                         type="text"
                         placeholder="Search logs..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-[#111] border-2 border-[#333] rounded-lg pl-10 pr-4 py-2.5 focus:border-[#FFC900] focus:outline-none"
+                        className="w-full bg-white border-2 border-black pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-[#FFC900] focus:outline-none"
                     />
                 </div>
-                <select
-                    value={filterSource}
-                    onChange={(e) => setFilterSource(e.target.value)}
-                    className="bg-[#111] border-2 border-[#333] rounded-lg px-4 py-2.5 focus:border-[#FFC900] focus:outline-none"
-                >
-                    <option value="all">All Sources</option>
-                    {uniqueSources.map(source => (
-                        <option key={source} value={source}>{source}</option>
-                    ))}
-                </select>
                 <button
                     onClick={exportLogs}
-                    className="px-4 py-2 bg-[#1A1A1A] border-2 border-[#333] rounded-lg hover:border-[#FFC900] flex items-center gap-2"
+                    className="px-4 py-2 bg-white border-2 border-black hover:bg-[#F5F5F0] flex items-center gap-2 font-bold"
                 >
                     <Download className="w-4 h-4" />
                     Export
                 </button>
                 <button
                     onClick={clearLogs}
-                    className="px-4 py-2 bg-red-500/10 border-2 border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 flex items-center gap-2"
+                    className="px-4 py-2 bg-[#FF4D4D] text-white border-2 border-black hover:bg-[#FF3333] flex items-center gap-2 font-bold"
                 >
                     <Trash2 className="w-4 h-4" />
                     Clear
@@ -285,102 +229,99 @@ export default function LogsPage() {
             </motion.div>
 
             {/* Logs List */}
-            <motion.div variants={item} className="bg-[#111] border-2 border-[#222] rounded-xl overflow-hidden">
-                <div className="max-h-[600px] overflow-y-auto">
+            <motion.div variants={item} className="bg-white border-4 border-black shadow-brutal overflow-hidden">
+                <div className="max-h-[500px] overflow-y-auto">
                     {loading && logs.length === 0 ? (
                         <div className="flex items-center justify-center py-12">
-                            <RefreshCw className="w-8 h-8 text-[#FFC900] animate-spin" />
+                            <Loader2 className="w-8 h-8 text-[#FF90E8] animate-spin" />
                         </div>
                     ) : filteredLogs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12">
-                            <FileText className="w-12 h-12 text-[#666] mb-3" />
-                            <p className="text-[#888]">No logs found</p>
+                            <FileText className="w-12 h-12 text-black/30 mb-3" />
+                            <p className="text-black/60 font-medium">No logs found</p>
+                            <p className="text-black/40 text-sm">Logs will appear as system events occur</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-[#222]">
+                        <div className="divide-y-2 divide-black/10">
                             {filteredLogs.map((log) => (
                                 <div
                                     key={log.id}
                                     onClick={() => setSelectedLog(log)}
-                                    className="p-4 hover:bg-[#1A1A1A] transition-colors cursor-pointer"
+                                    className="p-4 hover:bg-[#F5F5F0] transition-colors cursor-pointer"
                                 >
                                     <div className="flex items-start gap-4">
-                                        {/* Level Badge */}
                                         <div className={cn(
-                                            "p-2 rounded-lg flex-shrink-0",
-                                            getLevelColor(log.level)
+                                            "p-2 border border-black flex-shrink-0",
+                                            getLevelStyle(log.level)
                                         )}>
                                             {getLevelIcon(log.level)}
                                         </div>
 
-                                        {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="px-2 py-0.5 bg-[#333] rounded text-xs font-semibold">
+                                                <span className="px-2 py-0.5 bg-[#F5F5F0] border border-black text-xs font-bold uppercase">
                                                     {log.source}
                                                 </span>
                                                 <span className={cn(
-                                                    "px-2 py-0.5 rounded text-xs font-bold uppercase",
-                                                    getLevelColor(log.level)
+                                                    "px-2 py-0.5 border border-black text-xs font-black uppercase",
+                                                    getLevelStyle(log.level)
                                                 )}>
                                                     {log.level}
                                                 </span>
                                             </div>
                                             <p className="text-sm font-medium">{log.message}</p>
                                             {log.details && (
-                                                <p className="text-xs text-[#888] mt-1 truncate">{log.details}</p>
+                                                <p className="text-xs text-black/50 mt-1 truncate">{log.details}</p>
                                             )}
                                         </div>
 
-                                        {/* Timestamp */}
                                         <div className="text-right flex-shrink-0">
-                                            <p className="text-sm font-mono">{formatTime(log.timestamp)}</p>
-                                            <p className="text-xs text-[#888]">{formatDate(log.timestamp)}</p>
+                                            <p className="text-sm font-mono font-bold">{formatTime(log.timestamp)}</p>
+                                            <p className="text-xs text-black/50">{formatDate(log.timestamp)}</p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
-                    <div ref={logsEndRef} />
                 </div>
             </motion.div>
 
             {/* Log Detail Modal */}
             {selectedLog && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
                     onClick={() => setSelectedLog(null)}
                 >
                     <div
-                        className="bg-[#111] border-2 border-[#333] rounded-xl w-full max-w-lg p-6"
+                        className="bg-white border-4 border-black w-full max-w-lg p-6 shadow-brutal-lg"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                                <div className={cn("p-2 rounded-lg", getLevelColor(selectedLog.level))}>
+                                <div className={cn("p-2 border border-black", getLevelStyle(selectedLog.level))}>
                                     {getLevelIcon(selectedLog.level)}
                                 </div>
                                 <div>
-                                    <p className="font-bold">{selectedLog.source}</p>
-                                    <p className="text-xs text-[#888]">{new Date(selectedLog.timestamp).toLocaleString()}</p>
+                                    <p className="font-black">{selectedLog.source}</p>
+                                    <p className="text-xs text-black/60">{new Date(selectedLog.timestamp).toLocaleString()}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedLog(null)} className="p-2 hover:bg-[#333] rounded-lg">
+                            <button onClick={() => setSelectedLog(null)} className="p-2 hover:bg-[#F5F5F0] border border-black">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <p className="text-xs text-[#888] mb-1 uppercase font-bold">Message</p>
+                                <p className="text-xs text-black/60 mb-1 uppercase font-black">Message</p>
                                 <p className="text-sm">{selectedLog.message}</p>
                             </div>
 
                             {selectedLog.details && (
                                 <div>
-                                    <p className="text-xs text-[#888] mb-1 uppercase font-bold">Details</p>
-                                    <pre className="text-xs bg-[#0A0A0A] p-3 rounded-lg overflow-x-auto text-red-400 font-mono">
+                                    <p className="text-xs text-black/60 mb-1 uppercase font-black">Details</p>
+                                    <pre className="text-xs bg-black text-[#B1F202] p-3 border-2 border-black overflow-x-auto font-mono">
                                         {selectedLog.details}
                                     </pre>
                                 </div>
@@ -388,14 +329,14 @@ export default function LogsPage() {
 
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <p className="text-xs text-[#888] mb-1">Level</p>
-                                    <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase", getLevelColor(selectedLog.level))}>
+                                    <p className="text-xs text-black/60 mb-1 font-bold">Level</p>
+                                    <span className={cn("px-2 py-1 border border-black text-xs font-black uppercase", getLevelStyle(selectedLog.level))}>
                                         {selectedLog.level}
                                     </span>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-[#888] mb-1">Source</p>
-                                    <span className="font-semibold">{selectedLog.source}</span>
+                                    <p className="text-xs text-black/60 mb-1 font-bold">Source</p>
+                                    <span className="font-black">{selectedLog.source}</span>
                                 </div>
                             </div>
                         </div>
