@@ -1,8 +1,8 @@
 {
     "crons": [
         {
-            "path": "/api/admin/refresh-cache?key=trendly-refresh-2024",
-            "schedule": "0 0 * * *"
+            "path": "/api/cron/cache-videos?key=trendly-cron-2025",
+            "schedule": "0 * * * *"
         }
     ]
 }
