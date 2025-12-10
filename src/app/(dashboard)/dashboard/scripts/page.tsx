@@ -81,6 +81,7 @@ function ScriptsContent() {
     const [saved, setSaved] = useState(false)
     const [showContext, setShowContext] = useState(hasContext)
     const [viewingScript, setViewingScript] = useState<SavedScript | null>(null)
+    const [error, setError] = useState<string | null>(null)
 
     // Fetch saved scripts
     useEffect(() => {
@@ -110,6 +111,7 @@ function ScriptsContent() {
         if (!topic.trim()) return
         setIsGenerating(true)
         setScript(null)
+        setError(null)
 
         try {
             const response = await fetch('/api/ai/script', {
@@ -123,11 +125,17 @@ function ScriptsContent() {
                 })
             })
             const data = await response.json()
+            console.log('Script API response:', data)
+
             if (data.success && data.script) {
                 setScript(data.script)
+                setError(null)
+            } else {
+                setError(data.error || 'Failed to generate script')
             }
-        } catch (error) {
-            console.error('Failed to generate script:', error)
+        } catch (err: any) {
+            console.error('Failed to generate script:', err)
+            setError(err.message || 'Network error. Please try again.')
         } finally {
             setIsGenerating(false)
         }
@@ -521,11 +529,29 @@ function ScriptsContent() {
                                     animate={{ opacity: 1 }}
                                     className="p-12 bg-white border-3 border-black shadow-[4px_4px_0px_0px_#000] flex flex-col items-center justify-center text-center"
                                 >
-                                    <Brain className="w-16 h-16 text-[#FF90E8] mb-4" />
-                                    <h3 className="font-black text-xl uppercase mb-2">Ready to Create Magic!</h3>
-                                    <p className="text-black/60 max-w-md">
-                                        Enter your topic, choose a platform, and let AI generate a complete viral script with hooks, storyboard, camera angles, and more!
-                                    </p>
+                                    {error ? (
+                                        <>
+                                            <div className="w-16 h-16 bg-red-100 border-3 border-red-500 rounded-full flex items-center justify-center mb-4">
+                                                <span className="text-3xl">⚠️</span>
+                                            </div>
+                                            <h3 className="font-black text-xl uppercase mb-2 text-red-600">Generation Failed</h3>
+                                            <p className="text-black/60 max-w-md mb-4">{error}</p>
+                                            <button
+                                                onClick={generateScript}
+                                                className="px-6 py-2 bg-[#FFC900] border-3 border-black font-black uppercase shadow-[3px_3px_0px_0px_#000]"
+                                            >
+                                                Try Again
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Brain className="w-16 h-16 text-[#FF90E8] mb-4" />
+                                            <h3 className="font-black text-xl uppercase mb-2">Ready to Create Magic!</h3>
+                                            <p className="text-black/60 max-w-md">
+                                                Enter your topic, choose a platform, and let AI generate a complete viral script with hooks, storyboard, camera angles, and more!
+                                            </p>
+                                        </>
+                                    )}
                                 </motion.div>
                             )}
                         </AnimatePresence>
