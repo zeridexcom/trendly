@@ -233,7 +233,7 @@ export default function ContentWizard({ video, userIndustry, isOpen, onClose }: 
                     initial={{ scale: 0.95, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.95, y: 20 }}
-                    className="bg-[#F5F5F0] w-full max-w-4xl max-h-[85vh] overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col"
+                    className="bg-[#F5F5F0] w-full max-w-5xl max-h-[90vh] overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_#000] flex flex-col"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}

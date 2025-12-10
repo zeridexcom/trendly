@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-// Lazy initialization of OpenAI client
+// Use the exact same pattern as lib/ai.ts
 let openaiClient: OpenAI | null = null
 
 function getOpenAI(): OpenAI | null {
     if (openaiClient) return openaiClient
 
     const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY
-    if (!apiKey) return null
+    if (!apiKey) {
+        console.error('OPENROUTER_API_KEY or OPENAI_API_KEY not found in environment')
+        return null
+    }
 
     openaiClient = new OpenAI({
         baseURL: 'https://openrouter.ai/api/v1',
         apiKey,
         defaultHeaders: {
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://trendly.app',
-            'X-Title': 'Trendly - Content Creation',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+            'X-Title': 'Trendly - Social Media Content Platform',
         },
     })
 
@@ -49,13 +52,19 @@ export async function POST(request: NextRequest) {
         const body: ScriptRequest = await request.json()
         const { idea, platform, videoContext, userIndustry } = body
 
+        console.log('Script generation request:', { idea, platform, userIndustry })
+
         if (!idea || !platform) {
             return NextResponse.json({ success: false, error: 'Missing idea or platform' }, { status: 400 })
         }
 
         const openai = getOpenAI()
         if (!openai) {
-            return NextResponse.json({ success: false, error: 'AI service not configured' }, { status: 500 })
+            console.error('OpenAI client not initialized - check OPENROUTER_API_KEY')
+            return NextResponse.json({
+                success: false,
+                error: 'AI service not configured. Please check OPENROUTER_API_KEY in Vercel environment variables.'
+            }, { status: 500 })
         }
 
         const platformConfig = PLATFORM_CONFIG[platform] || PLATFORM_CONFIG.instagram
@@ -64,115 +73,97 @@ export async function POST(request: NextRequest) {
 
 CONTENT IDEA: ${idea}
 PLATFORM: ${platform.replace('_', ' ').toUpperCase()} (${platformConfig.format}, ${platformConfig.maxDuration})
-INDUSTRY: ${userIndustry}
-${videoContext ? `INSPIRATION: "${videoContext.title}"` : ''}
+INDUSTRY: ${userIndustry || 'General'}
+${videoContext ? `INSPIRATION VIDEO: "${videoContext.title}"` : ''}
 
 Generate a DETAILED script with this EXACT JSON structure:
 {
-    "title": "Catchy title",
+    "title": "Catchy title for the content",
     "hook": {
-        "text": "Attention-grabbing opening line that creates curiosity or shock. Make it SPECIFIC and PUNCHY, not generic.",
+        "text": "Attention-grabbing opening line - specific to the topic",
         "duration": "0-3 seconds",
-        "delivery": "How to deliver (energy level, emotion, pace)",
-        "visualNote": "What should be on screen"
+        "delivery": "Energy level, emotion, pace instructions",
+        "visualNote": "What should appear on screen"
     },
     "sections": [
         {
-            "title": "PROBLEM/SETUP",
-            "script": "Full paragraph of exactly what to say. Be specific, conversational, engaging. At least 2-3 sentences.",
-            "duration": "10-15 seconds",
-            "delivery": "Tone instructions",
-            "bRoll": ["Specific B-roll 1", "Specific B-roll 2"],
-            "camera": "Close-up / Medium / Wide",
-            "graphics": "Text overlay description"
-        },
-        {
-            "title": "MAIN POINT 1",
-            "script": "Detailed explanation of the first key point. Be specific and actionable. Include examples.",
-            "duration": "15-20 seconds",
-            "delivery": "Delivery notes",
-            "bRoll": ["B-roll suggestion"],
-            "camera": "Shot type",
-            "graphics": "Graphics/text"
-        },
-        {
-            "title": "MAIN POINT 2",
-            "script": "Second key insight or tip. Make it practical and memorable.",
-            "duration": "15-20 seconds",
-            "delivery": "Notes",
-            "bRoll": ["B-roll"],
-            "camera": "Shot",
-            "graphics": "Text overlay"
-        },
-        {
-            "title": "MAIN POINT 3",
-            "script": "Third insight or the 'secret sauce' that makes this content valuable.",
-            "duration": "15-20 seconds",
-            "delivery": "Notes",
-            "bRoll": ["B-roll"],
-            "camera": "Shot",
-            "graphics": "Graphics"
-        },
-        {
-            "title": "CONCLUSION/WRAP-UP",
-            "script": "Summarize the key takeaways. Remind them why this matters.",
-            "duration": "5-10 seconds",
-            "delivery": "Notes",
-            "bRoll": ["B-roll"],
-            "camera": "Shot",
-            "graphics": "Summary graphic"
+            "title": "Section name",
+            "script": "Full script text - exactly what to say. At least 2-3 complete sentences.",
+            "duration": "Time for this section",
+            "delivery": "Tone and delivery instructions",
+            "bRoll": ["B-roll suggestion 1", "B-roll suggestion 2"],
+            "camera": "Camera angle/shot type",
+            "graphics": "Text overlays or graphics"
         }
     ],
     "cta": {
-        "text": "Strong call-to-action that tells them exactly what to do next",
+        "text": "Call-to-action script",
         "type": "follow/like/comment/subscribe"
     },
     "production": {
-        "musicMood": "Specific music style/mood",
+        "musicMood": "Music style/mood",
         "props": ["Prop 1", "Prop 2"],
-        "location": "Specific location suggestion",
+        "location": "Filming location",
         "lighting": "Lighting setup",
         "outfit": "What to wear"
     },
-    "caption": "Ready-to-post caption with emojis and line breaks. Make it engaging and include a question.",
-    "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5", "hashtag6", "hashtag7", "hashtag8"],
+    "caption": "Ready-to-post caption with emojis",
+    "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"],
     "viralityScore": 85,
     "viralityReason": "Why this has viral potential",
     "estimatedViews": "10K-50K",
     "bestTimeToPost": "Best posting time"
 }
 
-CRITICAL RULES:
-1. Each section's "script" must be DETAILED - at least 2-3 full sentences of what to actually SAY
-2. Hook must be PUNCHY and SPECIFIC to the topic, not generic
-3. Include at least 5 content sections (not just 3)
-4. B-roll suggestions must be specific and actionable
-5. Caption must be ready to copy-paste with line breaks and emojis
+RULES:
+1. Include 4-5 content sections with detailed scripts
+2. Make the hook specific to the topic
+3. Each section script should be 2-3 full sentences minimum
+4. Return ONLY valid JSON, no markdown
 
-Return ONLY valid JSON.`
+Return ONLY the JSON object.`
+
+        console.log('Calling OpenRouter API...')
 
         const response = await openai.chat.completions.create({
             model: 'google/gemini-2.0-flash-001',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.8,
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are an expert viral content scriptwriter. Always return valid JSON only.'
+                },
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
             max_tokens: 4000,
         })
 
         const content = response.choices[0]?.message?.content
+        console.log('OpenRouter response received, length:', content?.length)
 
         if (!content) {
-            throw new Error('No response from AI')
+            return NextResponse.json({ success: false, error: 'No response from AI' }, { status: 500 })
         }
 
-        // Parse JSON
+        // Parse JSON - try multiple cleanup approaches
         let script
         try {
-            const jsonStr = content.replace(/```json\n?|\n?```/g, '').trim()
+            // Remove markdown code blocks if present
+            let jsonStr = content.replace(/```json\n?|\n?```/g, '').trim()
+            // Remove any leading/trailing whitespace or newlines
+            jsonStr = jsonStr.replace(/^\s+|\s+$/g, '')
             script = JSON.parse(jsonStr)
-        } catch {
-            console.error('Failed to parse:', content)
-            throw new Error('Failed to parse script JSON')
+        } catch (parseError) {
+            console.error('JSON parse error:', parseError)
+            console.error('Raw content:', content.substring(0, 500))
+            return NextResponse.json({
+                success: false,
+                error: 'Failed to parse AI response. Please try again.',
+                rawContent: content.substring(0, 200)
+            }, { status: 500 })
         }
+
+        console.log('Script generated successfully:', script.title)
 
         return NextResponse.json({
             success: true,
@@ -182,10 +173,10 @@ Return ONLY valid JSON.`
         })
 
     } catch (error: any) {
-        console.error('Script generation error:', error)
+        console.error('Script generation error:', error.message || error)
         return NextResponse.json({
             success: false,
-            error: error.message || 'Failed to generate script'
+            error: error.message || 'Failed to generate script. Check server logs.'
         }, { status: 500 })
     }
 }
