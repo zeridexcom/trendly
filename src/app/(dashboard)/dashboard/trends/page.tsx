@@ -144,10 +144,16 @@ export default function TrendsPage() {
     const [loadingMore, setLoadingMore] = useState(false)
     const [userNiche, setUserNiche] = useState('TECH')
 
-    // Instagram state
+    // Instagram state - expanded for full content
     const [instagramHashtags, setInstagramHashtags] = useState<any[]>([])
     const [instagramContentIdeas, setInstagramContentIdeas] = useState<string[]>([])
+    const [instagramSongs, setInstagramSongs] = useState<any[]>([])
+    const [instagramHooks, setInstagramHooks] = useState<any[]>([])
+    const [instagramCreators, setInstagramCreators] = useState<any[]>([])
+    const [instagramReels, setInstagramReels] = useState<any>({})
+    const [instagramPostingTimes, setInstagramPostingTimes] = useState<any>({})
     const [loadingInstagram, setLoadingInstagram] = useState(false)
+    const [activeInstagramSection, setActiveInstagramSection] = useState<'hashtags' | 'songs' | 'hooks' | 'creators' | 'reels' | 'times'>('hashtags')
 
     // YouTube video analysis modal state
     const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
@@ -355,12 +361,56 @@ export default function TrendsPage() {
         setLoadingInstagram(true)
         try {
             const targetNiche = niche || userNiche
-            const response = await fetch(`/api/instagram/hashtags?niche=${targetNiche}`)
-            const data = await response.json()
-            if (data.success) {
-                setInstagramHashtags(data.hashtags || [])
-                setInstagramContentIdeas(data.contentIdeas || [])
+
+            // Fetch all Instagram data concurrently
+            const [hashtagsRes, songsRes, hooksRes, creatorsRes, reelsRes, timesRes] = await Promise.allSettled([
+                fetch(`/api/instagram/hashtags?niche=${targetNiche}`),
+                fetch(`/api/instagram/songs?niche=${targetNiche}&limit=20`),
+                fetch(`/api/instagram/hooks?niche=${targetNiche}&limit=30`),
+                fetch(`/api/instagram/creators?niche=${targetNiche}`),
+                fetch(`/api/instagram/reels?niche=${targetNiche}`),
+                fetch(`/api/instagram/posting-times?niche=${targetNiche}`)
+            ])
+
+            // Process hashtags
+            if (hashtagsRes.status === 'fulfilled') {
+                const data = await hashtagsRes.value.json()
+                if (data.success) {
+                    setInstagramHashtags(data.hashtags || [])
+                    setInstagramContentIdeas(data.contentIdeas || [])
+                }
             }
+
+            // Process songs
+            if (songsRes.status === 'fulfilled') {
+                const data = await songsRes.value.json()
+                if (data.success) setInstagramSongs(data.songs || [])
+            }
+
+            // Process hooks
+            if (hooksRes.status === 'fulfilled') {
+                const data = await hooksRes.value.json()
+                if (data.success) setInstagramHooks(data.hooks || [])
+            }
+
+            // Process creators
+            if (creatorsRes.status === 'fulfilled') {
+                const data = await creatorsRes.value.json()
+                if (data.success) setInstagramCreators(data.creators || [])
+            }
+
+            // Process reels
+            if (reelsRes.status === 'fulfilled') {
+                const data = await reelsRes.value.json()
+                if (data.success) setInstagramReels(data)
+            }
+
+            // Process posting times
+            if (timesRes.status === 'fulfilled') {
+                const data = await timesRes.value.json()
+                if (data.success) setInstagramPostingTimes(data)
+            }
+
         } catch (err) {
             console.error('Failed to fetch Instagram trends:', err)
         } finally {
@@ -1034,7 +1084,7 @@ export default function TrendsPage() {
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 overflow-x-auto pb-2"
+                        className="mb-4 overflow-x-auto pb-2"
                     >
                         <div className="flex gap-2 min-w-max">
                             {NICHES.map((niche) => (
@@ -1058,86 +1108,222 @@ export default function TrendsPage() {
                         </div>
                     </motion.div>
 
-                    {/* Content Ideas Section */}
+                    {/* Instagram Sub-Navigation */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="mb-8 p-6 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 border-4 border-black shadow-[8px_8px_0px_0px_#000]"
+                        className="mb-6 overflow-x-auto"
                     >
-                        <h3 className="text-2xl font-black uppercase text-white mb-4 flex items-center gap-2">
-                            💡 Content Ideas for {userNiche}
-                        </h3>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {instagramContentIdeas.map((idea, i) => (
-                                <div key={i} className="bg-white/90 p-4 border-2 border-black hover:translate-y-[-2px] hover:shadow-lg transition-all cursor-pointer">
-                                    <p className="font-bold text-black">{idea}</p>
-                                </div>
+                        <div className="flex gap-1 min-w-max bg-black p-1">
+                            {[
+                                { id: 'hashtags', label: '# Hashtags', icon: '📊' },
+                                { id: 'songs', label: '🎵 Songs', icon: '' },
+                                { id: 'hooks', label: '💬 Hooks', icon: '' },
+                                { id: 'creators', label: '👤 Creators', icon: '' },
+                                { id: 'reels', label: '🎬 Reels', icon: '' },
+                                { id: 'times', label: '⏰ Best Times', icon: '' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveInstagramSection(tab.id as any)}
+                                    className={cn(
+                                        "px-4 py-2 font-bold text-sm transition-all whitespace-nowrap",
+                                        activeInstagramSection === tab.id
+                                            ? "bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white"
+                                            : "bg-white text-black hover:bg-gray-100"
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
                             ))}
                         </div>
                     </motion.div>
 
-                    {/* Trending Hashtags */}
-                    <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                        <Hash className="w-6 h-6" />
-                        Trending Hashtags for {userNiche}
-                    </h3>
-
-                    {loadingInstagram ? (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {Array.from({ length: 9 }).map((_, i) => (
+                    {loadingInstagram && (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {Array.from({ length: 8 }).map((_, i) => (
                                 <div key={i} className="animate-pulse bg-white border-2 border-black p-6">
                                     <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
                                     <div className="h-3 bg-gray-200 rounded w-1/2" />
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {instagramHashtags.map((hashtag, i) => (
-                                <motion.div
-                                    key={i}
-                                    variants={item}
-                                    className={cn(
-                                        "bg-white border-2 border-black p-5 hover:-translate-y-1 transition-all cursor-pointer group",
-                                        hashtag.category === 'Viral' && "shadow-[4px_4px_0px_0px_#FF4D4D]",
-                                        hashtag.category === 'Hot' && "shadow-[4px_4px_0px_0px_#FF9500]",
-                                        hashtag.category === 'Growing' && "shadow-[4px_4px_0px_0px_#B1F202]"
-                                    )}
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(hashtag.tag)
-                                    }}
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <span className={cn(
-                                            "px-2 py-1 text-xs font-black text-white",
-                                            hashtag.category === 'Viral' && "bg-red-500",
-                                            hashtag.category === 'Hot' && "bg-orange-500",
-                                            hashtag.category === 'Growing' && "bg-green-500",
-                                            hashtag.category === 'Stable' && "bg-gray-500"
-                                        )}>
-                                            {hashtag.category === 'Viral' && '🔥'} {hashtag.category.toUpperCase()}
-                                        </span>
-                                        <span className="text-xs font-bold text-green-600">{hashtag.growth}</span>
-                                    </div>
-                                    <h4 className="font-black text-lg mb-2 group-hover:text-pink-600 transition-colors">
-                                        {hashtag.tag}
-                                    </h4>
-                                    <p className="text-sm font-bold text-gray-500">{hashtag.posts} posts</p>
-                                    <p className="text-xs text-gray-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Click to copy
-                                    </p>
-                                </motion.div>
-                            ))}
-                        </motion.div>
                     )}
 
-                    {/* Empty State */}
-                    {!loadingInstagram && instagramHashtags.length === 0 && (
-                        <div className="text-center py-16 bg-white border-2 border-black border-dashed">
-                            <Hash className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-xl font-black uppercase text-black mb-2">No hashtags found</h3>
-                            <p className="font-medium text-gray-500">Select a niche to see trending hashtags</p>
-                        </div>
+                    {/* ===== HASHTAGS SECTION ===== */}
+                    {!loadingInstagram && activeInstagramSection === 'hashtags' && (
+                        <>
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 border-3 border-black">
+                                <h3 className="text-xl font-black uppercase text-white mb-3">💡 Content Ideas for {userNiche}</h3>
+                                <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-2">
+                                    {instagramContentIdeas.map((idea, i) => (
+                                        <div key={i} className="bg-white/90 p-3 border-2 border-black hover:-translate-y-1 transition-all cursor-pointer">
+                                            <p className="font-bold text-sm text-black">{idea}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                            <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2"><Hash className="w-6 h-6" /> Trending Hashtags</h3>
+                            <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {instagramHashtags.map((hashtag, i) => (
+                                    <motion.div key={i} variants={item} className={cn("bg-white border-2 border-black p-4 hover:-translate-y-1 transition-all cursor-pointer group", hashtag.category === 'Viral' && "shadow-[4px_4px_0px_0px_#FF4D4D]", hashtag.category === 'Hot' && "shadow-[4px_4px_0px_0px_#FF9500]", hashtag.category === 'Growing' && "shadow-[4px_4px_0px_0px_#B1F202]")} onClick={() => navigator.clipboard.writeText(hashtag.tag)}>
+                                        <div className="flex items-start justify-between mb-2">
+                                            <span className={cn("px-2 py-1 text-xs font-black text-white", hashtag.category === 'Viral' && "bg-red-500", hashtag.category === 'Hot' && "bg-orange-500", hashtag.category === 'Growing' && "bg-green-500", hashtag.category === 'Stable' && "bg-gray-500")}>{hashtag.category === 'Viral' && '🔥'} {hashtag.category.toUpperCase()}</span>
+                                            <span className="text-xs font-bold text-green-600">{hashtag.growth}</span>
+                                        </div>
+                                        <h4 className="font-black text-lg mb-1 group-hover:text-pink-600 transition-colors">{hashtag.tag}</h4>
+                                        <p className="text-sm font-bold text-gray-500">{hashtag.posts} posts</p>
+                                        <p className="text-xs text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to copy</p>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </>
+                    )}
+
+                    {/* ===== SONGS SECTION ===== */}
+                    {!loadingInstagram && activeInstagramSection === 'songs' && (
+                        <>
+                            <h3 className="text-xl font-black uppercase mb-4">🎵 Trending Songs & Audio</h3>
+                            <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {instagramSongs.map((song, i) => (
+                                    <motion.div key={i} variants={item} className={cn("bg-white border-2 border-black p-4 hover:-translate-y-1 transition-all group", song.category === 'Viral' && "shadow-[4px_4px_0px_0px_#FF4D4D]", song.category === 'Hot' && "shadow-[4px_4px_0px_0px_#FF9500]")}>
+                                        <div className="flex items-start justify-between mb-2">
+                                            <span className={cn("px-2 py-1 text-xs font-black text-white", song.category === 'Viral' && "bg-red-500", song.category === 'Hot' && "bg-orange-500", song.category === 'Growing' && "bg-green-500", song.category === 'Stable' && "bg-gray-500")}>{song.category}</span>
+                                            <span className="text-xs font-bold text-green-600">{song.growth}</span>
+                                        </div>
+                                        <h4 className="font-black text-base mb-1 line-clamp-1">{song.name}</h4>
+                                        <p className="text-sm font-medium text-gray-600 mb-2">{song.artist}</p>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-purple-600">{song.uses} uses</span>
+                                            <span className="px-2 py-0.5 bg-gray-100 text-xs font-bold">{song.mood}</span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </>
+                    )}
+
+                    {/* ===== HOOKS SECTION ===== */}
+                    {!loadingInstagram && activeInstagramSection === 'hooks' && (
+                        <>
+                            <h3 className="text-xl font-black uppercase mb-4">💬 Viral Hooks & Captions</h3>
+                            <p className="text-gray-600 font-medium mb-4">Click any hook to copy it instantly!</p>
+                            <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {instagramHooks.map((hook, i) => (
+                                    <motion.div key={i} variants={item} className="bg-white border-2 border-black p-4 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_#EC4899] transition-all cursor-pointer group" onClick={() => navigator.clipboard.writeText(hook.hook)}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="px-2 py-1 bg-pink-500 text-white text-xs font-black uppercase">{hook.type}</span>
+                                            <span className="text-xs font-bold text-gray-500">{hook.uses} uses</span>
+                                        </div>
+                                        <p className="font-bold text-lg group-hover:text-pink-600 transition-colors">"{hook.hook}"</p>
+                                        <p className="text-xs text-gray-400 mt-2 opacity-0 group-hover:opacity-100">Click to copy</p>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </>
+                    )}
+
+                    {/* ===== CREATORS SECTION ===== */}
+                    {!loadingInstagram && activeInstagramSection === 'creators' && (
+                        <>
+                            <h3 className="text-xl font-black uppercase mb-4">👤 Top Creators in {userNiche}</h3>
+                            <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {instagramCreators.map((creator, i) => (
+                                    <motion.div key={i} variants={item} className="bg-white border-2 border-black p-5 hover:shadow-[6px_6px_0px_0px_#8B5CF6] transition-all">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-full flex items-center justify-center text-white font-black text-xl border-2 border-black">#{creator.rank}</div>
+                                            <div className="flex-1">
+                                                <h4 className="font-black text-lg">@{creator.username}</h4>
+                                                <p className="text-sm font-medium text-gray-600">{creator.name}</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 grid grid-cols-2 gap-2">
+                                            <div className="bg-gray-100 p-2 text-center"><p className="text-xs text-gray-500">Followers</p><p className="font-black">{creator.followers}</p></div>
+                                            <div className="bg-green-100 p-2 text-center"><p className="text-xs text-gray-500">Engagement</p><p className="font-black text-green-600">{creator.engagement}</p></div>
+                                        </div>
+                                        <p className="mt-3 text-sm font-medium text-gray-600"><span className="font-black">Style:</span> {creator.style}</p>
+                                        <p className="mt-1 text-sm font-medium text-gray-600"><span className="font-black">Posts:</span> {creator.postFrequency}</p>
+                                        <a href={creator.profileUrl} target="_blank" rel="noopener noreferrer" className="mt-3 block w-full text-center py-2 bg-black text-white font-bold text-sm hover:bg-gray-800 transition-colors">View Profile →</a>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </>
+                    )}
+
+                    {/* ===== REELS SECTION ===== */}
+                    {!loadingInstagram && activeInstagramSection === 'reels' && instagramReels.formats && (
+                        <>
+                            <h3 className="text-xl font-black uppercase mb-4">🎬 Viral Reel Formats</h3>
+                            <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                {instagramReels.formats?.slice(0, 8).map((format: any, i: number) => (
+                                    <motion.div key={i} variants={item} className="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_#8B5CF6] transition-all">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="px-2 py-1 bg-purple-500 text-white text-xs font-black">{format.difficulty}</span>
+                                            <span className="text-sm font-black text-pink-600">{format.viralPotential}%</span>
+                                        </div>
+                                        <h4 className="font-black text-lg mb-2">{format.name}</h4>
+                                        <p className="text-sm text-gray-600 mb-2">{format.description}</p>
+                                        <p className="text-xs font-bold text-green-600">Avg Views: {format.avgViews}</p>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                            <h4 className="text-lg font-black uppercase mb-3">💡 Reel Ideas for {userNiche}</h4>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+                                {instagramReels.nicheIdeas?.map((idea: string, i: number) => (
+                                    <div key={i} className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 border-2 border-black text-white font-bold hover:-translate-y-1 transition-all cursor-pointer" onClick={() => navigator.clipboard.writeText(idea)}>
+                                        {idea}
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
+                    {/* ===== POSTING TIMES SECTION ===== */}
+                    {!loadingInstagram && activeInstagramSection === 'times' && instagramPostingTimes.nicheSpecific && (
+                        <>
+                            <h3 className="text-xl font-black uppercase mb-4">⏰ Best Posting Times for {userNiche}</h3>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-gradient-to-br from-green-400 to-green-600 border-2 border-black p-6 text-white">
+                                    <h4 className="font-black uppercase mb-2">🎯 Peak Hour</h4>
+                                    <p className="text-4xl font-black">{instagramPostingTimes.nicheSpecific?.peakHour}</p>
+                                </div>
+                                <div className="bg-white border-2 border-black p-6">
+                                    <h4 className="font-black uppercase mb-2">📅 Best Days</h4>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {instagramPostingTimes.nicheSpecific?.bestDays?.map((day: string, i: number) => (
+                                            <span key={i} className="px-3 py-1 bg-blue-500 text-white font-bold text-sm">{day}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="bg-white border-2 border-black p-6">
+                                    <h4 className="font-black uppercase mb-2">⏰ Best Times</h4>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {instagramPostingTimes.nicheSpecific?.bestTimes?.map((time: string, i: number) => (
+                                            <span key={i} className="px-3 py-1 bg-purple-500 text-white font-bold text-sm">{time}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-yellow-100 border-2 border-black p-4 mb-6">
+                                <p className="font-bold">💡 {instagramPostingTimes.nicheSpecific?.tip}</p>
+                            </div>
+                            <h4 className="text-lg font-black uppercase mb-3">📊 Posting Frequency Guide</h4>
+                            <div className="grid md:grid-cols-4 gap-4 mb-6">
+                                {Object.entries(instagramPostingTimes.frequency || {}).map(([type, data]: [string, any]) => (
+                                    <div key={type} className="bg-white border-2 border-black p-4 text-center">
+                                        <h5 className="font-black uppercase text-sm mb-2">{type}</h5>
+                                        <p className="text-2xl font-black text-purple-600">{data?.optimal}</p>
+                                        <p className="text-xs font-bold text-gray-500">{data?.note}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <h4 className="text-lg font-black uppercase mb-3">🔥 Quick Tips</h4>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {instagramPostingTimes.quickTips?.map((tip: string, i: number) => (
+                                    <div key={i} className="bg-white border-2 border-black p-4 font-medium">{tip}</div>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </>
             )}
