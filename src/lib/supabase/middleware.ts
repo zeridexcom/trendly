@@ -45,10 +45,29 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
+    const pathname = request.nextUrl.pathname
+
+    // Public paths - never redirect these
+    const publicPaths = ['/', '/login', '/signup', '/auth/callback', '/privacy', '/terms', '/api']
+    const isPublicPath = publicPaths.some(path =>
+        pathname === path || pathname.startsWith('/api') || pathname.startsWith('/auth')
+    )
+
+    // If it's a public path, let it through
+    if (isPublicPath) {
+        // But if user is logged in and on login page, redirect to dashboard
+        if (user && pathname === '/login') {
+            const url = request.nextUrl.clone()
+            url.pathname = '/dashboard'
+            return NextResponse.redirect(url)
+        }
+        return supabaseResponse
+    }
+
     // Protected routes - require login
     const protectedPaths = ['/dashboard', '/onboarding']
     const isProtectedPath = protectedPaths.some(path =>
-        request.nextUrl.pathname.startsWith(path)
+        pathname.startsWith(path)
     )
 
     if (!user && isProtectedPath) {
@@ -57,7 +76,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    if (user && isProtectedPath && !request.nextUrl.pathname.startsWith('/onboarding')) {
+    if (user && isProtectedPath && !pathname.startsWith('/onboarding')) {
         const onboardingComplete = user.user_metadata?.onboardingComplete
         if (!onboardingComplete) {
             const url = request.nextUrl.clone()
@@ -68,13 +87,6 @@ export async function updateSession(request: NextRequest) {
 
     // If logged in but not onboarded, redirect to onboarding (except if already there)
     // This will be checked after we have user preferences in DB
-
-    // If on login page but already logged in, redirect to dashboard
-    if (user && request.nextUrl.pathname === '/login') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
-    }
 
     return supabaseResponse
 }
