@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Sparkles, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import CookieConsentBanner from '@/components/CookieConsentBanner'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -74,7 +74,6 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-white font-sans text-black">
-            <CookieConsentBanner />
             {/* Left Panel - Brand / Marketing */}
             <div className="hidden lg:flex flex-col justify-between bg-[#FFC900] border-r-4 border-black p-12 relative overflow-hidden">
                 <div className="z-10">
@@ -95,8 +94,16 @@ export default function LoginPage() {
                 <div className="absolute top-1/2 right-0 translate-x-1/3 -translate-y-1/2 w-96 h-96 bg-[#FF90E8] rounded-full border-4 border-black mix-blend-multiply opacity-50 blur-3xl" />
                 <div className="absolute bottom-0 left-0 -translate-x-1/3 translate-y-1/3 w-80 h-80 bg-[#00F0FF] rounded-full border-4 border-black mix-blend-multiply opacity-50 blur-3xl" />
 
-                <div className="z-10 font-mono text-sm font-bold tracking-widest uppercase">
-                    © 2024 Trendly Inc.
+                <div className="z-10 space-y-2">
+                    <div className="font-mono text-sm font-bold tracking-widest uppercase">
+                        © 2024 Trendly Inc.
+                    </div>
+                    <div className="text-xs font-medium">
+                        By signing up, you agree to our{' '}
+                        <Link href="/terms" className="underline hover:no-underline">Terms</Link>,{' '}
+                        <Link href="/privacy" className="underline hover:no-underline">Privacy Policy</Link>{' & '}
+                        <Link href="/cookies" className="underline hover:no-underline">Cookies</Link>
+                    </div>
                 </div>
             </div>
 
