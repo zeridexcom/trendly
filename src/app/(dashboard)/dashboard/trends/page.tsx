@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     TrendingUp, Play, Eye, Heart, MessageCircle, Clock, ExternalLink,
     Sparkles, Search, RefreshCw, Lightbulb, Hash, Target, Zap, Youtube,
-    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3, Globe, Loader2, RotateCcw
+    X, CheckCircle, AlertTriangle, ArrowRight, Copy, ThumbsUp, BarChart3, Globe, Loader2, RotateCcw,
+    Flame, Cpu, Gamepad2, UtensilsCrossed, Film, Shirt, BookOpen, Plane, Briefcase, Music
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -108,6 +109,20 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
+// Niche filter options
+const NICHES = [
+    { id: 'ALL', label: 'All', icon: Globe, color: '#9333EA' },
+    { id: 'TECH', label: 'Tech', icon: Cpu, color: '#3B82F6' },
+    { id: 'GAMING', label: 'Gaming', icon: Gamepad2, color: '#EF4444' },
+    { id: 'ENTERTAINMENT', label: 'Entertainment', icon: Film, color: '#F59E0B' },
+    { id: 'FOOD', label: 'Food', icon: UtensilsCrossed, color: '#10B981' },
+    { id: 'FITNESS', label: 'Fitness', icon: Heart, color: '#EC4899' },
+    { id: 'FASHION', label: 'Fashion', icon: Shirt, color: '#8B5CF6' },
+    { id: 'EDUCATION', label: 'Education', icon: BookOpen, color: '#06B6D4' },
+    { id: 'TRAVEL', label: 'Travel', icon: Plane, color: '#14B8A6' },
+    { id: 'BUSINESS', label: 'Business', icon: Briefcase, color: '#6366F1' },
+]
+
 export default function TrendsPage() {
     // Active tab
     const [activeTab, setActiveTab] = useState<'youtube' | 'google'>('youtube')
@@ -144,12 +159,60 @@ export default function TrendsPage() {
     const [googleTrendAnalysis, setGoogleTrendAnalysis] = useState<GoogleTrendAnalysis | null>(null)
     const [analyzingGoogleTrend, setAnalyzingGoogleTrend] = useState(false)
 
+    // Infinite scroll observer ref
+    const observerRef = useRef<IntersectionObserver | null>(null)
+    const loadMoreRef = useRef<HTMLDivElement | null>(null)
+    const [hoveredVideo, setHoveredVideo] = useState<string | null>(null)
+
     useEffect(() => {
         // Get user's niche from preferences
         getUserNiche()
         fetchTrending(true) // true = fresh start with random offset
         fetchGoogleTrends()
     }, [])
+
+    // Infinite scroll observer
+    useEffect(() => {
+        if (!loadMoreRef.current || loading || loadingMore || !hasMore) return
+
+        observerRef.current = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loadingMore) {
+                    loadMoreVideos()
+                }
+            },
+            { threshold: 0.1 }
+        )
+
+        observerRef.current.observe(loadMoreRef.current)
+
+        return () => observerRef.current?.disconnect()
+    }, [hasMore, loading, loadingMore])
+
+    // Handle niche filter change
+    const handleNicheChange = (nicheId: string) => {
+        setUserNiche(nicheId)
+        setVideos([])
+        setCurrentPage(1)
+        setLoading(true)
+        // Fetch with new niche
+        setTimeout(() => {
+            fetchTrending(true)
+        }, 100)
+    }
+
+    // Calculate viral score for a video
+    const getViralScore = (video: YouTubeVideo): number => {
+        const views = video.viewCount || 0
+        const likes = video.likeCount || 0
+        const comments = video.commentCount || 0
+
+        // Simple viral score calculation based on engagement
+        const engagement = (likes + comments) / Math.max(views, 1) * 100
+        const viewBonus = Math.min(views / 1000000 * 20, 30) // Max 30 points for views
+        const score = Math.min(Math.round(engagement * 10 + viewBonus + 50), 100)
+        return score
+    }
 
     const getUserNiche = async () => {
         try {
@@ -475,6 +538,34 @@ export default function TrendsPage() {
             {/* ========== YOUTUBE TAB ========== */}
             {activeTab === 'youtube' && (
                 <>
+                    {/* Niche Filter Buttons */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 overflow-x-auto pb-2"
+                    >
+                        <div className="flex gap-2 min-w-max">
+                            {NICHES.map((niche) => (
+                                <button
+                                    key={niche.id}
+                                    onClick={() => handleNicheChange(niche.id)}
+                                    className={cn(
+                                        "px-4 py-2 border-2 border-black font-bold uppercase text-sm transition-all flex items-center gap-2 whitespace-nowrap",
+                                        userNiche === niche.id
+                                            ? "text-white shadow-[4px_4px_0px_0px_#000] -translate-y-1"
+                                            : "bg-white text-black hover:bg-gray-50"
+                                    )}
+                                    style={{
+                                        backgroundColor: userNiche === niche.id ? niche.color : undefined
+                                    }}
+                                >
+                                    <niche.icon className="w-4 h-4" />
+                                    {niche.label}
+                                </button>
+                            ))}
+                        </div>
+                    </motion.div>
+
                     {/* Search */}
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 mb-10">
                         <div className="flex-1 relative">
@@ -570,67 +661,120 @@ export default function TrendsPage() {
                         </div>
                     ) : (
                         <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {videos.map((video, index) => (
-                                <motion.div
-                                    key={video.id}
-                                    variants={item}
-                                    className="bg-white border-2 border-black overflow-hidden hover:shadow-[8px_8px_0px_0px_#FF4D4D] transition-shadow group"
-                                >
-                                    <a href={video.url} target="_blank" rel="noopener noreferrer" className="block relative">
-                                        <img src={video.thumbnail} alt={video.title} className="w-full aspect-video object-cover" />
-                                        <div className="absolute top-3 left-3 px-2 py-1 bg-black text-white text-xs font-black">
-                                            #{index + 1} TRENDING
+                            {videos.map((video, index) => {
+                                const viralScore = getViralScore(video)
+                                const isHovered = hoveredVideo === video.id
+                                return (
+                                    <motion.div
+                                        key={video.id}
+                                        variants={item}
+                                        onMouseEnter={() => setHoveredVideo(video.id)}
+                                        onMouseLeave={() => setHoveredVideo(null)}
+                                        className={cn(
+                                            "bg-white border-2 border-black overflow-hidden transition-all duration-300 group cursor-pointer",
+                                            isHovered
+                                                ? "shadow-[12px_12px_0px_0px_#FF4D4D] -translate-y-2 scale-[1.02]"
+                                                : "shadow-[4px_4px_0px_0px_#000]"
+                                        )}
+                                    >
+                                        <a href={video.url} target="_blank" rel="noopener noreferrer" className="block relative">
+                                            <img src={video.thumbnail} alt={video.title} className="w-full aspect-video object-cover transition-transform duration-300 group-hover:scale-105" />
+
+                                            {/* Play button overlay on hover */}
+                                            <div className={cn(
+                                                "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300",
+                                                isHovered ? "opacity-100" : "opacity-0"
+                                            )}>
+                                                <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110">
+                                                    <Play className="w-8 h-8 text-black fill-black ml-1" />
+                                                </div>
+                                            </div>
+
+                                            {/* Trending badge */}
+                                            <div className="absolute top-3 left-3 px-2 py-1 bg-black text-white text-xs font-black">
+                                                #{index + 1} TRENDING
+                                            </div>
+
+                                            {/* Viral Score Badge */}
+                                            <div className={cn(
+                                                "absolute top-3 right-3 px-2 py-1 text-white text-xs font-black flex items-center gap-1",
+                                                viralScore >= 80 ? "bg-gradient-to-r from-orange-500 to-red-500" :
+                                                    viralScore >= 60 ? "bg-gradient-to-r from-yellow-500 to-orange-500" :
+                                                        "bg-gray-700"
+                                            )}>
+                                                <Flame className={cn("w-3 h-3", viralScore >= 80 && "animate-pulse")} />
+                                                {viralScore}%
+                                            </div>
+
+                                            {/* Duration badge */}
+                                            <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 text-white text-xs font-black">
+                                                {video.formattedDuration || '0:00'}
+                                            </div>
+                                        </a>
+                                        <div className="p-5">
+                                            <h3 className="font-black text-lg leading-tight uppercase mb-2 line-clamp-2 group-hover:text-[#FF4D4D] transition-colors">
+                                                {video.title}
+                                            </h3>
+                                            <p className="text-xs font-bold text-gray-500 uppercase mb-4">{video.channelTitle}</p>
+                                            <div className="flex items-center justify-between text-xs font-bold text-black border-t-2 border-black/10 pt-3 mb-4">
+                                                <span className="flex items-center gap-1">
+                                                    <Eye className="w-4 h-4" /> {video.formattedViews}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Heart className="w-4 h-4" /> {video.formattedLikes}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <MessageCircle className="w-4 h-4" /> {video.formattedComments}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-3">
+                                                <span className={cn(
+                                                    "px-2 py-1 border-2 border-black text-xs font-black flex items-center gap-1",
+                                                    viralScore >= 80 ? "bg-gradient-to-r from-orange-400 to-red-400 text-white" :
+                                                        viralScore >= 60 ? "bg-[#FFC900]" : "bg-[#B1F202]"
+                                                )}>
+                                                    <Flame className="w-3 h-3" />
+                                                    {viralScore >= 80 ? "🔥 HOT" : viralScore >= 60 ? "⚡ VIRAL" : "📈 RISING"}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); analyzeVideo(video); }}
+                                                    className="flex-1 py-2 bg-black text-white text-xs font-black uppercase hover:bg-[#FFC900] hover:text-black transition-colors flex items-center justify-center gap-1"
+                                                >
+                                                    <Sparkles className="w-3 h-3" />
+                                                    Analyze
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black text-white text-xs font-black">
-                                            {video.formattedDuration}
-                                        </div>
-                                    </a>
-                                    <div className="p-5">
-                                        <h3 className="font-black text-lg leading-tight uppercase mb-2 line-clamp-2">
-                                            {video.title}
-                                        </h3>
-                                        <p className="text-xs font-bold text-gray-500 uppercase mb-4">{video.channelTitle}</p>
-                                        <div className="flex items-center justify-between text-xs font-bold text-black border-t-2 border-black/10 pt-3 mb-4">
-                                            <span className="flex items-center gap-1">
-                                                <Eye className="w-4 h-4" /> {video.formattedViews}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Heart className="w-4 h-4" /> {video.formattedLikes}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <MessageCircle className="w-4 h-4" /> {video.formattedComments}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <span className="px-2 py-1 bg-[#B1F202] border-2 border-black text-xs font-black">
-                                                {video.engagementRate} ENGAGEMENT
-                                            </span>
-                                            <button
-                                                onClick={() => analyzeVideo(video)}
-                                                className="flex-1 py-2 bg-black text-white text-xs font-black uppercase hover:bg-[#FFC900] hover:text-black transition-colors flex items-center justify-center gap-1"
-                                            >
-                                                <Sparkles className="w-3 h-3" />
-                                                Analyze This
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
+                                    </motion.div>
+                                )
+                            })}
                         </motion.div>
                     )}
 
-                    {/* Load More Button */}
+                    {/* Infinite Scroll Trigger & Progress */}
                     {!loading && videos.length > 0 && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="mt-8 flex flex-col items-center gap-4"
+                            className="mt-10 flex flex-col items-center gap-6"
                         >
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm font-bold text-gray-500">
-                                    Showing {videos.length} of {totalVideos} videos
-                                </span>
+                            {/* Progress Bar */}
+                            <div className="w-full max-w-md">
+                                <div className="flex justify-between text-sm font-bold mb-2">
+                                    <span className="text-gray-600">Loaded</span>
+                                    <span className="text-black">{videos.length} / {totalVideos}</span>
+                                </div>
+                                <div className="h-3 bg-gray-200 border-2 border-black overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(videos.length / totalVideos) * 100}%` }}
+                                        transition={{ duration: 0.5 }}
+                                        className="h-full bg-gradient-to-r from-[#B1F202] via-[#FFC900] to-[#FF4D4D]"
+                                    />
+                                </div>
                             </div>
+
+                            {/* Control Buttons */}
                             <div className="flex gap-4">
                                 <button
                                     onClick={refreshVideos}
@@ -638,28 +782,33 @@ export default function TrendsPage() {
                                     className="px-6 py-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black uppercase text-sm flex items-center gap-2"
                                 >
                                     <RotateCcw className={cn("w-5 h-5", loading && "animate-spin")} />
-                                    Refresh
+                                    Shuffle
                                 </button>
-                                {hasMore && (
-                                    <button
-                                        onClick={loadMoreVideos}
-                                        disabled={loadingMore}
-                                        className="px-8 py-3 bg-[#B1F202] border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black uppercase text-sm flex items-center gap-2"
-                                    >
-                                        {loadingMore ? (
-                                            <>
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                Loading...
-                                            </>
-                                        ) : (
-                                            <>
-                                                Load More Videos
-                                                <ArrowRight className="w-5 h-5" />
-                                            </>
-                                        )}
-                                    </button>
-                                )}
                             </div>
+
+                            {/* Infinite Scroll Observer + Loading Indicator */}
+                            {hasMore && (
+                                <div ref={loadMoreRef} className="flex flex-col items-center gap-3 py-8">
+                                    {loadingMore ? (
+                                        <div className="flex items-center gap-3">
+                                            <Loader2 className="w-6 h-6 animate-spin text-black" />
+                                            <span className="font-bold text-gray-600">Loading more videos...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-gray-400">
+                                            <ArrowRight className="w-5 h-5 animate-bounce" />
+                                            <span className="text-sm font-bold">Scroll for more</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* End of content */}
+                            {!hasMore && videos.length > 0 && (
+                                <div className="text-center py-6 text-gray-500 font-bold border-t-2 border-dashed border-gray-200 w-full max-w-md">
+                                    🎉 You've seen all {totalVideos} videos!
+                                </div>
+                            )}
                         </motion.div>
                     )}
 
