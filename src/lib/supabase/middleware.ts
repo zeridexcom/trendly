@@ -11,8 +11,6 @@ export async function updateSession(request: NextRequest) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseAnonKey) {
-        // Skip auth check if Supabase not configured
-        console.warn('Supabase env vars not configured, skipping auth middleware')
         return supabaseResponse
     }
 
@@ -37,56 +35,26 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // Do not run code between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
-
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
+    const { data: { user } } = await supabase.auth.getUser()
     const pathname = request.nextUrl.pathname
 
-    // Public paths - never redirect these
-    const publicPaths = ['/', '/login', '/signup', '/auth/callback', '/privacy', '/terms', '/api']
-    const isPublicPath = publicPaths.some(path =>
-        pathname === path || pathname.startsWith('/api') || pathname.startsWith('/auth')
-    )
-
-    // If it's a public path, let it through
-    if (isPublicPath) {
-        // But if user is logged in and on login page, redirect to dashboard
-        if (user && pathname === '/login') {
-            const url = request.nextUrl.clone()
-            url.pathname = '/dashboard'
-            return NextResponse.redirect(url)
-        }
-        return supabaseResponse
+    // ONLY redirect for /dashboard routes if not logged in
+    if (pathname.startsWith('/dashboard') && !user) {
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Protected routes - require login
-    const protectedPaths = ['/dashboard', '/onboarding']
-    const isProtectedPath = protectedPaths.some(path =>
-        pathname.startsWith(path)
-    )
-
-    if (!user && isProtectedPath) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+    // ONLY redirect for /onboarding routes if not logged in
+    if (pathname.startsWith('/onboarding') && !user) {
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    if (user && isProtectedPath && !pathname.startsWith('/onboarding')) {
+    // Check onboarding status for dashboard (but not onboarding page itself)
+    if (user && pathname.startsWith('/dashboard')) {
         const onboardingComplete = user.user_metadata?.onboardingComplete
         if (!onboardingComplete) {
-            const url = request.nextUrl.clone()
-            url.pathname = '/onboarding'
-            return NextResponse.redirect(url)
+            return NextResponse.redirect(new URL('/onboarding', request.url))
         }
     }
-
-    // If logged in but not onboarded, redirect to onboarding (except if already there)
-    // This will be checked after we have user preferences in DB
 
     return supabaseResponse
 }
