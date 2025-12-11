@@ -8,18 +8,29 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient()
-        await supabase.auth.exchangeCodeForSession(code)
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (error) {
+            console.error('Auth callback error:', error)
+            return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+        }
 
         // Check if user has completed onboarding
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
-            // For new users via OAuth, redirect to onboarding
-            // We'll check onboardingComplete in middleware later
-            return NextResponse.redirect(`${origin}/onboarding`)
+            const onboardingComplete = user.user_metadata?.onboardingComplete
+
+            if (onboardingComplete) {
+                // User already completed onboarding, go to dashboard
+                return NextResponse.redirect(`${origin}/dashboard`)
+            } else {
+                // New user or hasn't completed onboarding
+                return NextResponse.redirect(`${origin}/onboarding`)
+            }
         }
     }
 
-    // URL to redirect to after sign in process completes
-    return NextResponse.redirect(`${origin}/dashboard`)
+    // No code or something went wrong, go to login
+    return NextResponse.redirect(`${origin}/login`)
 }
