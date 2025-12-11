@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+function getSupabase() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    return createClient(supabaseUrl, supabaseServiceKey)
+}
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // GET - Fetch user's saved scripts
 export async function GET(request: NextRequest) {
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
         const platform = searchParams.get('platform')
         const limit = parseInt(searchParams.get('limit') || '20')
 
-        let query = supabase
+        let query = getSupabase()
             .from('saved_scripts')
             .select('*')
             .eq('user_id', userId)
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 })
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('saved_scripts')
             .insert({
                 user_id: userId,
@@ -127,7 +129,7 @@ export async function PATCH(request: NextRequest) {
         if (updates.scriptContent) dbUpdates.script_content = updates.scriptContent
         dbUpdates.updated_at = new Date().toISOString()
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('saved_scripts')
             .update(dbUpdates)
             .eq('id', id)
@@ -166,7 +168,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Script ID required' }, { status: 400 })
         }
 
-        const { error } = await supabase
+        const { error } = await getSupabase()
             .from('saved_scripts')
             .delete()
             .eq('id', id)
