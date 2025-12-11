@@ -125,7 +125,7 @@ const NICHES = [
 
 export default function TrendsPage() {
     // Active tab
-    const [activeTab, setActiveTab] = useState<'youtube' | 'google'>('youtube')
+    const [activeTab, setActiveTab] = useState<'youtube' | 'google' | 'instagram'>('youtube')
 
     // YouTube state
     const [videos, setVideos] = useState<YouTubeVideo[]>([])
@@ -143,6 +143,11 @@ export default function TrendsPage() {
     const [hasMore, setHasMore] = useState(false)
     const [loadingMore, setLoadingMore] = useState(false)
     const [userNiche, setUserNiche] = useState('TECH')
+
+    // Instagram state
+    const [instagramHashtags, setInstagramHashtags] = useState<any[]>([])
+    const [instagramContentIdeas, setInstagramContentIdeas] = useState<string[]>([])
+    const [loadingInstagram, setLoadingInstagram] = useState(false)
 
     // YouTube video analysis modal state
     const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
@@ -346,6 +351,23 @@ export default function TrendsPage() {
         }
     }
 
+    const fetchInstagramTrends = async (niche?: string) => {
+        setLoadingInstagram(true)
+        try {
+            const targetNiche = niche || userNiche
+            const response = await fetch(`/api/instagram/hashtags?niche=${targetNiche}`)
+            const data = await response.json()
+            if (data.success) {
+                setInstagramHashtags(data.hashtags || [])
+                setInstagramContentIdeas(data.contentIdeas || [])
+            }
+        } catch (err) {
+            console.error('Failed to fetch Instagram trends:', err)
+        } finally {
+            setLoadingInstagram(false)
+        }
+    }
+
     const searchAndAnalyze = async () => {
         if (!searchInput.trim()) return
 
@@ -532,6 +554,21 @@ export default function TrendsPage() {
                     <Globe className="w-5 h-5" />
                     Google Trends
                     <span className="px-2 py-0.5 text-xs bg-black text-white rounded-full">{googleTrends.length}</span>
+                </button>
+                <button
+                    onClick={() => { setActiveTab('instagram'); fetchInstagramTrends(); }}
+                    className={cn(
+                        "px-6 py-3 font-black uppercase text-sm border-2 border-black transition-all flex items-center gap-2",
+                        activeTab === 'instagram'
+                            ? "bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white shadow-[4px_4px_0px_0px_#000]"
+                            : "bg-white text-black hover:bg-gray-100"
+                    )}
+                >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                    Instagram
+                    <span className="px-2 py-0.5 text-xs bg-black text-white rounded-full">{instagramHashtags.length}</span>
                 </button>
             </motion.div>
 
@@ -989,6 +1026,121 @@ export default function TrendsPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* ========== INSTAGRAM TAB ========== */}
+            {activeTab === 'instagram' && (
+                <>
+                    {/* Niche Filter for Instagram */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 overflow-x-auto pb-2"
+                    >
+                        <div className="flex gap-2 min-w-max">
+                            {NICHES.map((niche) => (
+                                <button
+                                    key={niche.id}
+                                    onClick={() => { handleNicheChange(niche.id); fetchInstagramTrends(niche.id); }}
+                                    className={cn(
+                                        "px-4 py-2 border-2 border-black font-bold uppercase text-sm transition-all flex items-center gap-2 whitespace-nowrap",
+                                        userNiche === niche.id
+                                            ? "text-white shadow-[4px_4px_0px_0px_#000] -translate-y-1"
+                                            : "bg-white text-black hover:bg-gray-50"
+                                    )}
+                                    style={{
+                                        backgroundColor: userNiche === niche.id ? niche.color : undefined
+                                    }}
+                                >
+                                    <niche.icon className="w-4 h-4" />
+                                    {niche.label}
+                                </button>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    {/* Content Ideas Section */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mb-8 p-6 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 border-4 border-black shadow-[8px_8px_0px_0px_#000]"
+                    >
+                        <h3 className="text-2xl font-black uppercase text-white mb-4 flex items-center gap-2">
+                            💡 Content Ideas for {userNiche}
+                        </h3>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {instagramContentIdeas.map((idea, i) => (
+                                <div key={i} className="bg-white/90 p-4 border-2 border-black hover:translate-y-[-2px] hover:shadow-lg transition-all cursor-pointer">
+                                    <p className="font-bold text-black">{idea}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    {/* Trending Hashtags */}
+                    <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+                        <Hash className="w-6 h-6" />
+                        Trending Hashtags for {userNiche}
+                    </h3>
+
+                    {loadingInstagram ? (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                                <div key={i} className="animate-pulse bg-white border-2 border-black p-6">
+                                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+                                    <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <motion.div variants={container} initial="hidden" animate="show" className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {instagramHashtags.map((hashtag, i) => (
+                                <motion.div
+                                    key={i}
+                                    variants={item}
+                                    className={cn(
+                                        "bg-white border-2 border-black p-5 hover:-translate-y-1 transition-all cursor-pointer group",
+                                        hashtag.category === 'Viral' && "shadow-[4px_4px_0px_0px_#FF4D4D]",
+                                        hashtag.category === 'Hot' && "shadow-[4px_4px_0px_0px_#FF9500]",
+                                        hashtag.category === 'Growing' && "shadow-[4px_4px_0px_0px_#B1F202]"
+                                    )}
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(hashtag.tag)
+                                    }}
+                                >
+                                    <div className="flex items-start justify-between mb-2">
+                                        <span className={cn(
+                                            "px-2 py-1 text-xs font-black text-white",
+                                            hashtag.category === 'Viral' && "bg-red-500",
+                                            hashtag.category === 'Hot' && "bg-orange-500",
+                                            hashtag.category === 'Growing' && "bg-green-500",
+                                            hashtag.category === 'Stable' && "bg-gray-500"
+                                        )}>
+                                            {hashtag.category === 'Viral' && '🔥'} {hashtag.category.toUpperCase()}
+                                        </span>
+                                        <span className="text-xs font-bold text-green-600">{hashtag.growth}</span>
+                                    </div>
+                                    <h4 className="font-black text-lg mb-2 group-hover:text-pink-600 transition-colors">
+                                        {hashtag.tag}
+                                    </h4>
+                                    <p className="text-sm font-bold text-gray-500">{hashtag.posts} posts</p>
+                                    <p className="text-xs text-gray-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        Click to copy
+                                    </p>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    )}
+
+                    {/* Empty State */}
+                    {!loadingInstagram && instagramHashtags.length === 0 && (
+                        <div className="text-center py-16 bg-white border-2 border-black border-dashed">
+                            <Hash className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-xl font-black uppercase text-black mb-2">No hashtags found</h3>
+                            <p className="font-medium text-gray-500">Select a niche to see trending hashtags</p>
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* ========== VIDEO ANALYSIS MODAL ========== */}
             <AnimatePresence>
