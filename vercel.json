@@ -2,7 +2,7 @@
     "crons": [
         {
             "path": "/api/admin/cron-cache?key=trendly-cron-2025",
-            "schedule": "0 * * * *"
+            "schedule": "0 0 * * *"
         }
     ]
 }
