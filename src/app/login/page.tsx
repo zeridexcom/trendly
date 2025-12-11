@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sparkles, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import CookieConsentBanner from '@/components/CookieConsentBanner'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -73,6 +74,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-white font-sans text-black">
+            <CookieConsentBanner />
             {/* Left Panel - Brand / Marketing */}
             <div className="hidden lg:flex flex-col justify-between bg-[#FFC900] border-r-4 border-black p-12 relative overflow-hidden">
                 <div className="z-10">
