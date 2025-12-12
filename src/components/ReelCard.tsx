@@ -27,8 +27,8 @@ const item = {
 export default function ReelCard({ reel, index }: ReelCardProps) {
     const [imageError, setImageError] = useState(false)
 
-    // Use Instagram's direct media endpoint - this redirects to the actual image
-    const thumbnailUrl = `https://www.instagram.com/p/${reel.id}/media/?size=l`
+    // Use our proxy API that caches Instagram images server-side
+    const thumbnailUrl = `/api/instagram/image-proxy?shortcode=${reel.id}`
 
     // Generate fallback gradient based on username
     const gradientBg = `linear-gradient(135deg, 
