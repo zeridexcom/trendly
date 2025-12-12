@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Play, Flame, Heart, MessageCircle } from 'lucide-react'
 
@@ -25,27 +25,10 @@ const item = {
 }
 
 export default function ReelCard({ reel, index }: ReelCardProps) {
-    const [thumbnail, setThumbnail] = useState<string | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [imageError, setImageError] = useState(false)
 
-    useEffect(() => {
-        // Fetch fresh thumbnail from our proxy
-        const fetchThumbnail = async () => {
-            try {
-                const response = await fetch(`/api/instagram/thumbnail?shortcode=${reel.id}`)
-                const data = await response.json()
-                if (data.success && data.thumbnail) {
-                    setThumbnail(data.thumbnail)
-                }
-            } catch (err) {
-                console.error('Failed to fetch thumbnail:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchThumbnail()
-    }, [reel.id])
+    // Use Instagram's direct media endpoint - this redirects to the actual image
+    const thumbnailUrl = `https://www.instagram.com/p/${reel.id}/media/?size=l`
 
     // Generate fallback gradient based on username
     const gradientBg = `linear-gradient(135deg, 
@@ -63,27 +46,21 @@ export default function ReelCard({ reel, index }: ReelCardProps) {
             {/* Thumbnail */}
             <div
                 className="relative aspect-[9/16] overflow-hidden bg-gray-200"
-                style={{ background: !thumbnail ? gradientBg : undefined }}
+                style={{ background: imageError ? gradientBg : undefined }}
             >
-                {/* Loading state */}
-                {loading && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                    </div>
-                )}
-
-                {/* Thumbnail image */}
-                {thumbnail && (
+                {/* Actual thumbnail image */}
+                {!imageError && (
                     <img
-                        src={thumbnail}
+                        src={thumbnailUrl}
                         alt={reel.caption?.slice(0, 50)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={() => setThumbnail(null)}
+                        onError={() => setImageError(true)}
+                        loading="lazy"
                     />
                 )}
 
-                {/* Fallback caption when no thumbnail */}
-                {!loading && !thumbnail && (
+                {/* Fallback caption when image fails */}
+                {imageError && (
                     <div className="absolute inset-0 p-4 flex flex-col justify-between">
                         <div className="text-white text-sm font-bold line-clamp-4 drop-shadow-lg">
                             {reel.caption?.slice(0, 120)}...
@@ -97,7 +74,7 @@ export default function ReelCard({ reel, index }: ReelCardProps) {
                 )}
 
                 {/* Play overlay on hover */}
-                {thumbnail && (
+                {!imageError && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border-2 border-black">
                             <Play className="w-8 h-8 text-pink-500 fill-current ml-1" />
