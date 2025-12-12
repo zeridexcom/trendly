@@ -40,6 +40,13 @@ function calculateViralScore(likes: number, comments: number, plays: number): nu
 
 // Run Apify actor and get results
 async function runApifyActor(usernames: string[], reelsPerProfile: number = 30): Promise<any[]> {
+    if (!APIFY_API_TOKEN) {
+        throw new Error('APIFY_API_TOKEN environment variable not set')
+    }
+
+    // Convert usernames to profile URLs
+    const directUrls = usernames.map(u => `https://www.instagram.com/${u}/reels/`)
+
     // Start the actor run
     const runUrl = `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/runs?token=${APIFY_API_TOKEN}`
 
@@ -47,14 +54,14 @@ async function runApifyActor(usernames: string[], reelsPerProfile: number = 30):
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            usernames: usernames,
-            resultsLimit: reelsPerProfile,
-            includeSharesCount: true,
+            directUrls: directUrls,
+            resultsLimit: reelsPerProfile * usernames.length,
         })
     })
 
     if (!runResponse.ok) {
-        throw new Error(`Failed to start Apify actor: ${runResponse.statusText}`)
+        const errorText = await runResponse.text()
+        throw new Error(`Failed to start Apify actor: ${runResponse.status} - ${errorText}`)
     }
 
     const runData = await runResponse.json()
