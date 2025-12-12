@@ -116,21 +116,11 @@ export default function Sidebar() {
             {/* Logo */}
             <div className={cn("p-5 flex items-center border-b-4 border-black bg-white", isCollapsed && "justify-center p-4")}>
                 <Link href="/dashboard" className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-black flex items-center justify-center shadow-[4px_4px_0px_0px_#FF90E8] border-2 border-black hover:translate-x-1 transition-transform">
-                        <span className="text-white font-black text-xl italic">T</span>
-                    </div>
-                    <AnimatePresence>
-                        {!isCollapsed && (
-                            <motion.span
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -10 }}
-                                className="text-2xl font-black italic tracking-tighter text-black uppercase"
-                            >
-                                Trendly
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
+                    {isCollapsed ? (
+                        <img src="/favicon.png" alt="Trendllly" className="w-10 h-10 object-contain" />
+                    ) : (
+                        <img src="/trendllly-logo.png" alt="Trendllly" className="h-10 object-contain" />
+                    )}
                 </Link>
             </div>
 

@@ -23,14 +23,14 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({
                 success: true,
                 settings: {
-                    siteName: 'Trendly',
+                    siteName: 'Trendllly',
                     siteDescription: 'Discover trending content for your niche',
                     maintenanceMode: false,
                     allowRegistration: true,
                     defaultIndustry: 'TECH',
                     cacheRefreshHour: 0,
                     enableEmailNotifications: true,
-                    adminEmail: 'admin@trendly.app',
+                    adminEmail: 'admin@Trendllly.app',
                     youtubeApiKey: process.env.YOUTUBE_API_KEY ? '****' + process.env.YOUTUBE_API_KEY.slice(-8) : '',
                     serpApiKey: process.env.SERPAPI_KEY ? '****' + process.env.SERPAPI_KEY.slice(-8) : '',
                     openRouterApiKey: process.env.OPENROUTER_API_KEY ? '****' + process.env.OPENROUTER_API_KEY.slice(-8) : ''

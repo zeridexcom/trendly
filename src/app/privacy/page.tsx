@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Privacy Policy | Trendly',
-    description: 'Privacy Policy for Trendly - Instagram & YouTube Trends Platform',
+    title: 'Privacy Policy | Trendllly',
+    description: 'Privacy Policy for Trendllly - Instagram & YouTube Trends Platform',
 }
 
 export default function PrivacyPolicy() {
@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
                 <div className="space-y-6 text-gray-800">
                     <section>
                         <h2 className="text-2xl font-black uppercase mb-3">1. Information We Collect</h2>
-                        <p className="font-medium">When you use Trendly, we may collect:</p>
+                        <p className="font-medium">When you use Trendllly, we may collect:</p>
                         <ul className="list-disc list-inside mt-2 space-y-1 font-medium">
                             <li>Account information (email, name) when you sign up</li>
                             <li>Instagram account data when you connect your account</li>

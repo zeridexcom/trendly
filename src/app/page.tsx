@@ -53,7 +53,7 @@ export default async function HomePage() {
             }}
             className="text-gradient"
           >
-            Trendly
+            Trendllly
           </span>
         </Link>
 
@@ -315,7 +315,7 @@ export default async function HomePage() {
           fontSize: 'var(--text-sm)',
         }}
       >
-        <p>© 2024 Trendly. Built for social media teams.</p>
+        <p>© 2024 Trendllly. Built for social media teams.</p>
       </footer>
     </div>
   )

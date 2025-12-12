@@ -77,17 +77,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
                             <Link href="/dashboard" className="flex items-center gap-2" onClick={onClose}>
-                                <div className="relative">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                                        <Sparkles className="h-5 w-5 text-white" />
-                                    </div>
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center">
-                                        <Crown className="h-2.5 w-2.5 text-white" />
-                                    </div>
-                                </div>
-                                <span className="font-bold text-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
-                                    Trendly
-                                </span>
+                                <img src="/trendllly-logo.png" alt="Trendllly" className="h-8 object-contain" />
                             </Link>
                             <button
                                 onClick={onClose}

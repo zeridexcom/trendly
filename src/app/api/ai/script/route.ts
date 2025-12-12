@@ -18,7 +18,7 @@ function getOpenAI(): OpenAI | null {
         apiKey,
         defaultHeaders: {
             'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-            'X-Title': 'Trendly - Social Media Content Platform',
+            'X-Title': 'Trendllly - Social Media Content Platform',
         },
     })
 

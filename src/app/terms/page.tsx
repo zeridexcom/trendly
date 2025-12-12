@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Terms of Service | Trendly',
-    description: 'Terms of Service for Trendly - Instagram & YouTube Trends Platform',
+    title: 'Terms of Service | Trendllly',
+    description: 'Terms of Service for Trendllly - Instagram & YouTube Trends Platform',
 }
 
 export default function TermsOfService() {
@@ -15,12 +15,12 @@ export default function TermsOfService() {
                 <div className="space-y-6 text-gray-800">
                     <section>
                         <h2 className="text-2xl font-black uppercase mb-3">1. Acceptance of Terms</h2>
-                        <p className="font-medium">By accessing and using Trendly, you agree to be bound by these Terms of Service. If you do not agree, please do not use our service.</p>
+                        <p className="font-medium">By accessing and using Trendllly, you agree to be bound by these Terms of Service. If you do not agree, please do not use our service.</p>
                     </section>
 
                     <section>
                         <h2 className="text-2xl font-black uppercase mb-3">2. Description of Service</h2>
-                        <p className="font-medium">Trendly provides:</p>
+                        <p className="font-medium">Trendllly provides:</p>
                         <ul className="list-disc list-inside mt-2 space-y-1 font-medium">
                             <li>Trending content discovery for Instagram and YouTube</li>
                             <li>Hashtag research and recommendations</li>

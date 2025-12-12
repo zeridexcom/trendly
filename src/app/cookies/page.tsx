@@ -2,8 +2,8 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-    title: 'Cookie Policy | Trendly',
-    description: 'Cookie Policy for Trendly - Instagram & YouTube Trends Platform',
+    title: 'Cookie Policy | Trendllly',
+    description: 'Cookie Policy for Trendllly - Instagram & YouTube Trends Platform',
 }
 
 export default function CookiePolicy() {
@@ -21,7 +21,7 @@ export default function CookiePolicy() {
 
                     <section>
                         <h2 className="text-2xl font-black uppercase mb-3">2. How We Use Cookies</h2>
-                        <p className="font-medium mb-2">Trendly uses the following types of cookies:</p>
+                        <p className="font-medium mb-2">Trendllly uses the following types of cookies:</p>
                         <div className="bg-gray-100 border-2 border-black p-4 space-y-3">
                             <div>
                                 <h4 className="font-black">Essential Cookies (Required)</h4>
@@ -92,7 +92,7 @@ export default function CookiePolicy() {
 
                     <section>
                         <h2 className="text-2xl font-black uppercase mb-3">6. Your Consent</h2>
-                        <p className="font-medium">By using Trendly and accepting our cookie consent banner, you agree to our use of cookies as described in this policy. You can withdraw your consent at any time by clearing your cookies and revisiting our site.</p>
+                        <p className="font-medium">By using Trendllly and accepting our cookie consent banner, you agree to our use of cookies as described in this policy. You can withdraw your consent at any time by clearing your cookies and revisiting our site.</p>
                     </section>
 
                     <section>

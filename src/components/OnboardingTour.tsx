@@ -26,7 +26,7 @@ interface TourStep {
 const tourSteps: TourStep[] = [
     {
         target: '[data-tour="dashboard"]',
-        title: 'Welcome to Trendly! 👋',
+        title: 'Welcome to Trendllly! 👋',
         description: 'Your AI-powered content command center. Let\'s take a quick tour to get you started.',
         icon: Rocket,
         position: 'bottom',
@@ -74,7 +74,7 @@ export function useTour() {
     const [hasSeenTour, setHasSeenTour] = useState(true)
 
     useEffect(() => {
-        const seen = localStorage.getItem('trendly-tour-completed')
+        const seen = localStorage.getItem('Trendllly-tour-completed')
         if (!seen) {
             setHasSeenTour(false)
             // Auto-start tour after 2 seconds for new users
@@ -90,7 +90,7 @@ export function useTour() {
 
     const endTour = useCallback(() => {
         setIsOpen(false)
-        localStorage.setItem('trendly-tour-completed', 'true')
+        localStorage.setItem('Trendllly-tour-completed', 'true')
         setHasSeenTour(true)
     }, [])
 

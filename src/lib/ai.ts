@@ -14,7 +14,7 @@ function getOpenAI(): OpenAI | null {
         apiKey,
         defaultHeaders: {
             'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-            'X-Title': 'Trendly - Social Media Content Platform',
+            'X-Title': 'Trendllly - Social Media Content Platform',
         },
     })
 
@@ -110,7 +110,7 @@ Be encouraging, specific, and data-driven.`
         const response = await openai.chat.completions.create({
             model: 'openai/gpt-4o-mini',
             messages: [
-                { role: 'system', content: 'You are Trendly AI, an expert social media strategist. Always respond with valid JSON.' },
+                { role: 'system', content: 'You are Trendllly AI, an expert social media strategist. Always respond with valid JSON.' },
                 { role: 'user', content: prompt }
             ],
             temperature: 0.7,

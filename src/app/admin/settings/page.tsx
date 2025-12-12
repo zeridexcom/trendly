@@ -52,14 +52,14 @@ const INDUSTRIES = [
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<AppSettings>({
-        siteName: 'Trendly',
+        siteName: 'Trendllly',
         siteDescription: 'Discover trending content for your niche',
         maintenanceMode: false,
         allowRegistration: true,
         defaultIndustry: 'TECH',
         cacheRefreshHour: 0,
         enableEmailNotifications: true,
-        adminEmail: 'admin@trendly.app',
+        adminEmail: 'admin@Trendllly.app',
         youtubeApiKey: '',
         serpApiKey: '',
         openRouterApiKey: ''

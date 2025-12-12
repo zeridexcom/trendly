@@ -14,8 +14,8 @@ function getOpenAI(): OpenAI | null {
         baseURL: 'https://openrouter.ai/api/v1',
         apiKey,
         defaultHeaders: {
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://trendly.app',
-            'X-Title': 'Trendly - Content Ideas',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://Trendllly.app',
+            'X-Title': 'Trendllly - Content Ideas',
         },
     })
 

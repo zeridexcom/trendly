@@ -96,7 +96,7 @@ export default function LoginPage() {
 
                 <div className="z-10 space-y-2">
                     <div className="font-mono text-sm font-bold tracking-widest uppercase">
-                        © 2024 Trendly Inc.
+                        © 2024 Trendllly Inc.
                     </div>
                     <div className="text-xs font-medium">
                         By signing up, you agree to our{' '}
@@ -235,7 +235,7 @@ export default function LoginPage() {
                     {/* Toggle */}
                     <div className="text-center">
                         <p className="font-bold text-gray-500">
-                            {isSignUp ? 'Already a member?' : "New to Trendly?"}{' '}
+                            {isSignUp ? 'Already a member?' : "New to Trendllly?"}{' '}
                             <button
                                 type="button"
                                 onClick={() => setIsSignUp(!isSignUp)}

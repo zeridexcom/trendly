@@ -11,9 +11,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Trendly - AI Social Media Content Suite",
+  title: "Trendllly - AI Social Media Content Suite",
   description: "Unify content ideas, trends, and calendar workflow with AI-powered tools",
-  keywords: ["social media", "content planning", "content calendar", "trends", "ideas", "AI"],
+  keywords: ["social media", "content planning", "content calendar", "trends", "ideas", "AI", "Trendllly"],
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
