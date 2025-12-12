@@ -9,6 +9,7 @@ import {
     Flame, Cpu, Gamepad2, UtensilsCrossed, Film, Shirt, BookOpen, Plane, Briefcase, Music
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ReelCard from '@/components/ReelCard'
 
 interface YouTubeVideo {
     id: string
@@ -1240,70 +1241,7 @@ export default function TrendsPage() {
                                     className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"
                                 >
                                     {cachedReels.map((reel, i) => (
-                                        <motion.a
-                                            key={reel.id || i}
-                                            variants={item}
-                                            href={reel.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="bg-white border-2 border-black hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_#EC4899] transition-all group cursor-pointer overflow-hidden"
-                                        >
-                                            {/* Thumbnail - Gradient with Caption */}
-                                            <div className="relative aspect-[9/16] overflow-hidden"
-                                                style={{
-                                                    background: `linear-gradient(135deg, 
-                                                        hsl(${(reel.username?.charCodeAt(0) || 0) * 5 % 360}, 80%, 60%), 
-                                                        hsl(${((reel.username?.charCodeAt(1) || 0) * 7 + 60) % 360}, 70%, 50%))`
-                                                }}
-                                            >
-                                                {/* Caption Preview */}
-                                                <div className="absolute inset-0 p-4 flex flex-col justify-between">
-                                                    <div className="text-white text-sm font-bold line-clamp-4 drop-shadow-lg">
-                                                        {reel.caption?.slice(0, 120)}...
-                                                    </div>
-                                                    <div className="flex items-center justify-center">
-                                                        <div className="w-20 h-20 bg-white/20 backdrop-blur rounded-full flex items-center justify-center border-2 border-white/40">
-                                                            <Play className="w-10 h-10 text-white fill-white ml-1" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {/* Viral Score Badge */}
-                                                <div className="absolute top-2 right-2 flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 px-2 py-1 border-2 border-black shadow-lg">
-                                                    <Flame className="w-3 h-3 text-white" />
-                                                    <span className="text-white text-xs font-black">{reel.viralScore || 50}</span>
-                                                </div>
-                                                {/* Instagram Icon */}
-                                                <div className="absolute bottom-3 right-3 w-8 h-8 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 rounded-lg flex items-center justify-center border border-white/30">
-                                                    <span className="text-white font-black text-xs">IG</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Info */}
-                                            <div className="p-4">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs border border-black">
-                                                        {reel.username?.charAt(0).toUpperCase() || 'U'}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-black text-sm truncate">@{reel.username}</p>
-                                                        <p className="text-xs text-gray-500 truncate">{reel.displayName}</p>
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-gray-600 line-clamp-2 mb-3">{reel.caption?.slice(0, 80)}...</p>
-
-                                                {/* Stats */}
-                                                <div className="flex items-center gap-3 text-xs font-bold">
-                                                    <span className="flex items-center gap-1 text-red-500">
-                                                        <Heart className="w-3 h-3" />
-                                                        {reel.likes >= 1000000 ? `${(reel.likes / 1000000).toFixed(1)}M` : reel.likes >= 1000 ? `${(reel.likes / 1000).toFixed(1)}K` : reel.likes}
-                                                    </span>
-                                                    <span className="flex items-center gap-1 text-blue-500">
-                                                        <MessageCircle className="w-3 h-3" />
-                                                        {reel.comments >= 1000 ? `${(reel.comments / 1000).toFixed(1)}K` : reel.comments}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </motion.a>
+                                        <ReelCard key={reel.id || i} reel={reel} index={i} />
                                     ))}
                                 </motion.div>
                             )}
