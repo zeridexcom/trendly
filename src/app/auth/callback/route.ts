@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url)
@@ -7,7 +8,25 @@ export async function GET(request: Request) {
     const origin = requestUrl.origin
 
     if (code) {
-        const supabase = await createClient()
+        const cookieStore = await cookies()
+
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll()
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            cookieStore.set(name, value, options)
+                        })
+                    },
+                },
+            }
+        )
+
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (error) {
@@ -15,22 +34,19 @@ export async function GET(request: Request) {
             return NextResponse.redirect(`${origin}/login?error=auth_failed`)
         }
 
-        // Check if user has completed onboarding
+        // Get user after session is established
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
             const onboardingComplete = user.user_metadata?.onboardingComplete
 
             if (onboardingComplete) {
-                // User already completed onboarding, go to dashboard
                 return NextResponse.redirect(`${origin}/dashboard`)
             } else {
-                // New user or hasn't completed onboarding
                 return NextResponse.redirect(`${origin}/onboarding`)
             }
         }
     }
 
-    // No code or something went wrong, go to login
     return NextResponse.redirect(`${origin}/login`)
 }
