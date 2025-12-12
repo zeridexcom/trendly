@@ -59,38 +59,29 @@ export default function LoginPage() {
         setIsGoogleLoading(true)
         setError('')
 
-        console.log('Starting Google sign-in...')
-        console.log('Origin:', window.location.origin)
-        console.log('Redirect URL:', `${window.location.origin}/auth/callback`)
-
         try {
             if (!supabase) {
-                throw new Error('Supabase client not initialized. Check environment variables.')
+                throw new Error('Supabase client not initialized')
             }
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback`,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    },
                 },
             })
 
-            console.log('OAuth response:', { data, error })
-
             if (error) {
-                console.error('OAuth error:', error)
                 throw error
             }
 
-            // If we get here and no redirect happened, log it
-            console.log('OAuth initiated, should redirect...')
+            // Explicitly redirect to the OAuth URL
+            if (data?.url) {
+                window.location.href = data.url
+            }
         } catch (err) {
             console.error('Google sign-in error:', err)
-            setError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.')
+            setError(err instanceof Error ? err.message : 'Google sign-in failed')
             setIsGoogleLoading(false)
         }
     }
