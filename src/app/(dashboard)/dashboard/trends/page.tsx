@@ -206,10 +206,8 @@ export default function TrendsPage() {
         setVideos([])
         setCurrentPage(1)
         setLoading(true)
-        // Fetch with new niche
-        setTimeout(() => {
-            fetchTrending(true)
-        }, 100)
+        // Fetch with new niche - pass directly to avoid async state issue
+        fetchTrending(true, nicheId)
     }
 
     // Calculate viral score for a video
@@ -237,7 +235,7 @@ export default function TrendsPage() {
         }
     }
 
-    const fetchTrending = async (freshStart: boolean = false) => {
+    const fetchTrending = async (freshStart: boolean = false, overrideNiche?: string) => {
         if (freshStart) {
             setLoading(true)
             setVideos([])
@@ -246,9 +244,11 @@ export default function TrendsPage() {
         setError(null)
 
         try {
+            // Use override niche if passed, otherwise use state
+            const nicheToUse = overrideNiche || userNiche
             // Use cache API with random page for variety
             const page = freshStart ? Math.floor(Math.random() * 3) + 1 : currentPage
-            const response = await fetch(`/api/youtube/cache?niche=${userNiche}&page=${page}&limit=20`)
+            const response = await fetch(`/api/youtube/cache?niche=${nicheToUse}&page=${page}&limit=20`)
             const data = await response.json()
 
             if (data.success) {
