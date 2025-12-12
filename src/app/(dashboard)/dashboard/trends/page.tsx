@@ -153,7 +153,12 @@ export default function TrendsPage() {
     const [instagramReels, setInstagramReels] = useState<any>({})
     const [instagramPostingTimes, setInstagramPostingTimes] = useState<any>({})
     const [loadingInstagram, setLoadingInstagram] = useState(false)
-    const [activeInstagramSection, setActiveInstagramSection] = useState<'hashtags' | 'songs' | 'hooks' | 'creators' | 'reels' | 'times'>('hashtags')
+    const [activeInstagramSection, setActiveInstagramSection] = useState<'trending' | 'hashtags' | 'songs' | 'hooks' | 'creators' | 'reels' | 'times'>('trending')
+
+    // Cached Instagram reels from Apify
+    const [cachedReels, setCachedReels] = useState<any[]>([])
+    const [loadingCachedReels, setLoadingCachedReels] = useState(false)
+
 
     // YouTube video analysis modal state
     const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null)
@@ -415,6 +420,23 @@ export default function TrendsPage() {
             console.error('Failed to fetch Instagram trends:', err)
         } finally {
             setLoadingInstagram(false)
+        }
+    }
+
+    // Fetch cached reels from Apify
+    const fetchCachedReels = async (niche?: string) => {
+        setLoadingCachedReels(true)
+        try {
+            const targetNiche = niche || userNiche
+            const response = await fetch(`/api/instagram/reels-cache?niche=${targetNiche}&limit=30`)
+            const data = await response.json()
+            if (data.success) {
+                setCachedReels(data.reels || [])
+            }
+        } catch (err) {
+            console.error('Failed to fetch cached reels:', err)
+        } finally {
+            setLoadingCachedReels(false)
         }
     }
 
@@ -1116,11 +1138,12 @@ export default function TrendsPage() {
                     >
                         <div className="flex gap-1 min-w-max bg-black p-1">
                             {[
+                                { id: 'trending', label: '🔥 Trending Reels', icon: '' },
                                 { id: 'hashtags', label: '# Hashtags', icon: '📊' },
                                 { id: 'songs', label: '🎵 Songs', icon: '' },
                                 { id: 'hooks', label: '💬 Hooks', icon: '' },
                                 { id: 'creators', label: '👤 Creators', icon: '' },
-                                { id: 'reels', label: '🎬 Reels', icon: '' },
+                                { id: 'reels', label: '🎬 Reel Ideas', icon: '' },
                                 { id: 'times', label: '⏰ Best Times', icon: '' },
                             ].map((tab) => (
                                 <button
@@ -1148,6 +1171,134 @@ export default function TrendsPage() {
                                 </div>
                             ))}
                         </div>
+                    )}
+
+                    {/* ===== TRENDING REELS SECTION ===== */}
+                    {activeInstagramSection === 'trending' && (
+                        <>
+                            {/* Hero Stats */}
+                            <motion.div
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-6 p-6 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 border-3 border-black"
+                            >
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="text-2xl font-black uppercase text-white mb-1">🔥 Trending Instagram Reels</h3>
+                                        <p className="text-white/80 font-bold">Real viral content from top creators • Updated regularly</p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="bg-white/20 backdrop-blur px-4 py-2 border-2 border-white/30">
+                                            <p className="text-white/80 text-xs font-bold">REELS ANALYZED</p>
+                                            <p className="text-white text-2xl font-black">{cachedReels.length > 0 ? `${cachedReels.length}+` : '...'}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => fetchCachedReels()}
+                                            disabled={loadingCachedReels}
+                                            className="bg-white text-black px-4 py-2 font-black border-2 border-black hover:bg-yellow-300 transition-all disabled:opacity-50"
+                                        >
+                                            {loadingCachedReels ? '⏳' : '🔄'} Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Load reels on first render */}
+                            {cachedReels.length === 0 && !loadingCachedReels && (
+                                <div className="text-center py-12">
+                                    <button
+                                        onClick={() => fetchCachedReels()}
+                                        className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-8 py-4 font-black text-lg border-3 border-black hover:shadow-[6px_6px_0px_0px_#000] transition-all"
+                                    >
+                                        🔥 Load Trending Reels
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Loading state */}
+                            {loadingCachedReels && (
+                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="animate-pulse bg-white border-2 border-black">
+                                            <div className="aspect-[9/16] bg-gray-200" />
+                                            <div className="p-4">
+                                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                                                <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Reels Grid */}
+                            {!loadingCachedReels && cachedReels.length > 0 && (
+                                <motion.div
+                                    variants={container}
+                                    initial="hidden"
+                                    animate="show"
+                                    className="grid md:grid-cols-2 lg:grid-cols-4 gap-4"
+                                >
+                                    {cachedReels.map((reel, i) => (
+                                        <motion.a
+                                            key={reel.id || i}
+                                            variants={item}
+                                            href={reel.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-white border-2 border-black hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_#EC4899] transition-all group cursor-pointer overflow-hidden"
+                                        >
+                                            {/* Thumbnail */}
+                                            <div className="relative aspect-[9/16] bg-gray-100 overflow-hidden">
+                                                {reel.thumbnail && (
+                                                    <img
+                                                        src={reel.thumbnail}
+                                                        alt={reel.caption?.slice(0, 50)}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                )}
+                                                {/* Viral Score Badge */}
+                                                <div className="absolute top-2 right-2 flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 px-2 py-1 border-2 border-black">
+                                                    <Flame className="w-3 h-3 text-white" />
+                                                    <span className="text-white text-xs font-black">{reel.viralScore || 50}</span>
+                                                </div>
+                                                {/* Play overlay */}
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border-3 border-black">
+                                                        <Play className="w-8 h-8 text-pink-500 fill-current ml-1" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="p-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs border border-black">
+                                                        {reel.username?.charAt(0).toUpperCase() || 'U'}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-black text-sm truncate">@{reel.username}</p>
+                                                        <p className="text-xs text-gray-500 truncate">{reel.displayName}</p>
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-gray-600 line-clamp-2 mb-3">{reel.caption?.slice(0, 80)}...</p>
+
+                                                {/* Stats */}
+                                                <div className="flex items-center gap-3 text-xs font-bold">
+                                                    <span className="flex items-center gap-1 text-red-500">
+                                                        <Heart className="w-3 h-3" />
+                                                        {reel.likes >= 1000000 ? `${(reel.likes / 1000000).toFixed(1)}M` : reel.likes >= 1000 ? `${(reel.likes / 1000).toFixed(1)}K` : reel.likes}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-blue-500">
+                                                        <MessageCircle className="w-3 h-3" />
+                                                        {reel.comments >= 1000 ? `${(reel.comments / 1000).toFixed(1)}K` : reel.comments}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </motion.a>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </>
                     )}
 
                     {/* ===== HASHTAGS SECTION ===== */}
