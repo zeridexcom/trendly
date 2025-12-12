@@ -185,6 +185,7 @@ export default function TrendsPage() {
         getUserNiche()
         fetchTrending(true) // true = fresh start with random offset
         fetchGoogleTrends()
+        fetchCachedReels() // Auto-load Instagram reels on component mount
     }, [])
 
     // Infinite scroll observer
@@ -424,11 +425,11 @@ export default function TrendsPage() {
     }
 
     // Fetch cached reels from Apify
-    const fetchCachedReels = async (niche?: string) => {
+    const fetchCachedReels = async () => {
         setLoadingCachedReels(true)
         try {
-            const targetNiche = niche || userNiche
-            const response = await fetch(`/api/instagram/reels-cache?niche=${targetNiche}&limit=30`)
+            // Fetch ALL reels regardless of niche for the trending section
+            const response = await fetch(`/api/instagram/reels-cache?niche=ALL&limit=50`)
             const data = await response.json()
             if (data.success) {
                 setCachedReels(data.reels || [])
