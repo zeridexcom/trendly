@@ -94,44 +94,51 @@ async function runApifyActor(usernames: string[], reelsPerProfile: number = 30):
     return items
 }
 
+// Extract reel ID from Instagram URL
+function extractReelId(url: string): string | null {
+    const match = url.match(/\/(p|reel)\/([A-Za-z0-9_-]+)/)
+    return match ? match[2] : null
+}
+
 // Cache reels to database
 async function cacheReels(reels: any[], niche: string): Promise<number> {
     const supabase = getSupabaseAdmin()
     let cached = 0
 
     for (const reel of reels) {
-        if (!reel.id) continue
+        // Extract reel ID from URL
+        const reelId = extractReelId(reel.url)
+        if (!reelId) continue
 
-        const viralScore = calculateViralScore(
-            reel.likesCount || 0,
-            reel.commentsCount || 0,
-            reel.playsCount || reel.videoPlayCount || 0
+        const likesCount = reel.likesCount || 0
+        const commentsCount = reel.commentsCount || 0
+
+        // Calculate viral score (no plays count available, use likes as proxy)
+        const viralScore = Math.min(
+            Math.round(
+                (likesCount / 1000) * 2 +
+                (commentsCount / 100) * 5 +
+                40
+            ),
+            100
         )
 
         const { error } = await supabase
             .from('instagram_reels_cache')
             .upsert({
-                reel_id: reel.id,
-                username: reel.ownerUsername || reel.username,
-                display_name: reel.ownerFullName || reel.displayName,
-                profile_pic: reel.profilePicUrl,
+                reel_id: reelId,
+                username: reel.ownerUsername,
+                display_name: reel.ownerFullName,
                 caption: reel.caption?.slice(0, 1000),
-                thumbnail: reel.displayUrl || reel.thumbnailUrl,
-                video_url: reel.videoUrl,
-                likes_count: reel.likesCount || 0,
-                comments_count: reel.commentsCount || 0,
-                plays_count: reel.playsCount || reel.videoPlayCount || 0,
-                shares_count: reel.sharesCount || 0,
-                audio_name: reel.musicInfo?.title,
-                audio_artist: reel.musicInfo?.artist,
-                hashtags: reel.hashtags || [],
-                mentions: reel.mentions || [],
-                duration_seconds: reel.videoDuration,
-                posted_at: reel.timestamp ? new Date(reel.timestamp * 1000).toISOString() : null,
+                thumbnail: reel.displayUrl,
+                likes_count: likesCount,
+                comments_count: commentsCount,
+                plays_count: likesCount * 10, // Estimate plays as 10x likes
                 niche: niche,
                 is_active: true,
                 viral_score: viralScore,
                 display_order: Date.now(),
+                posted_at: reel.timestamp || null,
                 cached_at: new Date().toISOString(),
                 last_updated: new Date().toISOString()
             }, { onConflict: 'reel_id' })
