@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Sparkles, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
@@ -20,6 +21,14 @@ export default function LoginPage() {
     })
 
     const supabase = createClient()
+
+    // Show error from URL (from auth callback)
+    useEffect(() => {
+        const urlError = searchParams.get('error')
+        if (urlError) {
+            setError(`Login failed: ${urlError}`)
+        }
+    }, [searchParams])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
