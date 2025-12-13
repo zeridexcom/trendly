@@ -9,12 +9,10 @@ export async function GET(request: Request) {
     const error_description = requestUrl.searchParams.get('error_description')
     const origin = requestUrl.origin
 
-    console.log('Auth callback received:', {
-        hasCode: !!code,
-        error,
-        error_description,
-        url: request.url
-    })
+    console.log('=== Auth Callback Start ===')
+    console.log('URL:', request.url)
+    console.log('Code present:', !!code)
+    console.log('Error:', error, error_description)
 
     // Handle OAuth errors from Google
     if (error) {
@@ -22,68 +20,72 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_description || error)}`)
     }
 
-    if (code) {
-        const cookieStore = await cookies()
-
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    getAll() {
-                        return cookieStore.getAll()
-                    },
-                    setAll(cookiesToSet) {
-                        try {
-                            cookiesToSet.forEach(({ name, value, options }) => {
-                                cookieStore.set(name, value, options)
-                            })
-                        } catch (error) {
-                            console.error('Error setting cookies:', error)
-                        }
-                    },
-                },
-            }
-        )
-
-        try {
-            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-            console.log('Exchange result:', {
-                hasSession: !!data?.session,
-                hasUser: !!data?.user,
-                error: exchangeError?.message
-            })
-
-            if (exchangeError) {
-                console.error('Auth callback exchange error:', exchangeError)
-                return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(exchangeError.message)}`)
-            }
-
-            // Get user after session is established
-            const { data: { user } } = await supabase.auth.getUser()
-
-            console.log('User after exchange:', {
-                hasUser: !!user,
-                email: user?.email,
-                onboardingComplete: user?.user_metadata?.onboardingComplete
-            })
-
-            if (user) {
-                const onboardingComplete = user.user_metadata?.onboardingComplete
-
-                if (onboardingComplete) {
-                    return NextResponse.redirect(`${origin}/dashboard`)
-                } else {
-                    return NextResponse.redirect(`${origin}/onboarding`)
-                }
-            }
-        } catch (err) {
-            console.error('Unexpected error in auth callback:', err)
-            return NextResponse.redirect(`${origin}/login?error=unexpected_error`)
-        }
+    if (!code) {
+        console.error('No code received in callback')
+        return NextResponse.redirect(`${origin}/login?error=no_code`)
     }
 
-    console.log('No code received, redirecting to login')
-    return NextResponse.redirect(`${origin}/login?error=no_code`)
+    const cookieStore = await cookies()
+
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return cookieStore.getAll()
+                },
+                setAll(cookiesToSet) {
+                    try {
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            cookieStore.set(name, value, options)
+                        })
+                    } catch (err) {
+                        console.error('Error setting cookies:', err)
+                    }
+                },
+            },
+        }
+    )
+
+    try {
+        // Exchange code for session
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+        console.log('Exchange result:', {
+            hasSession: !!data?.session,
+            hasUser: !!data?.user,
+            userId: data?.user?.id,
+            email: data?.user?.email,
+            error: exchangeError?.message
+        })
+
+        if (exchangeError) {
+            console.error('Exchange error:', exchangeError)
+            return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(exchangeError.message)}`)
+        }
+
+        // Use user from exchange data directly (more reliable)
+        const user = data?.user
+
+        if (!user) {
+            console.error('No user in exchange data')
+            return NextResponse.redirect(`${origin}/login?error=no_user`)
+        }
+
+        const onboardingComplete = user.user_metadata?.onboardingComplete
+        console.log('Onboarding complete:', onboardingComplete)
+
+        if (onboardingComplete) {
+            console.log('Redirecting to dashboard')
+            return NextResponse.redirect(`${origin}/dashboard`)
+        } else {
+            console.log('Redirecting to onboarding')
+            return NextResponse.redirect(`${origin}/onboarding`)
+        }
+
+    } catch (err) {
+        console.error('Unexpected error in auth callback:', err)
+        return NextResponse.redirect(`${origin}/login?error=unexpected_error`)
+    }
 }
