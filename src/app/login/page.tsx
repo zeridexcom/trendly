@@ -207,12 +207,10 @@ function LoginContent() {
                     </div>
 
                     {/* Social Login - Google Sign-In */}
-                    <div className="w-full p-2 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]">
-                        <GoogleSignInButton
-                            onError={(err) => setError(err)}
-                            onLoading={(loading) => setIsGoogleLoading(loading)}
-                        />
-                    </div>
+                    <GoogleSignInButton
+                        onError={(err) => setError(err)}
+                        onLoading={(loading) => setIsGoogleLoading(loading)}
+                    />
 
                     {/* Toggle */}
                     <div className="text-center">
