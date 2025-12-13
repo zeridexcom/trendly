@@ -64,33 +64,56 @@ function LoginContent() {
         }
     }
 
-    const handleGoogleSignIn = async () => {
+    const handleGoogleSignIn = async (e?: React.MouseEvent) => {
+        // Prevent any form submission or default behavior
+        if (e) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+
         setIsGoogleLoading(true)
         setError('')
 
         try {
+            // Check if Supabase client is available
             if (!supabase) {
-                throw new Error('Supabase client not initialized')
+                throw new Error('Connection error. Please refresh the page and try again.')
             }
+
+            // Check if third-party cookies might be blocked
+            if (typeof window !== 'undefined' && !navigator.cookieEnabled) {
+                throw new Error('Cookies are disabled. Please enable cookies to sign in with Google.')
+            }
+
+            console.log('Initiating Google OAuth...')
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback`,
+                    skipBrowserRedirect: false,
                 },
             })
 
+            console.log('OAuth response:', { hasUrl: !!data?.url, error: error?.message })
+
             if (error) {
-                throw error
+                console.error('OAuth error:', error)
+                throw new Error(error.message || 'Failed to connect to Google. Please try again.')
             }
 
-            // Explicitly redirect to the OAuth URL
-            if (data?.url) {
-                window.location.href = data.url
+            if (!data?.url) {
+                throw new Error('Could not connect to Google. Please try again or use email login.')
             }
+
+            // Redirect to Google OAuth
+            console.log('Redirecting to:', data.url)
+            window.location.href = data.url
+
         } catch (err) {
             console.error('Google sign-in error:', err)
-            setError(err instanceof Error ? err.message : 'Google sign-in failed')
+            const errorMessage = err instanceof Error ? err.message : 'Google sign-in failed'
+            setError(`${errorMessage}. If this persists, try: 1) Refreshing the page, 2) Using incognito mode, 3) Clearing cookies.`)
             setIsGoogleLoading(false)
         }
     }
